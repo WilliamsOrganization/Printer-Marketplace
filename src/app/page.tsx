@@ -1,21 +1,10 @@
-"use client"
-
 import Image from "next/image"
-import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import SearchBarMain from "@/components/ui/custom/searchbar"
+import { FilterSidebar } from "@/components/ui/custom/filter-sidebar"
+import { SortSelect } from "@/components/ui/custom/sort-select"
 
 const products = [
   { id: 1, name: "Abstract Sunset", price: 49.99, image: "/globe.svg", category: "prints", badge: "New" },
@@ -45,29 +34,29 @@ const priceRanges = [
   { id: "over75", label: "Over $75", min: 75, max: Infinity },
 ]
 
-type SortOption = "featured" | "price-asc" | "price-desc" | "name"
+type SearchParams = {
+  category?: string | string[]
+  price?: string | string[]
+  sort?: string
+}
 
-export default function Home() {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState<SortOption>("featured")
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
 
-  const toggleCategory = (categoryId: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(c => c !== categoryId)
-        : [...prev, categoryId]
-    )
-  }
+  // Parse params - handle both single values and arrays
+  const selectedCategories = params.category
+    ? Array.isArray(params.category) ? params.category : [params.category]
+    : []
+  const selectedPriceRanges = params.price
+    ? Array.isArray(params.price) ? params.price : [params.price]
+    : []
+  const sortBy = params.sort || "featured"
 
-  const togglePriceRange = (rangeId: string) => {
-    setSelectedPriceRanges(prev =>
-      prev.includes(rangeId)
-        ? prev.filter(r => r !== rangeId)
-        : [...prev, rangeId]
-    )
-  }
-
+  // Filter products on server
   const filteredProducts = products
     .filter(product => {
       const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category)
@@ -80,7 +69,6 @@ export default function Home() {
     .sort((a, b) => {
       switch (sortBy) {
         case "featured":
-          // Badged items first, then by id
           if (a.badge && !b.badge) return -1
           if (!a.badge && b.badge) return 1
           return a.id - b.id
@@ -101,65 +89,12 @@ export default function Home() {
         {/* Filters Sidebar */}
         <aside className="w-56 shrink-0 hidden md:block">
           <div className="sticky top-24">
-            <div className="mb-6">
-              <SearchBarMain />
-            </div>
-
-            <h3 className="font-semibold mb-4">Filters</h3>
-
-            {/* Categories */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium mb-3">Category</h4>
-              <div className="space-y-2">
-                {categories.map(category => (
-                  <div key={category.id} className="flex items-center gap-2">
-                    <Checkbox
-                      id={category.id}
-                      checked={selectedCategories.includes(category.id)}
-                      onCheckedChange={() => toggleCategory(category.id)}
-                    />
-                    <Label htmlFor={category.id} className="text-sm cursor-pointer">
-                      {category.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator className="my-4" />
-
-            {/* Price Range */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium mb-3">Price</h4>
-              <div className="space-y-2">
-                {priceRanges.map(range => (
-                  <div key={range.id} className="flex items-center gap-2">
-                    <Checkbox
-                      id={range.id}
-                      checked={selectedPriceRanges.includes(range.id)}
-                      onCheckedChange={() => togglePriceRange(range.id)}
-                    />
-                    <Label htmlFor={range.id} className="text-sm cursor-pointer">
-                      {range.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {(selectedCategories.length > 0 || selectedPriceRanges.length > 0) && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  setSelectedCategories([])
-                  setSelectedPriceRanges([])
-                }}
-              >
-                Clear Filters
-              </Button>
-            )}
+            <FilterSidebar
+              categories={categories}
+              priceRanges={priceRanges}
+              selectedCategories={selectedCategories}
+              selectedPriceRanges={selectedPriceRanges}
+            />
           </div>
         </aside>
 
@@ -169,17 +104,7 @@ export default function Home() {
             <p className="text-sm text-muted-foreground">
               {filteredProducts.length} products
             </p>
-            <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="featured">Featured</SelectItem>
-                <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-              </SelectContent>
-            </Select>
+            <SortSelect currentSort={sortBy} />
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -215,14 +140,8 @@ export default function Home() {
           {filteredProducts.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No products match your filters.</p>
-              <Button
-                variant="link"
-                onClick={() => {
-                  setSelectedCategories([])
-                  setSelectedPriceRanges([])
-                }}
-              >
-                Clear filters
+              <Button variant="link" asChild>
+                <Link href="/">Clear filters</Link>
               </Button>
             </div>
           )}
