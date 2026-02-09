@@ -4,6 +4,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Header from "@/components/ui/custom/header";
 import Footer from "@/components/ui/custom/footer";
+import { PromoBanner } from "@/components/ui/custom/promo-banner";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
 		<html lang="en">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
 				<Header/>
+				<PromoBanner />
 				<TooltipProvider>{children}</TooltipProvider>
 				<Footer/>
 			</body>
