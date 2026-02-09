@@ -21,11 +21,11 @@ export function Header() {
       <div className="sticky top-0 w-full z-20">
         {/* Header bar */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-background">
-          <NavigationMenuDemo />
           <Button variant="ghost" onClick={() => setIsOpen(!isOpen)}>
             Product details
             <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
           </Button>
+          <NavigationMenuDemo />
         </div>
 
       {/* Drawer - expands from bottom of header */}
