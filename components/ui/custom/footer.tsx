@@ -97,7 +97,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} MyStore. All rights reserved.
+            &copy; {new Date().getFullYear()} PrintMarket. All rights reserved.
           </p>
 
           {/* Social icons */}
