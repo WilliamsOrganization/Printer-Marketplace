@@ -27,8 +27,11 @@ public class InventoryItem {
 	@UpdateTimestamp
 	private Date updatedAt;
 
+	private String itemTitle;
+	private String itemDescription;
 	private Long itemCost;
 	private String imageUrl;
+	private String stripeId;
 	private Boolean sale;
 
 }
