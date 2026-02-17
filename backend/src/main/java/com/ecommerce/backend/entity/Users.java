@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 /**
- * Users
+ * Registered user account with authentication credentials.
  */
 @Data
 @Entity

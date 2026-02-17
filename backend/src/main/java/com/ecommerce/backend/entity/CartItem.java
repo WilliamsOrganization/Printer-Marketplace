@@ -22,7 +22,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 /**
- * cartItem This is a marketplace Item in which to market
+ * Line item in a shopping cart linking a cart to an inventory item with quantity.
  */
 @Data
 @Entity

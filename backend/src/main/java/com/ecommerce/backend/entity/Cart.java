@@ -21,7 +21,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 /**
- * Cart  This is a marketplace Item in which to market
+ * Shopping cart belonging to a user, containing cart items.
  */
 @Data
 @Entity

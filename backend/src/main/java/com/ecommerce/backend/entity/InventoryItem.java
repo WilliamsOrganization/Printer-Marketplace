@@ -13,7 +13,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 /**
- * InventoryItem This is a marketplace Item in which to market
+ * Product available for purchase in the store.
  */
 @Data
 @Entity
