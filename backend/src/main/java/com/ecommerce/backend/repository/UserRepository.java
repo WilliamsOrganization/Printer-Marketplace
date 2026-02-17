@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.ecommerce.backend.entity.Users;
 
 /**
- * UserRepository
+ * Data access layer for User entities.
  */
 public interface UserRepository extends JpaRepository<Users, Long> {
 }

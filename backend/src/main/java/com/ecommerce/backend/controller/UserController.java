@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * UserController
+ * REST controller for user account operations.
  */
 @RestController
 @RequestMapping("/api/users")

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * CartController
+ * REST controller for shopping cart operations.
  */
 @RestController
 @RequestMapping("/api/Cart")

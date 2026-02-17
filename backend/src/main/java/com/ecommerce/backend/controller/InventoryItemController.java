@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * InventoryItemController
+ * REST controller for product inventory operations.
  */
 @RestController
 @RequestMapping("/api/InventoryItem")
