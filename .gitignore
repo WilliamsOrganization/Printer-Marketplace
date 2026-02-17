@@ -45,3 +45,29 @@ yarn-error.log*
 # IDE
 .idea/
 .vscode/
+
+
+## backend stuff starts here
+*.iws
+*.iml
+*.ipr
+
+# Java/Maven (backend)
+**/target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.jar
+!**/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.war
+
+# Spring Boot
+**/application-local.properties
+**/application-local.yml
+
+# Logs
+*.log
+**/logs/
+
+# Secrets
+**/secrets/
