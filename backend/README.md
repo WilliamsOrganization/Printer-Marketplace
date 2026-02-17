@@ -1,5 +1,20 @@
 # Backend (Spring Boot)
 
+
+## Run
+
+```bash
+# Development
+./mvnw spring-boot:run
+
+# Build jar
+./mvnw clean package
+
+# Run jar
+java -jar target/backend-0.0.1-SNAPSHOT.jar
+```
+
+
 ## Recipe
 
 - [x] Spring Boot 3.5.0
