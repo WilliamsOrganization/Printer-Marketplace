@@ -1,5 +1,10 @@
 package com.ecommerce.backend.entity;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -7,10 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.sql.Date;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Product available for purchase in the store.
@@ -24,9 +26,9 @@ public class InventoryItem {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@CreationTimestamp
-	private Date createdAt;
+	private LocalDateTime createdAt;
 	@UpdateTimestamp
-	private Date updatedAt;
+	private LocalDateTime updatedAt;
 
 	private String itemTitle;
 	private String item;
