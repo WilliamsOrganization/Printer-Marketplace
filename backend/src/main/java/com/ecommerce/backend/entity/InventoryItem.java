@@ -22,12 +22,13 @@ public class InventoryItem {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY )
 	private Long id;
-	private String itemName;
-	private Long itemCost;
-
 	@CreationTimestamp
 	private Date createdAt;
-
 	@UpdateTimestamp
 	private Date updatedAt;
+
+	private Long itemCost;
+	private String imageUrl;
+	private Boolean sale;
+
 }
