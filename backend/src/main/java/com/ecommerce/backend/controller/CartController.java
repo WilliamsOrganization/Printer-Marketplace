@@ -17,32 +17,32 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/Cart")
 public class CartController {
-	private final CartRepository repository;
+    private final CartRepository repository;
 
-	public CartController(CartRepository repository) {
-		this.repository = repository;
-	}
+    public CartController(CartRepository repository) {
+        this.repository = repository;
+    }
 
-	@GetMapping
-	public List<Cart> getAll() {
-		return repository.findAll();
-	}
+    @GetMapping
+    public List<Cart> getAll() {
+        return repository.findAll();
+    }
 
-	@GetMapping("/{id}")
-	public Cart getOne(@PathVariable Long id) {
-		return repository.findById(id).orElseThrow();
-	}
+    @GetMapping("/{id}")
+    public Cart getOne(@PathVariable Long id) {
+        return repository.findById(id).orElseThrow();
+    }
 
-	@PostMapping
-	public Cart create(@RequestBody Cart cart) {
-		// TODO: process POST request
-		return repository.save(cart);
-	}
+    @PostMapping
+    public Cart create(@RequestBody Cart cart) {
+        // TODO: process POST request
+        return repository.save(cart);
+    }
 
-	@DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")
 
-	public void delete(@PathVariable Long id) {
-		// TODO: process POST request
-		repository.deleteById(id);
-	}
+    public void delete(@PathVariable Long id) {
+        // TODO: process POST request
+        repository.deleteById(id);
+    }
 }
