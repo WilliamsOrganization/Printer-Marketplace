@@ -8,7 +8,7 @@ import Dashboard from "@/components/ui/custom/dashboard"
 export default function LoginPage() {
 	const { data: session, status } = useSession()
 
-	if (true) {
+	if (status === "authenticated") {
 		return (
 		<Dashboard />
 		)
