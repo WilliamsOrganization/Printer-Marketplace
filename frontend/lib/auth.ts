@@ -29,6 +29,15 @@ export const authOptions: NextAuthOptions = {
 		strategy: "jwt", // or "database"
 	},
 	callbacks: {
+		async signIn({user, account, profile}) {
+			if(account?.provider =="google" || account?.provider=="apple"){
+				console.log('TODO: Create user')
+				// successful
+				return true;
+			}
+			// how to configure truthy and false login
+			return false;
+		},
 		async jwt({ token, user }) {
 			if (user) token.id = user.id;
 			return token;
