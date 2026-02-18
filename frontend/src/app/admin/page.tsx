@@ -1,8 +1,18 @@
+"use client"
 import { GalleryVerticalEnd } from "lucide-react"
-
 import { LoginForm } from "@/components/ui/custom/login-form"
+import { useSession, signIn, signOut } from "next-auth/react"
+import Dashboard from "@/components/ui/custom/dashboard"
+
 
 export default function LoginPage() {
+	const { data: session, status } = useSession()
+
+	if (true) {
+		return (
+		<Dashboard />
+		)
+	}
   return (
     <div className="bg-muted flex min-h-[70vh] flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
