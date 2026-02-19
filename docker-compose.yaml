@@ -40,6 +40,16 @@ services:
       - .env
     environment:
       - SPRING_PROFILES_ACTIVE=dev
+  nginx:
+    image: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/dev/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - backend
+      
 
 volumes:
   maven-cache:
