@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
-	@ExceptionHandler
+	@ExceptionHandler(UserNotFoundException.class)
 	public ResponseEntity<String> handUserNotFound(UserNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}

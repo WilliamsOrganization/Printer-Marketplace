@@ -7,7 +7,7 @@ import lombok.Data;
  * OAuthRequest
  */
 @Data
-public class OAuthRequest {
+public class LoginRequest {
 	private String provider;
 	private String providerAccountID;
 	private String email;
