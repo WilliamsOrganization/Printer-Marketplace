@@ -1,7 +1,7 @@
 package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.dto.AuthResponse;
-import com.ecommerce.backend.dto.OAuthRequest;
+import com.ecommerce.backend.dto.LoginRequest;
 import com.ecommerce.backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/login")
-	public ResponseEntity<AuthResponse> Login(@RequestBody OAuthRequest request) {
+	public ResponseEntity<AuthResponse> Login(@RequestBody LoginRequest request) {
 		AuthResponse response = authService.handleLogin(request);
 		return ResponseEntity.ok(response);
 	}

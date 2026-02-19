@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
- * OAuthRequest
+ * LoginRequest	
  */
 @Data
 public class LoginRequest {
