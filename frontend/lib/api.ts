@@ -9,12 +9,11 @@ async function getServerApi() {
 	const session = await getSession();
 
 	return axios.create({
-		baseURL: process.env.BACKEND_URL,
+		baseURL: BACKEND_URL,
 		headers: {
-			ContentType: "application/json",
-			...(session?.backendToken && {
-				authorization: `Bearer ${session.backendToken}`,
-			}),
+			"ContentType": "application/json",
+			Authorization: session?.backendToken ? `Bearer ${session.backendToken}`
+			: undefined,
 		},
 	});
 }
