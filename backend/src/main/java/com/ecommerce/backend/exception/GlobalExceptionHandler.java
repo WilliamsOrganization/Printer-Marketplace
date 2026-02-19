@@ -13,7 +13,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 	@ExceptionHandler(UserNotFoundException.class)
-	public ResponseEntity<String> handUserNotFound(UserNotFoundException ex) {
+	public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+	@ExceptionHandler(InvalidCredentials.class)
+	public ResponseEntity<String> handleNoPasswordSet(InvalidCredentials ex) {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
 	}
 }

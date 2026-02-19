@@ -23,7 +23,9 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> Login(@RequestBody LoginRequest request) {
-		AuthResponse response = authService.handleLogin(request);
-		return ResponseEntity.ok(response);
+		if (request.getPassword() == null) {
+			return ResponseEntity.ok(authService.handleLogin(request));
+		}
+		return ResponseEntity.ok(authService.handlePasswordLogin(request));
 	}
 }

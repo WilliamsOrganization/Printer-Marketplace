@@ -5,6 +5,7 @@ import com.ecommerce.backend.dto.LoginRequest;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.entity.Users.Role;
+import com.ecommerce.backend.exception.InvalidCredentials;
 import com.ecommerce.backend.exception.UserNotFoundException;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
@@ -25,6 +26,16 @@ public class AuthService {
 
     public AuthResponse handleLogin(LoginRequest request) {
         Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(()->new UserNotFoundException("User does not exist"));
+		Sessions session = sessionCreate(user, request);
+        return new AuthResponse(session.getToken(), user.getId());
+    }
+
+	public AuthResponse handlePasswordLogin(LoginRequest request) {
+        Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(()->new UserNotFoundException("User does not exist"));
+		// this exists if the user logged in previously through oauth and hasn't set a password
+		if(user.getPassword()==null) throw new InvalidCredentials("Invalid Email Or Password");
+		// TODO: requires email authentication layer ie copy past password
+
 		Sessions session = sessionCreate(user, request);
         return new AuthResponse(session.getToken(), user.getId());
     }
