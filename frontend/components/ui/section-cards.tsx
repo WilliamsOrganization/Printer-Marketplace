@@ -12,6 +12,8 @@ import {
 import { useEffect, useState } from "react";
 import { InventoryItem } from "@/lib/types";
 import axios from "axios";
+import { Button } from "./button";
+import Link from "next/link";
 
 export function SectionCards() {
 	const [inventory, inventoryState] = useState<InventoryItem[] | null>(null);
@@ -44,17 +46,13 @@ export function SectionCards() {
 					<CardAction>
 						<Badge variant="outline">
 							<IconTrendingUp />
-							+12.5%
 						</Badge>
 					</CardAction>
 				</CardHeader>
-				<CardFooter className="flex-col items-start gap-1.5 text-sm">
-					<div className="line-clamp-1 flex gap-2 font-medium">
-						Trending up this month <IconTrendingUp className="size-4" />
-					</div>
-					<div className="text-muted-foreground">
-						Visitors for the last 6 months
-					</div>
+				<CardFooter className="flex-col text-md min-w-full">
+					<Link href="/admin/item/" >
+						<Button className="w-full" variant="outline">Create Inventory Item</Button>
+					</Link>
 				</CardFooter>
 			</Card>
 
