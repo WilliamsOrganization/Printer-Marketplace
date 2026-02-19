@@ -28,6 +28,23 @@ export interface InventoryItem {
 	badge: Badge;
 }
 
+export enum UserRole {
+	CUSTOMER = "CUSTOMER",
+	REGISTERED = "REGISTERED",
+	ADMIN = "ADMIN",
+}
+
+export interface User {
+	id: number;
+	createdAt: string;
+	updatedAt: string;
+	email: string;
+	phoneNumber: string;
+	password: string;
+	isAdmin: boolean;
+	userRole: UserRole;
+}
+
 export interface ImageDropFieldProps {
 	name: string;
 	required?: boolean;

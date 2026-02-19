@@ -10,7 +10,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { InventoryItem } from "@/lib/types";
+import { InventoryItem, User } from "@/lib/types";
 import axios from "axios";
 import { Button } from "./button";
 import Link from "next/link";
@@ -19,6 +19,8 @@ export function SectionCards() {
 	const [inventory, inventoryState] = useState<InventoryItem[] | null>(null);
 	const [inventoryCount, inventoryCountState] = useState<number>(0);
 
+	const [user, userState] = useState<User[] | null>(null);
+	const [userCount, userCountState] = useState<number>(0);
 	useEffect(() => {
 		axios
 			.get("/server/inventoryitem")
@@ -29,6 +31,17 @@ export function SectionCards() {
 			.catch((err) => {
 				console.log("Error" + err.message);
 			});
+
+		axios
+			.get("/server/users")
+			.then((res) => {
+				userState(res.data);
+				userCountState(res.data.length);
+			})
+			.catch((err) => {
+				console.log("Error" + err.message);
+			});
+
 	}, []);
 
 	return (
@@ -36,7 +49,7 @@ export function SectionCards() {
 			{/* this is the important card I want to actually mess with */}
 			<Card className="@container/card">
 				<CardHeader>
-					<CardDescription>Create New Inventory Item</CardDescription>
+					<CardDescription>Inventory Items</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
 						{inventoryCount}
 					</CardTitle>
@@ -53,16 +66,16 @@ export function SectionCards() {
 				</CardFooter>
 			</Card>
 
+			{/* this is the important card I want to actually mess with */}
 			<Card className="@container/card">
 				<CardHeader>
-					<CardDescription>New Customers</CardDescription>
+					<CardDescription>Active Users</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						1,234
+						{userCount}
 					</CardTitle>
 					<CardAction>
 						<Badge variant="outline">
 							<IconTrendingDown />
-							-20%
 						</Badge>
 					</CardAction>
 				</CardHeader>
@@ -71,7 +84,7 @@ export function SectionCards() {
 						Down 20% this period <IconTrendingDown className="size-4" />
 					</div>
 					<div className="text-muted-foreground">
-						Acquisition needs attention
+						Total Accounts Registered
 					</div>
 				</CardFooter>
 			</Card>
