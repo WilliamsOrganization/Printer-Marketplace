@@ -23,6 +23,7 @@ public class InventoryItemController {
 		this.repository = repository;
 	}
 
+	// TODO: protect this field maybe
 	@GetMapping
 	public List<InventoryItem> getAll() {
 		return repository.findAll();
