@@ -16,7 +16,7 @@ function page() {
 					You need to be logged in to visit this page
 				</p>
 				<Button asChild className="mt-6">
-					<Link href="/admin">Back to Admin Login</Link>
+					<Link href="/admin/">Back to Admin Login</Link>
 				</Button>
 			</div>
 		);
