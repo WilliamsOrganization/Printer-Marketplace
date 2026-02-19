@@ -77,3 +77,6 @@ data/
 
 # neovim bugs
 **.null*
+
+/frontend/src/app/test/*
+
