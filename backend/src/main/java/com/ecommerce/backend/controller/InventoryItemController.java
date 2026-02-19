@@ -36,7 +36,8 @@ public class InventoryItemController {
 
 	@PostMapping
 	public InventoryItem create(@RequestBody InventoryItem inventoryitem) {
-		// TODO: process POST request
+		// String[] imageUrls= new String[]{ "String","string","string" };
+		// inventoryitem.setImageUrls(imageUrls);
 		return repository.save(inventoryitem);
 	}
 
