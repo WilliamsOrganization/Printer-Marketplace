@@ -1,7 +1,7 @@
 package com.ecommerce.backend.service;
 
 import com.ecommerce.backend.dto.AuthResponse;
-import com.ecommerce.backend.dto.OAuthRequest;
+import com.ecommerce.backend.dto.LoginRequest;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.entity.Users.Role;
@@ -23,13 +23,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
 
-    public AuthResponse handleLogin(OAuthRequest request) {
+    public AuthResponse handleLogin(LoginRequest request) {
         Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(()->new UserNotFoundException("User does not exist"));
-		Sessions session = sessionCreate(user);
+		Sessions session = sessionCreate(user, request);
         return new AuthResponse(session.getToken(), user.getId());
     }
 
-    private Users createUser(OAuthRequest request) {
+    private Users createUser(LoginRequest request) {
         Users user = new Users();
         user.setEmail(request.getEmail());
         user.setUserRole(Role.CUSTOMER);
@@ -37,10 +37,12 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    private Sessions sessionCreate(Users user) {
+    private Sessions sessionCreate(Users user, LoginRequest request) {
         Sessions session = new Sessions();
         session.setUser(user);
         session.setExpiresAt(LocalDateTime.now().plusDays(30));
+		session.setProviderAccountID(request.getProviderAccountID());
+		session.setDeviceInfo(request.getDeviceInfo());
         return sessionRepository.save(session);
     }
 }

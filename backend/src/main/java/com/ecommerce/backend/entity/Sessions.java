@@ -36,10 +36,11 @@ public class Sessions {
 	@CreationTimestamp
 	private LocalDateTime createdAt;
 
-	@CreationTimestamp
 	private LocalDateTime expiresAt;
 
 	private String deviceInfo;
+
+	private String providerAccountID;
 
 	@PrePersist
 	private void generateToken() {
