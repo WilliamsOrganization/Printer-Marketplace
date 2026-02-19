@@ -24,7 +24,7 @@ export const authOptions: NextAuthOptions = {
 				if (!credentials?.email || !credentials?.password) {
 					return null;
 				}
-				const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+				const res = await fetch(`${BACKEND_URL}/server/auth/login`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -59,7 +59,7 @@ export const authOptions: NextAuthOptions = {
 		async signIn({ user, account, profile }) {
 			if (account?.provider == "google" || account?.provider == "apple") {
 				// TODO: finish auth login route
-				const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+				const res = await fetch(`${BACKEND_URL}/server/auth/login`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
