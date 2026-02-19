@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * REST controller for product inventory operations.
  */
 @RestController
-@RequestMapping("/api/InventoryItem")
+@RequestMapping("/server/inventoryitem")
 public class InventoryItemController {
 	private final InventoryItemRepository repository;
 

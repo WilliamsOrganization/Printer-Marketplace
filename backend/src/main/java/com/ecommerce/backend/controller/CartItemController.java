@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * REST controller for cart item operations.
  */
 @RestController
-@RequestMapping("/api/CartItem")
+@RequestMapping("/server/CartItem")
 public class CartItemController {
 	private final CartItemRepository repository;
 
