@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * AuthService
+ * AuthService handles all of the business logic for logging in
  */
 @Service
 @RequiredArgsConstructor
