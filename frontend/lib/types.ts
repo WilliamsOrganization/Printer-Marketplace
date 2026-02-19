@@ -21,9 +21,21 @@ export interface InventoryItem {
 	itemTitle: string;
 	item: string;
 	itemCost: number;
-	imageUrl: string;
+	imageUrl: string[];
 	stripeId: string;
 	sale: boolean;
 	category: Category;
 	badge: Badge;
+}
+
+export interface ImageDropFieldProps {
+	name: string;
+	required?: boolean;
+	accept?: Record<string, string[]>;
+	maxFiles?: number;
+	maxSize?: number;
+	value?: File[];
+	onChange?: (files: File[]) => void;
+	className?: string;
+	disabled?: boolean;
 }

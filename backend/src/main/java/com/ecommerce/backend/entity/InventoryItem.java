@@ -1,10 +1,13 @@
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -33,7 +36,10 @@ public class InventoryItem {
 	private String itemTitle;
 	private String item;
 	private Long itemCost;
-	private String imageUrl;
+
+	@Column(columnDefinition = "text[]")
+	private String[] imageUrls;
+
 	private String stripeId;
 	private Boolean sale;
 
