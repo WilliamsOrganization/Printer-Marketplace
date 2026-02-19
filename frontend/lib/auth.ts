@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
+import { email } from "zod";
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -12,8 +13,28 @@ export const authOptions: NextAuthOptions = {
 				password: { label: "Password", type: "password" },
 			},
 			async authorize(credentials) {
-				// TODO: Add your authentication logic here
-				// Return user object or null
+				if(!credentials?.email || !credentials?.password ){
+					return null;
+				}
+				const res = await fetch('http://localhost:8080/api/auth/login',{
+					method: "POST",
+					headers: {"Content-Type":"application/json"},
+					body: JSON.stringify({
+						email: credentials.email,
+						password: credentials.password,
+					})
+				})
+				if(!res.ok) return null;
+				const data = res.json();
+
+				return {
+					id: data.user.id,
+					email: data.user.email,
+					name: data.user.name,
+					accessToken: data.token,
+					// authtoken 
+				}
+
 			},
 		}),
 		GoogleProvider({

@@ -1,6 +1,7 @@
 package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.entity.Users.Role;
 import com.ecommerce.backend.repository.UserRepository;
 import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,6 +37,7 @@ public class UserController {
 	@PostMapping
 	public Users create(@RequestBody Users user) {
 		// TODO: process POST request
+		user.setUserRole(Role.CUSTOMER);
 		return repository.save(user);
 	}
 
