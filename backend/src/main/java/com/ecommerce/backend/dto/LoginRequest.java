@@ -12,5 +12,4 @@ public class LoginRequest {
 	private String providerAccountID;
 	private String email;
 	private String name;
-	private String deviceInfo;
 }

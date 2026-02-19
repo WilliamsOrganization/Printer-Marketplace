@@ -42,7 +42,6 @@ public class AuthService {
         session.setUser(user);
         session.setExpiresAt(LocalDateTime.now().plusDays(30));
 		session.setProviderAccountID(request.getProviderAccountID());
-		session.setDeviceInfo(request.getDeviceInfo());
         return sessionRepository.save(session);
     }
 }

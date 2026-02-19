@@ -16,7 +16,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
- * Session management so far only intended for Amy's main route. 
+ * Session management so far only intended for Amy's main route.
  */
 @Data
 @Entity
@@ -37,9 +37,6 @@ public class Sessions {
 	private LocalDateTime createdAt;
 
 	private LocalDateTime expiresAt;
-
-	private String deviceInfo;
-
 	private String providerAccountID;
 
 	@PrePersist
