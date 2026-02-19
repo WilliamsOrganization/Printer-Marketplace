@@ -1,6 +1,5 @@
 package com.ecommerce.backend.exception;
 
-import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
