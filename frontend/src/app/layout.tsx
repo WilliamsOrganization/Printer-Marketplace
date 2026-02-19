@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Header from "@/components/ui/custom/header";
 import Footer from "@/components/ui/custom/footer";
 import { PromoBanner } from "@/components/ui/custom/promo-banner";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
 				<Header/>
 				<PromoBanner />
 				<TooltipProvider>{children}</TooltipProvider>
+				<Toaster position="top-center"/>
 				<Footer/>
 			</body>
 		</html>

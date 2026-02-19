@@ -62,8 +62,6 @@ export function CreateInventoryItemForm() {
 
 	function onSubmit(data: FormValues) {
 		// TODO: Upload images, then POST to /server/inventoryitem
-		console.log("Creating item");
-		toast.message("creatingitem")
 		axios
 			.post("/server/inventoryitem", data)
 			.then(() => {
