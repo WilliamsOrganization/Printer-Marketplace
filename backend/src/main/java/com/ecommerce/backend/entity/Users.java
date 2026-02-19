@@ -30,6 +30,7 @@ public class Users {
 	private LocalDateTime createdAt;
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
+	@Column(unique = true)
 	private String email;
 	private String phoneNumber; // completes to phone_number in the table
 	private String password;

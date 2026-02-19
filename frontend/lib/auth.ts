@@ -2,8 +2,16 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
-import { email } from "zod";
+import z, { email } from "zod";
+import { AuthResponse } from "./types";
 
+const AuthResponseSchema = z.object({
+	sessionToken: z.string(),
+	userId: z.number(),
+})
+type AuthResponseSchema = z.infer<typeof AuthResponseSchema>;
+
+const BACKEND_URL = process.env.SPRINGBOOT_BACKEND_URL || "http://backend:8080"
 export const authOptions: NextAuthOptions = {
 	providers: [
 		CredentialsProvider({
@@ -13,28 +21,26 @@ export const authOptions: NextAuthOptions = {
 				password: { label: "Password", type: "password" },
 			},
 			async authorize(credentials) {
-				if(!credentials?.email || !credentials?.password ){
+				if (!credentials?.email || !credentials?.password) {
 					return null;
 				}
-				const res = await fetch('http://localhost:8080/api/auth/login',{
+				const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
 					method: "POST",
-					headers: {"Content-Type":"application/json"},
+					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
 						email: credentials.email,
 						password: credentials.password,
-					})
-				})
-				if(!res.ok) return null;
-				const data = res.json();
+					}),
+				});
+				if (!res.ok) return null;
+				const parsed = AuthResponseSchema.safeParse(await res.json());
+				if (!parsed.success) return null;
 
 				return {
-					id: data.user.id,
-					email: data.user.email,
-					name: data.user.name,
-					accessToken: data.token,
-					// authtoken 
-				}
-
+					id: String(parsed.data.userId),
+					email: credentials.email,
+					backendToken: parsed.data.sessionToken,
+				};
 			},
 		}),
 		GoogleProvider({
@@ -50,21 +56,45 @@ export const authOptions: NextAuthOptions = {
 		strategy: "jwt", // or "database"
 	},
 	callbacks: {
-		async signIn({user, account, profile}) {
-			if(account?.provider =="google" || account?.provider=="apple"){
-				console.log('TODO: Create user')
-				// successful
+		async signIn({ user, account, profile }) {
+			if (account?.provider == "google" || account?.provider == "apple") {
+				// TODO: finish auth login route
+				const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						provider: account?.provider,
+						providerAccountID: account?.providerAccountId,
+						email: user.email,
+						name: user.name,
+					}),
+				});
+				if (!res.ok) return false;
+				const json = await res.json();
+				const parsed = AuthResponseSchema.safeParse(json);
+				if (!parsed.success) {
+					console.log('invalid response recieved', parsed.error)
+					return false;
+				}
+				user.backendToken = parsed.data.sessionToken;
+				user.id = String( parsed.data.userId );
 				return true;
 			}
-			// how to configure truthy and false login
 			return false;
 		},
 		async jwt({ token, user }) {
-			if (user) token.id = user.id;
+			if (user) {
+				token.id = user.id
+				token.backendToken = user.backendToken;
+				token.userId = user.id;
+			};
 			return token;
 		},
 		async session({ session, token }) {
-			if (session.user) session.user.id = token.id;
+			if (session.user) {
+				session.backendToken = token.id as string
+				session.user.id =token.userId as string
+			};
 			return session;
 		},
 	},
