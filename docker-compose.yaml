@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "${DB_PORT}:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
 
@@ -15,8 +13,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     env_file:
       - .env
     volumes:
@@ -31,8 +27,6 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - postgres
-    ports:
-      - "8080:8080"
     volumes:
       - ./backend:/app
       - maven-cache:/root/.m2
@@ -40,6 +34,7 @@ services:
       - .env
     environment:
       - SPRING_PROFILES_ACTIVE=dev
+
   nginx:
     image: nginx
     ports:
@@ -50,8 +45,5 @@ services:
       - frontend
       - backend
       
-
 volumes:
   maven-cache:
-
-
