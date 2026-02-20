@@ -28,7 +28,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Category, Badge, InventoryItem } from "@/lib/types";
+import { Category, ItemBadge } from "@/lib/types";
 import { ImageDropField } from "./drag-drop";
 import axios from "axios";
 import api from "@/lib/api";
@@ -41,7 +41,7 @@ const formSchema = z.object({
 	stripeId: z.string().min(1, "Stripe ID is required"),
 	sale: z.boolean(),
 	category: z.nativeEnum(Category),
-	badge: z.nativeEnum(Badge),
+	badge: z.nativeEnum(ItemBadge),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -57,7 +57,7 @@ export function CreateInventoryItemForm() {
 			stripeId: "",
 			sale: false,
 			category: Category.ELECTRONICS,
-			badge: Badge.NEW,
+			badge: ItemBadge.NEW,
 		},
 	});
 
@@ -297,7 +297,7 @@ export function CreateInventoryItemForm() {
 															</FieldDescription>
 														</FieldContent>
 														<RadioGroupItem
-															value={Badge.BESTSELLER}
+															value={ItemBadge.BESTSELLER}
 															id="badge-bestseller"
 														/>
 													</Field>
@@ -310,7 +310,7 @@ export function CreateInventoryItemForm() {
 																Recently added item
 															</FieldDescription>
 														</FieldContent>
-														<RadioGroupItem value={Badge.NEW} id="badge-new" />
+														<RadioGroupItem value={ItemBadge.NEW} id="badge-new" />
 													</Field>
 												</FieldLabel>
 												<FieldLabel htmlFor="badge-sale">
@@ -322,7 +322,7 @@ export function CreateInventoryItemForm() {
 															</FieldDescription>
 														</FieldContent>
 														<RadioGroupItem
-															value={Badge.SALE}
+															value={ItemBadge.SALE}
 															id="badge-sale"
 														/>
 													</Field>
