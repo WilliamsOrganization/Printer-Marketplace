@@ -127,14 +127,14 @@ export default async function Home({
 											<Badge
 												className="absolute top-2 left-2 z-10"
 												variant={
-													product.badge === "Sale" ? "destructive" : "secondary"
+													product.badge === ItemBadge.SALE ? "destructive" : "secondary"
 												}
 											>
 												{product.badge}
 											</Badge>
 										)}
 										<Image
-											src={product.image}
+											src={product.imageUrl?.[0] || "/globe.svg"}
 											alt={product.itemTitle}
 											fill
 											className="object-contain p-8 group-hover:scale-105 transition-transform"
@@ -142,7 +142,7 @@ export default async function Home({
 									</div>
 								</CardContent>
 								<CardFooter className="flex flex-col items-start gap-2 p-4">
-									<p className="font-medium">{product.name}</p>
+									<p className="font-medium">{product.itemTitle}</p>
 									<p className="text-muted-foreground">
 										${product.itemCost.toFixed(2)}
 									</p>
