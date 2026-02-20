@@ -9,29 +9,7 @@ import api from "@/lib/api";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import apiServer from "@/lib/api-server";
-import { InventoryItem } from "@/lib/types";
-
-// const products = [
-//   { id: 1, name: "Abstract Sunset", price: 49.99, image: "/globe.svg", category: "prints", badge: "New" },
-//   { id: 2, name: "Mountain Vista", price: 59.99, image: "/globe.svg", category: "posters", badge: "Best Seller" },
-//   { id: 3, name: "Ocean Waves", price: 39.99, image: "/globe.svg", category: "canvas", badge: "Sale" },
-//   { id: 4, name: "Forest Path", price: 54.99, image: "/globe.svg", category: "prints" },
-//   { id: 5, name: "City Lights", price: 44.99, image: "/globe.svg", category: "posters" },
-//   { id: 6, name: "Desert Dunes", price: 64.99, image: "/globe.svg", category: "canvas" },
-//   { id: 7, name: "Northern Lights", price: 74.99, image: "/globe.svg", category: "prints", badge: "New" },
-//   { id: 8, name: "Tropical Beach", price: 49.99, image: "/globe.svg", category: "posters" },
-//   { id: 9, name: "Autumn Forest", price: 54.99, image: "/globe.svg", category: "canvas" },
-//   { id: 10, name: "Starry Night", price: 69.99, image: "/globe.svg", category: "prints" },
-//   { id: 11, name: "Urban Street", price: 44.99, image: "/globe.svg", category: "posters" },
-//   { id: 12, name: "Zen Garden", price: 59.99, image: "/globe.svg", category: "canvas" },
-// ]
-
-const categories = [
-	{ id: "prints", label: "Prints" },
-	{ id: "posters", label: "Posters" },
-	{ id: "canvas", label: "Canvas" },
-	{ id: "frames", label: "Frames" },
-];
+import { Category, CategoryLabel, InventoryItem, ItemBadge } from "@/lib/types";
 
 const priceRanges = [
 	{ id: "under50", label: "Under $50", min: 0, max: 50 },
@@ -44,6 +22,11 @@ type SearchParams = {
 	itemCost?: string | string[];
 	sort?: string;
 };
+
+const categoryOptions = Object.entries(CategoryLabel).map(([id, label]) => ({
+	id,
+	label,
+}));
 
 export default async function Home({
 	searchParams,
@@ -87,7 +70,9 @@ export default async function Home({
 				selectedPriceRanges.some((rangeId) => {
 					const range = priceRanges.find((r) => r.id === rangeId);
 					return (
-						range && product.itemCost >= range.min && product.itemCost < range.max
+						range &&
+						product.itemCost >= range.min &&
+						product.itemCost < range.max
 					);
 				});
 			return categoryMatch && priceMatch;
@@ -116,7 +101,7 @@ export default async function Home({
 				<aside className="w-56 shrink-0 hidden md:block">
 					<div className="sticky top-24">
 						<FilterSidebar
-							categories={categories}
+							categories={categoryOptions}
 							priceRanges={priceRanges}
 							selectedCategories={selectedCategories}
 							selectedPriceRanges={selectedPriceRanges}

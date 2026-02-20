@@ -9,8 +9,14 @@ export enum Category {
 	PRINTS = "PRINTS",
 	CUSTOM = "CUSTOM",
 }
+export const CategoryLabel: Record<Category, string> = {
+	[Category.CUSTOM]: "Custom",
+	[Category.ELECTRONICS]: "Electronics",
+	[Category.PRINTS]: "Prints",
+}
 
-export enum Badge {
+
+export enum ItemBadge {
 	BESTSELLER = "BESTSELLER",
 	NEW = "NEW",
 	SALE = "SALE",
@@ -25,7 +31,7 @@ export interface InventoryItem {
 	stripeId: string;
 	sale: boolean;
 	category: Category;
-	badge: Badge;
+	badge: ItemBadge;
 }
 
 export enum UserRole {
