@@ -44,16 +44,8 @@ public class InventoryItemController {
 	@DeleteMapping("/{id}")
 
 	public void delete(@PathVariable Long id) {
-		// TODO: process POST request
 		repository.deleteById(id);
 	}
-
 	// TODO: big todo to create the upload image route for the item creation form
-
-
-
-
-
-
 
 }

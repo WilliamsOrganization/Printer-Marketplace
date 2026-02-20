@@ -36,7 +36,6 @@ public class UserController {
 
 	@PostMapping
 	public Users create(@RequestBody Users user) {
-		// TODO: process POST request
 		user.setUserRole(Role.CUSTOMER);
 		return repository.save(user);
 	}
@@ -44,7 +43,6 @@ public class UserController {
 	@DeleteMapping("/{id}")
 
 	public void delete(@PathVariable Long id) {
-		// TODO: process POST request
 		repository.deleteById(id);
 	}
 }

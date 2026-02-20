@@ -35,14 +35,12 @@ public class CartController {
 
     @PostMapping
     public Cart create(@RequestBody Cart cart) {
-        // TODO: process POST request
         return repository.save(cart);
     }
 
     @DeleteMapping("/{id}")
 
     public void delete(@PathVariable Long id) {
-        // TODO: process POST request
         repository.deleteById(id);
     }
 }
