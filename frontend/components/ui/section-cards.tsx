@@ -78,10 +78,13 @@ export function SectionCards() {
 						</Badge>
 					</CardAction>
 				</CardHeader>
-				<CardFooter className="flex-col text-md min-w-full">
-					<Link href="/admin/item/" >
-						<Button className="w-full" variant="outline">Create Inventory Item</Button>
-					</Link>
+				<CardFooter className="flex-row text-md w-full gap-2 items-center justify-between">
+						<Button className="w-auto" variant="default">Edit Inventory Items</Button>
+						<Link href="/admin/item/" >
+
+						{/* TODO: confure an editing route for the individual items */}
+							<Button className="w-auto" variant="outline">Create Inventory Item</Button>
+						</Link>
 				</CardFooter>
 			</Card>
 

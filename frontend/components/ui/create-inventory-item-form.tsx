@@ -35,8 +35,8 @@ import api from "@/lib/api";
 
 const formSchema = z.object({
 	itemTitle: z.string().min(0, "Item title is required"),
-	item: z.string().min(1, "Item description is required"),
-	itemCost: z.coerce.number().positive("Item cost must be positive"),
+	itemDescription: z.string().min(1, "Item description is required"),
+	itemCost: z.number().positive("Item cost must be positive"),
 	image: z.array(z.instanceof(File)),
 	stripeId: z.string().min(1, "Stripe ID is required"),
 	sale: z.boolean(),
@@ -51,7 +51,7 @@ export function CreateInventoryItemForm() {
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			itemTitle: "",
-			item: "",
+			itemDescription: "",
 			itemCost: 0,
 			image: [],
 			stripeId: "",
@@ -106,13 +106,13 @@ export function CreateInventoryItemForm() {
 								)}
 							/>
 							<Controller
-								name="item"
+								name="itemDescription"
 								control={form.control}
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="item">Item Description</FieldLabel>
+										<FieldLabel htmlFor="itemDescription">Item Description</FieldLabel>
 										<Input
-											id="item"
+											id="itemDescription"
 											placeholder="Enter item description"
 											{...field}
 										/>

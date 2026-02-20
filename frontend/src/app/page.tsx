@@ -152,7 +152,7 @@ export default async function Home({
 									</div>
 
 									<p className="text-muted-foreground">
-										${product.itemDescription}
+										{product.itemDescription}
 									</p>
 									<Button size="sm" className="w-full mt-2">
 										Add to Cart
