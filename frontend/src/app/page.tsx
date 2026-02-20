@@ -5,9 +5,6 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FilterSidebar } from "@/components/ui/custom/filter-sidebar";
 import { SortSelect } from "@/components/ui/custom/sort-select";
-import api from "@/lib/api";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import apiServer from "@/lib/api-server";
 import { Category, CategoryLabel, InventoryItem, ItemBadge } from "@/lib/types";
 
@@ -146,9 +143,7 @@ export default async function Home({
 								<CardFooter className="flex flex-col items-start gap-2 p-4">
 									<div className="flex flex-row justify-between min-w-full">
 										<p className="font-bold">{product.itemTitle}</p>
-										<p className="font-bold">
-											${product.itemCost.toFixed(2)}
-										</p>
+										<p className="font-bold">${product.itemCost.toFixed(2)}</p>
 									</div>
 
 									<p className="text-muted-foreground">
