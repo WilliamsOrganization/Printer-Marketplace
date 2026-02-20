@@ -34,7 +34,7 @@ public class InventoryItem {
 	private LocalDateTime updatedAt;
 
 	private String itemTitle;
-	private String item;
+	private String itemDescription;
 	private Long itemCost;
 
 	@Column(columnDefinition = "text[]")

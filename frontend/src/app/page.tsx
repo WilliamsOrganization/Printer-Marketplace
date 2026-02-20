@@ -118,7 +118,7 @@ export default async function Home({
 						<SortSelect currentSort={sortBy} />
 					</div>
 
-					<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+					<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
 						{filteredProducts.map((product) => (
 							<Card key={product.id} className="group overflow-hidden">
 								<CardContent className="p-0">
@@ -127,7 +127,9 @@ export default async function Home({
 											<Badge
 												className="absolute top-2 left-2 z-10"
 												variant={
-													product.badge === ItemBadge.SALE ? "destructive" : "secondary"
+													product.badge === ItemBadge.SALE
+														? "destructive"
+														: "secondary"
 												}
 											>
 												{product.badge}
@@ -142,9 +144,15 @@ export default async function Home({
 									</div>
 								</CardContent>
 								<CardFooter className="flex flex-col items-start gap-2 p-4">
-									<p className="font-medium">{product.itemTitle}</p>
+									<div className="flex flex-row justify-between min-w-full">
+										<p className="font-bold">{product.itemTitle}</p>
+										<p className="font-bold">
+											${product.itemCost.toFixed(2)}
+										</p>
+									</div>
+
 									<p className="text-muted-foreground">
-										${product.itemCost.toFixed(2)}
+										${product.itemDescription}
 									</p>
 									<Button size="sm" className="w-full mt-2">
 										Add to Cart

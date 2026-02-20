@@ -25,7 +25,7 @@ export enum ItemBadge {
 export interface InventoryItem {
 	id: number;
 	itemTitle: string;
-	item: string;
+	itemDescription: string;
 	itemCost: number;
 	imageUrl: string[];
 	stripeId: string;
