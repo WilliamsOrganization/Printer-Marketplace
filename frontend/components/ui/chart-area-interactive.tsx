@@ -141,6 +141,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function ChartAreaInteractive() {
+	// TODO: Add in the Session query information and make sure the route is protected.
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("90d")
 

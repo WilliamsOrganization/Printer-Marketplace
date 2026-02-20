@@ -21,6 +21,11 @@ export function SectionCards() {
 
 	const [user, userState] = useState<User[] | null>(null);
 	const [userCount, userCountState] = useState<number>(0);
+
+	const [sessionCount, sessionCountState] = useState<number>(0);
+	const [activeSessionCount, activeSessionCountState] = useState<number>(0);
+	const [uniqueUserCount, uniqueUserCountState] = useState<number>(0);
+
 	useEffect(() => {
 		axios
 			.get("/server/inventoryitem")
@@ -31,7 +36,9 @@ export function SectionCards() {
 			.catch((err) => {
 				console.log("Error" + err.message);
 			});
+	}, []);
 
+	useEffect(()=>{
 		axios
 			.get("/server/users")
 			.then((res) => {
@@ -41,8 +48,20 @@ export function SectionCards() {
 			.catch((err) => {
 				console.log("Error" + err.message);
 			});
+	},[])
 
-	}, []);
+	useEffect(()=>{
+		axios
+			.get("/server/session/stats")
+			.then((res) => {
+				sessionCountState(res.data.totalSessions)
+				activeSessionCountState(res.data.activeSessions)
+				uniqueUserCountState(res.data.uniqueUsers)
+			})
+			.catch((err) => {
+				console.log("Error" + err.message);
+			});
+	},[])
 
 	return (
 		<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
@@ -66,27 +85,25 @@ export function SectionCards() {
 				</CardFooter>
 			</Card>
 
-			{/* this is the important card I want to actually mess with */}
+			{/* Session Stats Card */}
 			<Card className="@container/card">
 				<CardHeader>
-					<CardDescription>Active Users</CardDescription>
+					<CardDescription>Session Stats</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						{userCount}
+						{activeSessionCount} <span className="text-muted-foreground text-lg">active</span>
 					</CardTitle>
-					<CardAction>
-						<Badge variant="outline">
-							<IconTrendingDown />
-						</Badge>
-					</CardAction>
 				</CardHeader>
 				<CardFooter className="flex-col items-start gap-1.5 text-sm">
-					<div className="line-clamp-1 flex gap-2 font-medium">
-						Down 20% this period <IconTrendingDown className="size-4" />
+					<div className="flex gap-2">
+						<span className="font-medium">{sessionCount}</span>
+						<span >Total Sessions</span>
 					</div>
-					<div className="text-muted-foreground">
-						Total Accounts Registered
+					<div className="flex gap-2">
+						<span className="font-medium">{uniqueUserCount}</span>
+						<span className="text-muted-foreground">Unique Users</span>
 					</div>
 				</CardFooter>
+
 			</Card>
 			<Card className="@container/card">
 				<CardHeader>

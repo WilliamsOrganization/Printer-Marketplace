@@ -27,32 +27,31 @@ public class SessionController {
 
 	@GetMapping("/stats")
 	public Map<String, Long> getStats() {
-		return Map.of("totalSessions", repository.count(), "activeSessions",
-				repository.countByExpiresAtAfter(LocalDateTime.now()),
-				"uniqueUsers", repository.countUniqueUsers()
-
-		);
+		return Map.of(
+			"totalSessions", repository.count(), 
+			"activeSessions", repository.countByExpiresAtAfter(LocalDateTime.now()),
+			"uniqueUsers", repository.countUniqueUsers());
 	}
 
 	// TODO: needs auth protectiosn
 	// @GetMapping
 	// public List<Sessions> getAll() {
-	// 	return repository.findAll();
+	// return repository.findAll();
 	// }
 	//
 	// @GetMapping("/{id}")
 	// public Sessions getOne(@PathVariable Long id) {
-	// 	return repository.findById(id).orElseThrow();
+	// return repository.findById(id).orElseThrow();
 	// }
 	//
 	// @PostMapping
 	// public Sessions create(@RequestBody Sessions session) {
-	// 	return repository.save(session);
+	// return repository.save(session);
 	// }
 	//
 	// @DeleteMapping("/{id}")
 	//
 	// public void delete(@PathVariable Long id) {
-	// 	repository.deleteById(id);
+	// repository.deleteById(id);
 	// }
 }
