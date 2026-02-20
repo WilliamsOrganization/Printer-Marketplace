@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
 	async rewrites() {
 		return [
 			{
+				// TODO: remember to find a separate env variable for the production deployment
 				source:"/server/:path*",
 				destination: 'http://backend:8080/server/:path*'
 			}
