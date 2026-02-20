@@ -31,6 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import { Category, Badge, InventoryItem } from "@/lib/types";
 import { ImageDropField } from "./drag-drop";
 import axios from "axios";
+import api from "@/lib/api";
 
 const formSchema = z.object({
 	itemTitle: z.string().min(0, "Item title is required"),
@@ -62,8 +63,8 @@ export function CreateInventoryItemForm() {
 
 	function onSubmit(data: FormValues) {
 		// TODO: Upload images, then POST to /server/inventoryitem
-		axios
-			.post("/server/inventoryitem", data)
+		api
+			.post("/inventoryitem", data)
 			.then(() => {
 				toast.success("Inventory Item Created");
 				form.reset();

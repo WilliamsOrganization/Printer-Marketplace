@@ -1,68 +1,105 @@
-# Ecommerce App
+# Ecommerce Platform
 
-Full-stack ecommerce application with Next.js frontend, Spring Boot backend, and PostgreSQL database.
+A production-ready ecommerce platform built with a modern tech stack, featuring a customer storefront, admin dashboard, and secure payment processing.
+
+## Architecture
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Nginx     │────▶│   Next.js   │     │   Spring    │
+│   Proxy     │     │   Frontend  │────▶│   Boot API  │
+└─────────────┘     └─────────────┘     └──────┬──────┘
+                                               │
+                                        ┌──────▼──────┐
+                                        │  PostgreSQL │
+                                        └─────────────┘
+```
 
 ## Tech Stack
 
-- **Frontend:** Next.js (React)
-- **Backend:** Spring Boot 3 (Java 21)
-- **Database:** PostgreSQL 16
-- **Containerization:** Docker Compose
+**Frontend**
+- Next.js 14 with App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui components
+- React Hook Form + Zod validation
 
-## Getting Started
+**Backend**
+- Spring Boot 3
+- Java 21
+- JPA/Hibernate
+- RESTful API design
 
-### Prerequisites
+**Infrastructure**
+- Docker & Docker Compose
+- Nginx reverse proxy
+- PostgreSQL 16
 
-- Docker and Docker Compose
-- Copy `.env.example` to `.env` and configure your environment variables
+**Integrations**
+- Google OAuth 2.0
+- Stripe Payments
 
-### Run the full stack
+## Features
+
+### Customer Experience
+- Browse products by category
+- Shopping cart management
+- Secure checkout with Stripe
+- User account creation and login
+
+### Admin Dashboard
+- Inventory management (CRUD operations)
+- Image uploads for products
+- Real-time session analytics
+- User management
+
+### Security
+- Role-based access control (Customer, Registered, Admin)
+- Session-based authentication
+- Secure password handling
+- Protected API endpoints
+
+## Quick Start
 
 ```bash
+# Clone and configure
+cp .env.example .env
+
+# Start all services
 docker compose up --build -d
 ```
 
-| Service   | URL                     |
-|-----------|-------------------------|
-| Frontend  | http://localhost:3000   |
-| Backend   | http://localhost:8080   |
-| Postgres  | localhost:5432          |
+Access the application at `http://localhost:3000`
 
-### Useful commands
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/server/inventoryitem` | List all products |
+| POST | `/server/inventoryitem` | Create product (Admin) |
+| GET | `/server/users` | List users (Admin) |
+| GET | `/server/session/stats` | Session analytics (Admin) |
+
+## Database Schema
+
+- **Users** - Account credentials, roles, timestamps
+- **Sessions** - Token-based session management with expiration
+- **InventoryItem** - Product catalog with pricing and categories
+- **Cart / CartItem** - Shopping cart functionality
+
+## Local Development
 
 ```bash
-# View logs
+# Backend logs
 docker compose logs -f backend
+
+# Frontend logs
 docker compose logs -f frontend
 
-# Rebuild after code changes
-docker compose up --build -d
-
-# Stop all services
-docker compose down
-
-# Connect to database
+# Database access
 docker compose exec postgres psql -U $DB_USER -d $DB_NAME
 ```
 
-## Project Structure
+## License
 
-```
-my-app/
-├── frontend/          # Next.js app
-├── backend/           # Spring Boot API
-│   └── src/main/java/com/ecommerce/backend/
-│       └── entity/    # JPA entities
-├── data/              # Postgres data (gitignored)
-├── docker-compose.yaml
-└── .env
-```
-
-## TODO
-
-- Admin page
-- Checkout page
-- Information page
-- Settings/contact page
-- DB tables: User, Products, Carts, CartItems, Orders, OrderItems
-- Flat shipping rate configuration with Stripe
+MIT

@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
 		},
 		async session({ session, token }) {
 			if (session.user) {
-				session.backendToken = token.id as string
+				session.backendToken = token.backendToken as string
 				session.user.id =token.userId as string
 			};
 			return session;

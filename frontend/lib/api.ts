@@ -3,17 +3,20 @@ import { authOptions } from "./auth";
 import axios from "axios";
 import { getSession } from "next-auth/react";
 
-const BACKEND_URL= process.env.SPRINGBOOT_BACKEND_URL || "http://backend:8080" // TODO: check this is the proper url
+const api = axios.create({
+	baseURL: "/server",
+	headers: {
+		"Content-Type": "application/json",
+	},
+})
 
-async function getServerApi() {
+api.interceptors.request.use(async (config)=>{
 	const session = await getSession();
+	if (session?.backendToken){
+		config.headers.Authorization = `Bearer ${session.backendToken}`;
+	}
+	return config;
+})
 
-	return axios.create({
-		baseURL: BACKEND_URL,
-		headers: {
-			"ContentType": "application/json",
-			Authorization: session?.backendToken ? `Bearer ${session.backendToken}`
-			: undefined,
-		},
-	});
-}
+export default api;
+

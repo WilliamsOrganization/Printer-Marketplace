@@ -10,7 +10,16 @@ import com.ecommerce.backend.exception.UserNotFoundException;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,6 +30,22 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
+
+	public Optional<Authentication> authenticateFromToken(String token){
+		if(token ==null) return Optional.empty();
+		Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
+		
+		if (sessionOpt.isEmpty() || sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+			return Optional.empty();
+		}
+		Users user = sessionOpt.get().getUser();
+		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+		authorities.add(new SimpleGrantedAuthority("ROLE_"+ user.getUserRole().name()));
+		if (Boolean.TRUE.equals(user.getIsAdmin())) {
+			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+		}
+		return Optional.of(new UsernamePasswordAuthenticationToken(user, null, authorities));
+	}
 
     public AuthResponse handleLogin(LoginRequest request) {
         Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(()->new UserNotFoundException("User does not exist"));
