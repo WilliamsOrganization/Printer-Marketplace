@@ -69,6 +69,7 @@ export function EditInventory({ item }: EditInventoryProps) {
 	});
 
 	function onSubmit(data: FormValues) {
+		// TODO: The Parent table needs to update with the new values
 		api
 			.put(`/inventoryitem/${item.id}`, data)
 			.then(() => {
