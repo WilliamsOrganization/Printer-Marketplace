@@ -53,6 +53,7 @@ public class CartService {
 			return response;
 		} else if (auth instanceof AnonymousAuthenticationToken) {
 			// create user/cart/cartItem
+			// TODO: add duplicate InventoryItem handling use to update CartItem quantity rather than append new
 			Users user = new Users();
 			user.setUserRole(Users.Role.CUSTOMER);
 			user = userRepository.save(user);
