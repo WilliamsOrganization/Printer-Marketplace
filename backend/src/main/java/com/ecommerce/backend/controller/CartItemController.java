@@ -26,30 +26,26 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/server/cartitem")
+@RequiredArgsConstructor
 public class CartItemController {
-	private final CartItemRepository repository;
+	private final CartItemRepository cartItemRepository;
 	private final CartService cartService;
 
-	public CartItemController(CartItemRepository repository,
-			CartService cartService) {
-		this.repository = repository;
-		this.cartService = cartService;
-	}
 
 	@GetMapping
 	public List<CartItem> getAll() {
-		return repository.findAll();
+		return cartItemRepository.findAll();
 	}
 
 	@GetMapping("/{id}")
 	public CartItem getOne(@PathVariable Long id) {
-		return repository.findById(id).orElseThrow();
+		return cartItemRepository.findById(id).orElseThrow();
 	}
 
 	@PostMapping
 	public AddCartItemResponse create(@RequestBody AddCartItemRequest request,
 			HttpServletResponse response) {
-		AddCartItemResponse result = this.cartService.createCartItem(request);
+		AddCartItemResponse result = cartService.createCartItem(request);
 		if (result.getSessionToken() != null) {
 			Cookie cookie = new Cookie("session_token", result.getSessionToken());
 			cookie.setHttpOnly(true);
@@ -65,6 +61,6 @@ public class CartItemController {
 	@DeleteMapping("/{id}")
 
 	public void delete(@PathVariable Long id) {
-		repository.deleteById(id);
+		cartItemRepository.deleteById(id);
 	}
 }

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,6 +37,7 @@ public class CartItem {
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "cart_id",nullable = false)
+	@JsonBackReference
 	private Cart cart;
 
 	@ManyToOne

@@ -1,6 +1,4 @@
-
-
-export interface AuthResponse { 
+export interface AuthResponse {
 	sessionToken: string;
 	userId: number;
 }
@@ -13,8 +11,7 @@ export const CategoryLabel: Record<Category, string> = {
 	[Category.CUSTOM]: "Custom",
 	[Category.ELECTRONICS]: "Electronics",
 	[Category.PRINTS]: "Prints",
-}
-
+};
 
 export enum ItemBadge {
 	BESTSELLER = "BESTSELLER",
@@ -32,6 +29,21 @@ export interface InventoryItem {
 	sale: boolean;
 	category: Category;
 	badge: ItemBadge;
+}
+export interface CartItem {
+	Id: number;
+	createdAt: string;
+	updatedAt: string;
+	cart: Cart;
+	inventoryItem: InventoryItem;
+	quantity: number;
+}
+export interface Cart {
+	id: number;
+	createdAt: string;
+	updatedAt: string;
+	user: User;
+	items: CartItem[];
 }
 
 export enum UserRole {

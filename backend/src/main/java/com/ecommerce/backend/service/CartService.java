@@ -43,7 +43,8 @@ public class CartService {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth != null && auth.isAuthenticated() &&
 				auth.getPrincipal() instanceof Users user) {
-			// TODO: if a user exists without a cart they wont be able to create a cart. fix me pls :)
+			// TODO: if a user exists without a cart they wont be able to create
+			// a cart. fix me pls :)
 
 			Cart cart = cartRepository.findByUser(user).orElseThrow();
 			cartItem.setCart(cart);
@@ -54,7 +55,8 @@ public class CartService {
 			return response;
 		} else if (auth instanceof AnonymousAuthenticationToken) {
 			// create user/cart/cartItem
-			// TODO: add duplicate InventoryItem handling use to update CartItem quantity rather than append new
+			// TODO: add duplicate InventoryItem handling use to update CartItem
+			// quantity rather than append new
 			Users user = new Users();
 			user.setUserRole(Users.Role.CUSTOMER);
 			user = userRepository.save(user);
@@ -72,5 +74,14 @@ public class CartService {
 		} else {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	public Cart getCartItems() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth != null && auth.isAuthenticated() &&
+				auth.getPrincipal() instanceof Users user) {
+			return cartRepository.findByUser(user).orElseThrow();
+		}
+		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 	}
 }

@@ -1,8 +1,17 @@
 package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.entity.Cart;
+import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.repository.CartRepository;
+import com.ecommerce.backend.repository.UserRepository;
+import com.ecommerce.backend.service.CartService;
+
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
+
+import org.apache.catalina.User;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,32 +24,30 @@ import org.springframework.web.bind.annotation.RestController;
  * REST controller for shopping cart operations.
  */
 @RestController
-@RequestMapping("/server/Cart")
+@RequestMapping("/server/cart")
+@RequiredArgsConstructor
 public class CartController {
-    private final CartRepository repository;
-
-    public CartController(CartRepository repository) {
-        this.repository = repository;
-    }
+    private final CartRepository cartRepository;
+    private final CartService cartService;
 
     @GetMapping
     public List<Cart> getAll() {
-        return repository.findAll();
+        return cartRepository.findAll();
     }
 
     @GetMapping("/{id}")
+	@PreAuthorize("hasRole('CUSTOMER')")
     public Cart getOne(@PathVariable Long id) {
-        return repository.findById(id).orElseThrow();
+		return cartService.getCartItems();
     }
 
     @PostMapping
     public Cart create(@RequestBody Cart cart) {
-        return repository.save(cart);
+        return cartRepository.save(cart);
     }
 
     @DeleteMapping("/{id}")
-
     public void delete(@PathVariable Long id) {
-        repository.deleteById(id);
+        cartRepository.deleteById(id);
     }
 }
