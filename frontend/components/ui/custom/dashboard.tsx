@@ -1,3 +1,5 @@
+"use client"
+
 import { AppSidebar } from "@/components/ui/app-sidebar"
 import { ChartAreaInteractive } from "@/components/ui/chart-area-interactive"
 import { DataTable } from "@/components/ui/data-table"
@@ -7,11 +9,24 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import json from "@/components/ui/custom/data.json"
+import { useEffect, useState } from "react"
+import api from "@/lib/api"
+import { InventoryItem } from "@/lib/types"
 
-const data=json;
-  
 export default function Dashboard() {
+	const [inventory, setInventory] = useState<InventoryItem[]>([]);
+
+	useEffect(() => {
+		api
+			.get("/inventoryitem")
+			.then((res) => {
+				setInventory(res.data);
+			})
+			.catch((err) => {
+				console.log("Error" + err.message);
+			});
+	}, []);
+
   return (
     <SidebarProvider
       style={
@@ -31,7 +46,7 @@ export default function Dashboard() {
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
               </div>
-              <DataTable data={data} />
+              <DataTable data={inventory} />
             </div>
           </div>
         </div>
