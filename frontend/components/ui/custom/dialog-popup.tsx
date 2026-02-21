@@ -82,7 +82,7 @@ export function EditInventory({ item }: EditInventoryProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start px-2">Edit</Button>
+        <span className="w-full cursor-default">Edit</span>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
