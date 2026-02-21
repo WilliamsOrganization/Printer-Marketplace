@@ -14,6 +14,8 @@ import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -81,6 +83,17 @@ public class CartService {
 		if (auth != null && auth.isAuthenticated() &&
 				auth.getPrincipal() instanceof Users user) {
 			return cartRepository.findByUser(user).orElseThrow();
+		}
+		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+	}
+
+	public void deleteCartItem(Long id) {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth != null && auth.isAuthenticated() &&
+				auth.getPrincipal() instanceof Users user) {
+			Cart cart = cartRepository.findByUser(user).orElseThrow();
+			cartItemRepository.deleteByIdAndCart(id, cart);
+			return; 
 		}
 		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 	}

@@ -31,7 +31,7 @@ export interface InventoryItem {
 	badge: ItemBadge;
 }
 export interface CartItem {
-	Id: number;
+	id: number;
 	createdAt: string;
 	updatedAt: string;
 	cart: Cart;

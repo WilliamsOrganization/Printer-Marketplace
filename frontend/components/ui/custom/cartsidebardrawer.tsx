@@ -28,6 +28,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { ShoppingBasket } from "lucide-react";
+import { DeleteFromCartButton } from "./delete-from-cart-button";
 
 export function CartSidebarDrawer() {
 	const [cart, setCartItems] = useState<Cart>();
@@ -59,7 +60,7 @@ export function CartSidebarDrawer() {
 					<ul className="flex flex-col gap-2">
 						{cart?.items?.map((cartItem) => (
 							<ListItem
-								key={cartItem.Id}
+								key={cartItem.id}
 								inventoryItem={cartItem.item}
 								cartItem={cartItem}
 							>
@@ -100,8 +101,8 @@ function ListItem({
 					<p className="text-muted-foreground">
 						{inventoryItem.itemDescription}
 					</p>
-					{/* TODO: remember to implement the quantity */}
-					<AddToCartButton itemId={inventoryItem.id} quantity={1} />
+					{/* TODO: Change this to a remove from cart button  */}
+					<DeleteFromCartButton itemId={cartItem.id}/>
 				</CardFooter>
 			</Card>
 		</li>

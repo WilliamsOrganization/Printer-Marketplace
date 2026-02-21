@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class CartItemController {
 	private final CartItemRepository cartItemRepository;
 	private final CartService cartService;
-
 
 	@GetMapping
 	public List<CartItem> getAll() {
@@ -59,8 +59,8 @@ public class CartItemController {
 	}
 
 	@DeleteMapping("/{id}")
-
-	public void delete(@PathVariable Long id) {
-		cartItemRepository.deleteById(id);
+	// @PreAuthorize("hasRole('CUSTOMER')")
+	public void deleteCartItem(@PathVariable Long id) {
+			cartService.deleteCartItem(id);
 	}
 }
