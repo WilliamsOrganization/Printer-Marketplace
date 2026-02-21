@@ -35,7 +35,7 @@ export interface CartItem {
 	createdAt: string;
 	updatedAt: string;
 	cart: Cart;
-	inventoryItem: InventoryItem;
+	item: InventoryItem;
 	quantity: number;
 }
 export interface Cart {

@@ -30,14 +30,14 @@ public class CartController {
     private final CartRepository cartRepository;
     private final CartService cartService;
 
-    @GetMapping
-    public List<Cart> getAll() {
-        return cartRepository.findAll();
-    }
+    // @GetMapping
+    // public List<Cart> getAll() {
+    //     return cartRepository.findAll();
+    // }
 
-    @GetMapping("/{id}")
+    @GetMapping
 	@PreAuthorize("hasRole('CUSTOMER')")
-    public Cart getOne(@PathVariable Long id) {
+    public Cart getOne() {
 		return cartService.getCartItems();
     }
 

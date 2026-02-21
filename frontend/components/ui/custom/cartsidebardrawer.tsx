@@ -23,27 +23,24 @@ import {
 } from "../card";
 import { IconTrendingUp } from "@tabler/icons-react";
 import { AddToCartButton } from "./cart-submit-button";
-import { CartItem, InventoryItem, ItemBadge, User } from "@/lib/types";
+import { Cart, CartItem, InventoryItem, ItemBadge, User } from "@/lib/types";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { ShoppingBasket } from "lucide-react";
 
 export function CartSidebarDrawer() {
-	const [cartItems, setCartItems] = useState<CartItem[]>([]);
-	const user: User | null = null;
+	const [cart, setCartItems] = useState<Cart>();
 	useEffect(() => {
-		if (user) {
-			api
-				.get(`/cart/${user.id}`)
-				.then((res) => {
-					console.log("successfully fetched Cart items");
-					setCartItems(res.data);
-				})
-				.catch((err) => {
-					console.log("Error fetching cart Items: " + err.message);
-				});
-		}
+		api
+			.get("/cart")
+			.then((res) => {
+				console.log("successfully fetched Cart items");
+				setCartItems(res.data);
+			})
+			.catch((err) => {
+				console.log("Error fetching cart Items: " + err.message);
+			});
 	}, []);
 
 	return (
@@ -59,13 +56,14 @@ export function CartSidebarDrawer() {
 					<DrawerDescription>Set your daily activity goal.</DrawerDescription>
 				</DrawerHeader>
 				<div className="no-scrollbar overflow-y-auto px-4">
-					<ul className="grid w-[400px] gap-2 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-						{cartItems.map((cartItem) => (
+					<ul className="flex flex-col gap-2">
+						{cart?.items?.map((cartItem) => (
 							<ListItem
-								inventoryItem={cartItem.inventoryItem}
+								key={cartItem.Id}
+								inventoryItem={cartItem.item}
 								cartItem={cartItem}
 							>
-								{cartItem.inventoryItem.itemTitle}
+								{cartItem.item.itemTitle}
 							</ListItem>
 						))}
 					</ul>
@@ -82,6 +80,7 @@ export function CartSidebarDrawer() {
 }
 
 function ListItem({
+	key,
 	inventoryItem,
 	cartItem,
 	...props
@@ -92,28 +91,6 @@ function ListItem({
 	return (
 		<li {...props}>
 			<Card key={inventoryItem.id} className="group overflow-hidden">
-				<CardContent className="p-0">
-					<div className="relative aspect-square bg-muted">
-						{inventoryItem.badge && (
-							<Badge
-								className="absolute top-2 left-2 z-10"
-								variant={
-									inventoryItem.badge === ItemBadge.SALE
-										? "destructive"
-										: "secondary"
-								}
-							>
-								{inventoryItem.badge}
-							</Badge>
-						)}
-						<Image
-							src={inventoryItem.imageUrl?.[0] || "/globe.svg"}
-							alt={inventoryItem.itemTitle}
-							fill
-							className="object-contain p-8 group-hover:scale-105 transition-transform"
-						/>
-					</div>
-				</CardContent>
 				<CardFooter className="flex flex-col items-start gap-2 p-4">
 					<div className="flex flex-row justify-between min-w-full">
 						<p className="font-bold">{inventoryItem.itemTitle}</p>
