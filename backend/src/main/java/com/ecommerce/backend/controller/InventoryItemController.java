@@ -45,7 +45,7 @@ public class InventoryItemController {
 	}
 
 	@DeleteMapping("/{id}")
-
+	@PreAuthorize("hasRole('ADMIN')")
 	public void delete(@PathVariable Long id) {
 		repository.deleteById(id);
 	}
