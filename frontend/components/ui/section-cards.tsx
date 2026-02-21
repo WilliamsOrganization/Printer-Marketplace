@@ -79,11 +79,11 @@ export function SectionCards() {
 					</CardAction>
 				</CardHeader>
 				<CardFooter className="flex-row text-md w-full gap-2 items-center justify-between">
-						<Button className="w-auto" variant="default">Edit Inventory Items</Button>
+						<Button className="" variant="default">Edit Inventory</Button>
 						<Link href="/admin/item/" >
 
 						{/* TODO: confure an editing route for the individual items */}
-							<Button className="w-auto" variant="outline">Create Inventory Item</Button>
+							<Button className="" variant="outline">Create Inventory</Button>
 						</Link>
 				</CardFooter>
 			</Card>
