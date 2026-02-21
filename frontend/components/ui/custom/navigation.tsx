@@ -11,7 +11,7 @@ import {
 	NavigationMenuTrigger,
 	navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import CartDrawer from "./cartdrawer";
+import CartSidebarDrawer from "./cartsidebardrawer";
 
 const components: { title: string; href: string; description: string }[] = [
 	{
@@ -88,7 +88,7 @@ export function NavigationMenuDemo() {
 					</NavigationMenuContent>
 				</NavigationMenuItem>
 
-				<CartDrawer/>
+				<CartSidebarDrawer/>
 
 			</NavigationMenuList>
 		</NavigationMenu>
