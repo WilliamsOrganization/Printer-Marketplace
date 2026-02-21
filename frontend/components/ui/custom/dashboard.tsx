@@ -11,20 +11,38 @@ import {
 } from "@/components/ui/sidebar"
 import { useEffect, useState } from "react"
 import api from "@/lib/api"
-import { InventoryItem } from "@/lib/types"
+import { InventoryItem, User } from "@/lib/types"
 
 export default function Dashboard() {
 	const [inventory, setInventory] = useState<InventoryItem[]>([]);
+	const [users, setUsers] = useState<User[]>([]);
+	const [sessionCount, setSessionCount] = useState<number>(0);
+	const [activeSessionCount, setActiveSessionCount] = useState<number>(0);
+	const [uniqueUserCount, setUniqueUserCount] = useState<number>(0);
 
 	useEffect(() => {
 		api
 			.get("/inventoryitem")
+			.then((res) => setInventory(res.data))
+			.catch((err) => console.log("Error: " + err.message));
+	}, []);
+
+	useEffect(() => {
+		api
+			.get("/users")
+			.then((res) => setUsers(res.data))
+			.catch((err) => console.log("Error: " + err.message));
+	}, []);
+
+	useEffect(() => {
+		api
+			.get("/session/stats")
 			.then((res) => {
-				setInventory(res.data);
+				setSessionCount(res.data.totalSessions);
+				setActiveSessionCount(res.data.activeSessions);
+				setUniqueUserCount(res.data.uniqueUsers);
 			})
-			.catch((err) => {
-				console.log("Error" + err.message);
-			});
+			.catch((err) => console.log("Error: " + err.message));
 	}, []);
 
   return (
@@ -42,7 +60,13 @@ export default function Dashboard() {
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <SectionCards />
+              <SectionCards
+                inventory={inventory}
+                users={users}
+                sessionCount={sessionCount}
+                activeSessionCount={activeSessionCount}
+                uniqueUserCount={uniqueUserCount}
+              />
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
               </div>
@@ -54,4 +78,3 @@ export default function Dashboard() {
     </SidebarProvider>
   )
 }
-

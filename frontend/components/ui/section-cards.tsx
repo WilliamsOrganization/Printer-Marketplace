@@ -9,60 +9,19 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { useEffect, useState } from "react";
 import { InventoryItem, User } from "@/lib/types";
-import axios from "axios";
 import { Button } from "./button";
 import Link from "next/link";
 
-export function SectionCards() {
-	const [inventory, inventoryState] = useState<InventoryItem[] | null>(null);
-	const [inventoryCount, inventoryCountState] = useState<number>(0);
+type SectionCardsProps = {
+	inventory: InventoryItem[];
+	users: User[];
+	sessionCount: number;
+	activeSessionCount: number;
+	uniqueUserCount: number;
+}
 
-	const [user, userState] = useState<User[] | null>(null);
-	const [userCount, userCountState] = useState<number>(0);
-
-	const [sessionCount, sessionCountState] = useState<number>(0);
-	const [activeSessionCount, activeSessionCountState] = useState<number>(0);
-	const [uniqueUserCount, uniqueUserCountState] = useState<number>(0);
-
-	useEffect(() => {
-		axios
-			.get("/server/inventoryitem")
-			.then((res) => {
-				inventoryState(res.data);
-				inventoryCountState(res.data.length);
-			})
-			.catch((err) => {
-				console.log("Error" + err.message);
-			});
-	}, []);
-
-	useEffect(()=>{
-		axios
-			.get("/server/users")
-			.then((res) => {
-				userState(res.data);
-				userCountState(res.data.length);
-			})
-			.catch((err) => {
-				console.log("Error" + err.message);
-			});
-	},[])
-
-	useEffect(()=>{
-		axios
-			.get("/server/session/stats")
-			.then((res) => {
-				sessionCountState(res.data.totalSessions)
-				activeSessionCountState(res.data.activeSessions)
-				uniqueUserCountState(res.data.uniqueUsers)
-			})
-			.catch((err) => {
-				console.log("Error" + err.message);
-			});
-	},[])
-
+export function SectionCards({ inventory, users, sessionCount, activeSessionCount, uniqueUserCount }: SectionCardsProps) {
 	return (
 		<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
 			{/* this is the important card I want to actually mess with */}
@@ -70,7 +29,7 @@ export function SectionCards() {
 				<CardHeader>
 					<CardDescription>Inventory Items</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						{inventoryCount}
+						{inventory.length}
 					</CardTitle>
 					<CardAction>
 						<Badge variant="outline">
@@ -112,12 +71,11 @@ export function SectionCards() {
 				<CardHeader>
 					<CardDescription>Active Accounts</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						45,678
+						{users.length}
 					</CardTitle>
 					<CardAction>
 						<Badge variant="outline">
 							<IconTrendingUp />
-							+12.5%
 						</Badge>
 					</CardAction>
 				</CardHeader>
