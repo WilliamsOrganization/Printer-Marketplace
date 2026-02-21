@@ -100,7 +100,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import EditInventory from "./custom/dialog-popup";
+import EditInventory from "./custom/dialog-popup-edit";
 import api from "@/lib/api";
 
 export const schema = z.object({
@@ -187,16 +187,7 @@ export function DataTable({ data: initialData, }: { data: z.infer<typeof schema>
 	const deleteInventoryItem = function(id: number) {
 		api.delete(`/inventoryitem/${id}`).then((res) => {
 			console.log("successfully deleted item" + res.data)
-			// add sync table reload trigger
-		}).catch((err) => {
-			console.log("Error occured here: " + err.message)
-		})
-	}
-
-	const updateInventoryItem = function(id: number) {
-		api.put(`/inventoryitem/${id}`).then((res) => {
-			console.log("successfully deleted item" + res.data)
-			// add sync table reload trigger
+			setData(prev => prev.filter(item=>item.id !==id))
 		}).catch((err) => {
 			console.log("Error occured here: " + err.message)
 		})
