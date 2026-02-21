@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
- 
-// This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
-  return NextResponse.redirect(new URL('/admin', request.url))
-}
+import { withAuth } from "next-auth/middleware";
+
+export default withAuth({
+	secret: process.env.NEXTAUTH_SECRET,
+	pages: {
+		signIn: "/admin",
+	},
+});
 
 export const config = {
-	matcher: ["/admin/:path" , "/admin/dashboard/:path"]
-}
+	matcher: ["/admin/dashboard", "/admin/dashboard/:path*"],
+};
