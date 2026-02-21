@@ -40,7 +40,7 @@ export function LoginForm({
 
 									onClick={() => {
 										console.log("clicking clicking button")
-										signIn("apple", { callbackUrl: "/admin" });
+										signIn("apple", { callbackUrl: "/admin/dashboard" });
 									}}
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -54,7 +54,7 @@ export function LoginForm({
 								<Button variant="outline" type="button"
 									onClick={() => {
 										console.log("clicking clicking button")
-										signIn("google", { callbackUrl: "/admin" });
+										signIn("google", { callbackUrl: "/admin/dashboard" });
 									}}
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

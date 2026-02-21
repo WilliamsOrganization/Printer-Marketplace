@@ -39,7 +39,7 @@ export function SectionCards({ inventory, users, sessionCount, activeSessionCoun
 				</CardHeader>
 				<CardFooter className="flex-row text-md w-full gap-2 items-center justify-between">
 						<Button className="" variant="default">Edit Inventory</Button>
-						<Link href="/admin/item/" >
+						<Link href="/admin/dashboard/item/" >
 
 						{/* TODO: confure an editing route for the individual items */}
 							<Button className="" variant="outline">Create Inventory</Button>
