@@ -1,7 +1,13 @@
 package com.ecommerce.backend.controller;
 
+import com.ecommerce.backend.dto.AddCartItemRequest;
+import com.ecommerce.backend.dto.AddCartItemResponse;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.repository.CartItemRepository;
+import com.ecommerce.backend.service.CartService;
+
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,12 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
  * REST controller for cart item operations.
  */
 @RestController
-@RequestMapping("/server/CartItem")
+@RequestMapping("/server/cartitem")
 public class CartItemController {
 	private final CartItemRepository repository;
+	private final CartService cartService;
 
-	public CartItemController(CartItemRepository repository) {
+	public CartItemController(CartItemRepository repository, CartService cartService) {
 		this.repository = repository;
+		this.cartService = cartService;
 	}
 
 	@GetMapping
@@ -34,8 +42,8 @@ public class CartItemController {
 	}
 
 	@PostMapping
-	public CartItem create(@RequestBody CartItem cartItem) {
-		return repository.save(cartItem);
+	public AddCartItemResponse create(@RequestBody AddCartItemRequest request) {
+		return this.cartService.createCartItem(request);
 	}
 
 	@DeleteMapping("/{id}")

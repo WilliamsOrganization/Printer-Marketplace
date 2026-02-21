@@ -7,6 +7,8 @@ import { FilterSidebar } from "@/components/ui/custom/filter-sidebar";
 import { SortSelect } from "@/components/ui/custom/sort-select";
 import apiServer from "@/lib/api-server";
 import { Category, CategoryLabel, InventoryItem, ItemBadge } from "@/lib/types";
+import api from "@/lib/api";
+import { AddToCartButton } from "@/components/ui/custom/cart-submit-button";
 
 const priceRanges = [
 	{ id: "under50", label: "Under $50", min: 0, max: 50 },
@@ -149,9 +151,8 @@ export default async function Home({
 									<p className="text-muted-foreground">
 										{product.itemDescription}
 									</p>
-									<Button size="sm" className="w-full mt-2">
-										Add to Cart
-									</Button>
+									{/* TODO: remember to implement the quantity */}
+									<AddToCartButton itemId={product.id} quantity={1}/>
 								</CardFooter>
 							</Card>
 						))}

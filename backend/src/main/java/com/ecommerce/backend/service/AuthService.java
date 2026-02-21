@@ -2,13 +2,18 @@ package com.ecommerce.backend.service;
 
 import com.ecommerce.backend.dto.AuthResponse;
 import com.ecommerce.backend.dto.LoginRequest;
+import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.entity.Users.Role;
 import com.ecommerce.backend.exception.InvalidCredentials;
 import com.ecommerce.backend.exception.UserNotFoundException;
+import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +35,7 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
+    private final CartRepository cartRepository;
 
 	public Optional<Authentication> authenticateFromToken(String token){
 		if(token ==null) return Optional.empty();

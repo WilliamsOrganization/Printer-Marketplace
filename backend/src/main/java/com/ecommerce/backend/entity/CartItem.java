@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -31,8 +32,9 @@ public class CartItem {
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
 
+	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "cart_id")
+	@JoinColumn(name = "cart_id",nullable = false)
 	private Cart cart;
 
 	@ManyToOne

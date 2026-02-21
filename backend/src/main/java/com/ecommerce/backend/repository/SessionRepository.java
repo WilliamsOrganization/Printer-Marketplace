@@ -1,6 +1,8 @@
 package com.ecommerce.backend.repository;
 
 import com.ecommerce.backend.entity.Sessions;
+import com.ecommerce.backend.entity.Users;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -21,5 +23,8 @@ public interface SessionRepository extends JpaRepository<Sessions, Long> {
 
 	@Query("SELECT s FROM Sessions s JOIN FETCH s.user WHERE s.token= :token")
 	Optional<Sessions> findbyTokenWithUser(@Param("token") String token);
+
+	Optional<Sessions> findByUser(Users user);
+
 
 }
