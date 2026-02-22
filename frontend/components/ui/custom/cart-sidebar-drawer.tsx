@@ -85,7 +85,7 @@ function ListItem({
 
 					<div className="flex flex-row justify-between min-w-full">
 						<p className="font-bold">{inventoryItem.itemTitle}</p>
-						<p className="font-bold">${inventoryItem.itemCost.toFixed(2)}</p>
+						<p className="font-bold">${cartItem.quantity * Number(inventoryItem.itemCost.toFixed(2))}</p>
 					</div>
 
 					<p className="text-muted-foreground">

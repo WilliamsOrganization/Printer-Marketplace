@@ -61,7 +61,7 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 			>
 				Delete From Cart
 			</Button>
-			{/* TODO: shitty solution but better uses react-number-format npm package */}
+			{/* TODO: shitty solution but better */}
 			<NumericFormat
 				defaultValue={cartItem.quantity}
 				max={20}
