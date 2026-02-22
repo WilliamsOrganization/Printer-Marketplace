@@ -32,7 +32,6 @@ import { DeleteFromCartButton } from "./delete-from-cart-button";
 import { useCart } from "@/src/context/cart-context";
 
 export function CartSidebarDrawer() {
-	// TODO: sync the states when items are added/removed from with useContext
 	const { cart, setCart } = useCart();
 
 	useEffect(() => {
