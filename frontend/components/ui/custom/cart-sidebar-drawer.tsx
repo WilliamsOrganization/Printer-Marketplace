@@ -83,7 +83,6 @@ function ListItem({
 			<Card key={inventoryItem.id} className="group overflow-hidden">
 				<CardFooter className="flex flex-col items-start gap-2 p-4">
 
-					{/* TODO: remember to implement the quantity */}
 					<div className="flex flex-row justify-between min-w-full">
 						<p className="font-bold">{inventoryItem.itemTitle}</p>
 						<p className="font-bold">${inventoryItem.itemCost.toFixed(2)}</p>
