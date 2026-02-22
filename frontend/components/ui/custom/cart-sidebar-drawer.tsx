@@ -43,12 +43,13 @@ export function CartSidebarDrawer() {
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>
-
 					<div className="flex flex-row gap-2 text-3xl items-center">
-						<ShoppingBasket className="size-10"/>
-						<DrawerTitle >Your Cart</DrawerTitle>
+						<ShoppingBasket className="size-10" />
+						<DrawerTitle>Your Cart</DrawerTitle>
 					</div>
-					<DrawerDescription className="text-lg text-muted-foreground">Edit your cart items before checkout</DrawerDescription>
+					<DrawerDescription className="text-lg text-muted-foreground">
+						Edit your cart items before checkout
+					</DrawerDescription>
 				</DrawerHeader>
 				<div className="no-scrollbar overflow-y-auto px-4">
 					<ul className="flex flex-col gap-2">
@@ -64,10 +65,10 @@ export function CartSidebarDrawer() {
 					</ul>
 				</div>
 				<DrawerFooter>
-
-					<Link href="/checkout/">
-						<Button>Go to checkout</Button>
-					</Link>
+					{/* TODO: this stripe hook is working and needs configuring to pass the price_id and quantity array */}
+					<form action="/checkout_sessions" method="POST">
+						<Button type="submit">Go to checkout</Button>
+					</form>
 					<DrawerClose asChild>
 						<Button variant="outline">Close</Button>
 					</DrawerClose>
