@@ -22,23 +22,25 @@ import {
 	CardTitle,
 } from "../card";
 import { IconTrendingUp } from "@tabler/icons-react";
-import { AddToCartButton } from "./cart-submit-button";
+import { AddToCartButton } from "./add-to-cart-button";
 import { Cart, CartItem, InventoryItem, ItemBadge, User } from "@/lib/types";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { ShoppingBasket } from "lucide-react";
 import { DeleteFromCartButton } from "./delete-from-cart-button";
+import { useCart } from "@/src/context/cart-context";
 
 export function CartSidebarDrawer() {
 	// TODO: sync the states when items are added/removed from with useContext
-	const [cart, setCartItems] = useState<Cart>();
+	const { cart, setCart } = useCart();
+
 	useEffect(() => {
 		api
 			.get("/cart")
 			.then((res) => {
 				console.log("successfully fetched Cart items");
-				setCartItems(res.data);
+				setCart(res.data);
 			})
 			.catch((err) => {
 				console.log("Error fetching cart Items: " + err.message);
@@ -102,8 +104,7 @@ function ListItem({
 					<p className="text-muted-foreground">
 						{inventoryItem.itemDescription}
 					</p>
-					{/* TODO: Change this to a remove from cart button  */}
-					<DeleteFromCartButton itemId={cartItem.id}/>
+					<DeleteFromCartButton itemId={cartItem.id} />
 				</CardFooter>
 			</Card>
 		</li>

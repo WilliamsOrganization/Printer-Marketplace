@@ -65,5 +65,4 @@ public class InventoryItemController {
 		repository.deleteById(id);
 	}
 	// TODO: big todo to create the upload image route for the item creation
-	// form
 }

@@ -1,23 +1,30 @@
-"use client";
-
 import api from "@/lib/api";
 import { Button } from "../button";
-import { CartItem } from "@/lib/types";
+import { Cart, CartItem } from "@/lib/types";
+import { toast } from "sonner";
+import React from "react";
+import { useCart } from "@/src/context/cart-context";
 
 export function DeleteFromCartButton({
 	itemId,
 }: {
 	itemId: number;
 }) {
+	const {cart, setCart}= useCart();
 	const removeCartItem = function(cartId: number) {
 		api
 			.delete(`/cartitem/${cartId}`)
 			.then((res) => {
-				console.log("Successfully Deleted Cart Item" + res.data);
+				toast.success("Successfuly deleted cart item");
+				setCart((previous)=>{
+					const updatedItems = previous!.items.filter((item)=> item.id !== cartId)
+					const updatedCart = { ...previous!, items: updatedItems}
+					return updatedCart;
+				})
 			})
 			.catch((err) => {
-				console.log("Error Deleting Cart Item " + err.message);
-				console.log("trying to delete ID: " + cartId);
+				toast.error("Error deleting cart item")
+				console.log("Error: "+ err.message)
 			});
 	};
 	return (

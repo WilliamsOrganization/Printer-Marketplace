@@ -5,8 +5,6 @@ import com.ecommerce.backend.dto.AddCartItemResponse;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.service.CartService;
-import com.sun.org.slf4j.internal.Logger;
-import com.sun.org.slf4j.internal.LoggerFactory;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -45,7 +43,7 @@ public class CartItemController {
 	}
 
 	@PostMapping
-	public AddCartItemResponse create(@RequestBody AddCartItemRequest request,
+	public CartItem create(@RequestBody AddCartItemRequest request,
 			HttpServletResponse response) {
 		AddCartItemResponse result = cartService.createCartItem(request);
 		if (result.getSessionToken() != null) {
@@ -57,7 +55,7 @@ public class CartItemController {
 		} else {
 			log.info("No Session token was created or assigned");
 		}
-		return result;
+		return result.getCartItem();
 	}
 
 	@DeleteMapping("/{id}")

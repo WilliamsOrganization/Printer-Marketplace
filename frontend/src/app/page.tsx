@@ -8,7 +8,7 @@ import { SortSelect } from "@/components/ui/custom/sort-select";
 import apiServer from "@/lib/api-server";
 import { Category, CategoryLabel, InventoryItem, ItemBadge } from "@/lib/types";
 import api from "@/lib/api";
-import { AddToCartButton } from "@/components/ui/custom/cart-submit-button";
+import { AddToCartButton } from "@/components/ui/custom/add-to-cart-button";
 
 const priceRanges = [
 	{ id: "under50", label: "Under $50", min: 0, max: 50 },

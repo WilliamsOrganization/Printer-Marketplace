@@ -33,7 +33,6 @@ public class SessionController {
 			"uniqueUsers", repository.countUniqueUsers());
 	}
 
-	// TODO: needs auth protectiosn
 	// @GetMapping
 	// public List<Sessions> getAll() {
 	// return repository.findAll();

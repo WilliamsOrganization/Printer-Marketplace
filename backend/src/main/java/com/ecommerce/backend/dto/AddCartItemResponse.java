@@ -1,5 +1,7 @@
 package com.ecommerce.backend.dto;
 
+import com.ecommerce.backend.entity.CartItem;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -9,6 +11,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AddCartItemResponse {
-	private Long itemId;
+	private CartItem cartItem;
 	private String sessionToken;
 }

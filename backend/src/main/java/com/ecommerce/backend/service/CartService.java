@@ -52,7 +52,7 @@ public class CartService {
 			cartItem.setCart(cart);
 			cartItem = cartItemRepository.save(cartItem);
 			AddCartItemResponse response = new AddCartItemResponse(
-					cartItem.getId(),
+					cartItem,
 					sessionRepository.findByUser(user).orElseThrow().getToken());
 			return response;
 		} else if (auth instanceof AnonymousAuthenticationToken) {
@@ -71,7 +71,7 @@ public class CartService {
 			cart = cartRepository.save(cart);
 			cartItem.setCart(cart);
 			cartItem = cartItemRepository.save(cartItem);
-			AddCartItemResponse response = new AddCartItemResponse(cartItem.getId(), session.getToken());
+			AddCartItemResponse response = new AddCartItemResponse(cartItem, session.getToken());
 			return response;
 		} else {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
