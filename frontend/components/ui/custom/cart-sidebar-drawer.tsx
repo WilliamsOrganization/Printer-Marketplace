@@ -66,8 +66,8 @@ export function CartSidebarDrawer() {
 				</div>
 				<DrawerFooter>
 					{/* TODO: this stripe hook is working and needs configuring to pass the price_id and quantity array */}
-					<form action="/checkout_sessions" method="POST">
-						<Button type="submit">Go to checkout</Button>
+					<form action="/checkout_sessions" method="POST" className="min-w-full">
+						<Button type="submit" className="min-w-full">Go to checkout</Button>
 					</form>
 					<DrawerClose asChild>
 						<Button variant="outline">Close</Button>
