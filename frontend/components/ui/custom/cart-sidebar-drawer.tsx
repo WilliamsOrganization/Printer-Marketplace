@@ -32,11 +32,11 @@ import { DeleteFromCartButton } from "./delete-from-cart-button";
 import { useCart } from "@/src/context/cart-context";
 
 export function CartSidebarDrawer() {
-	const { cart, setCart,cartDrawer, setCartDrawer } = useCart();
+	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
 	return (
 		<Drawer direction="right" open={cartDrawer} onOpenChange={setCartDrawer}>
 			<DrawerTrigger asChild>
-				<Button variant="outline" >
+				<Button variant="outline">
 					<ShoppingBasket />
 				</Button>
 			</DrawerTrigger>
@@ -82,10 +82,11 @@ function ListItem({
 		<li {...props}>
 			<Card key={inventoryItem.id} className="group overflow-hidden">
 				<CardFooter className="flex flex-col items-start gap-2 p-4">
-
 					<div className="flex flex-row justify-between min-w-full">
 						<p className="font-bold">{inventoryItem.itemTitle}</p>
-						<p className="font-bold">${cartItem.quantity * Number(inventoryItem.itemCost.toFixed(2))}</p>
+						<p className="font-bold">
+							${cartItem.quantity * Number(inventoryItem.itemCost.toFixed(2))}
+						</p>
 					</div>
 
 					<p className="text-muted-foreground">

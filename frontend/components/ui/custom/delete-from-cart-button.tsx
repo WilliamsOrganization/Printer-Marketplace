@@ -54,13 +54,6 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 	};
 	return (
 		<>
-			<Button
-				size="sm"
-				className="w-full mt-2"
-				onClick={() => removeCartItem(cartItem.id)}
-			>
-				Delete From Cart
-			</Button>
 			{/* TODO: shitty solution but better */}
 			<NumericFormat
 				defaultValue={cartItem.quantity}
@@ -68,10 +61,17 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 				min={1}
 				allowNegative={false}
 				decimalScale={0}
-				onBlur={(e) => updateQuantityServer(cartItem, Number( e.target.value ))}
-				type={ "number" as any }
+				onBlur={(e) => updateQuantityServer(cartItem, Number(e.target.value))}
+				type={"number" as any}
 				customInput={Input}
-			></NumericFormat>
+			/>
+			<Button
+				size="sm"
+				className="w-full mt-2"
+				onClick={() => removeCartItem(cartItem.id)}
+			>
+				Delete From Cart
+			</Button>
 		</>
 	);
 }
