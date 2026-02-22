@@ -40,7 +40,9 @@ public class InventoryItem {
 	@Column(columnDefinition = "text[]")
 	private String[] imageUrls;
 
+	// TODO: configure this to be stripePriceId  May need to add product_id to be able to modify it on the backend. 
 	private String stripeId;
+	// TODO: private String stripeProductId
 	private Boolean sale;
 
 	@Enumerated(EnumType.STRING)
