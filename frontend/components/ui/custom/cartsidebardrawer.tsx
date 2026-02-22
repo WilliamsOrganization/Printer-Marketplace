@@ -31,6 +31,7 @@ import { ShoppingBasket } from "lucide-react";
 import { DeleteFromCartButton } from "./delete-from-cart-button";
 
 export function CartSidebarDrawer() {
+	// TODO: sync the states when items are added/removed from with useContext
 	const [cart, setCartItems] = useState<Cart>();
 	useEffect(() => {
 		api

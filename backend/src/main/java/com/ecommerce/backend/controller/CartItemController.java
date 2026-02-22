@@ -9,6 +9,8 @@ import com.sun.org.slf4j.internal.Logger;
 import com.sun.org.slf4j.internal.LoggerFactory;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +61,8 @@ public class CartItemController {
 	}
 
 	@DeleteMapping("/{id}")
-	// @PreAuthorize("hasRole('CUSTOMER')")
+	@PreAuthorize("hasRole('CUSTOMER')")
+	@Transactional
 	public void deleteCartItem(@PathVariable Long id) {
 			cartService.deleteCartItem(id);
 	}
