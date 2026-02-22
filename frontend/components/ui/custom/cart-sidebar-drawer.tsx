@@ -80,16 +80,16 @@ function ListItem({
 }) {
 	return (
 		<li {...props}>
-			<Card key={inventoryItem.id} className="group overflow-hidden">
+			<Card key={inventoryItem.id} className="group overflow-hidden p-0">
 				<CardFooter className="flex flex-col items-start gap-2 p-4">
 					<div className="flex flex-row justify-between min-w-full">
-						<p className="font-bold">{inventoryItem.itemTitle}</p>
+						<p className="font-bold truncate">{inventoryItem.itemTitle}</p>
 						<p className="font-bold">
 							${cartItem.quantity * Number(inventoryItem.itemCost.toFixed(2))}
 						</p>
 					</div>
 
-					<p className="text-muted-foreground">
+					<p className="text-muted-foreground line-clamp-2">
 						{inventoryItem.itemDescription}
 					</p>
 					<DeleteFromCartButton cartItem={cartItem} />

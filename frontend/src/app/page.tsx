@@ -121,7 +121,7 @@ export default async function Home({
 
 					<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
 						{filteredProducts.map((product) => (
-							<Card key={product.id} className="group overflow-hidden">
+							<Card key={product.id} className="group overflow-hidden flex flex-col p-0">
 								<CardContent className="p-0">
 									<div className="relative aspect-square bg-muted">
 										{product.badge && (
@@ -140,18 +140,19 @@ export default async function Home({
 											src={product.imageUrl?.[0] || "/globe.svg"}
 											alt={product.itemTitle}
 											fill
-											className="object-contain p-8 group-hover:scale-105 transition-transform"
+											className="object-cover p-8 group-hover:scale-105 transition-transform"
 										/>
 									</div>
+
 								</CardContent>
-								<CardFooter className="flex flex-col items-start gap-2 p-4">
-									<div className="flex flex-row justify-between min-w-full">
-										<p className="font-bold">{product.itemTitle}</p>
+								<CardFooter className="flex flex-col items-start gap-2 p-4 mt-auto pt-0">
+
+									<div className="flex flex-row justify-between min-w-full ">
+										<p className="font-bold line-clamp-1">{product.itemTitle}</p>
 										<p className="font-bold">${product.itemCost.toFixed(2)}</p>
 									</div>
 
-
-									<p className="text-muted-foreground">
+									<p className="text-muted-foreground line-clamp-2">
 										{product.itemDescription}
 									</p>
 

@@ -32,6 +32,8 @@ import { Category, ItemBadge } from "@/lib/types";
 import { ImageDropField } from "./drag-drop";
 import axios from "axios";
 import api from "@/lib/api";
+import { redirect } from "next/navigation";
+import { NumericFormat } from "react-number-format";
 
 const formSchema = z.object({
 	itemTitle: z.string().min(0, "Item title is required"),
@@ -110,7 +112,9 @@ export function CreateInventoryItemForm() {
 								control={form.control}
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="itemDescription">Item Description</FieldLabel>
+										<FieldLabel htmlFor="itemDescription">
+											Item Description
+										</FieldLabel>
 										<Input
 											id="itemDescription"
 											placeholder="Enter item description"
@@ -128,12 +132,20 @@ export function CreateInventoryItemForm() {
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor="itemCost">Item Cost</FieldLabel>
-										<Input
+										Number
+										<NumericFormat
 											id="itemCost"
-											type="number"
+											defaultValue={0.0}
+											max={200}
+											min={1}
 											step="0.01"
-											placeholder="0.00"
-											{...field}
+											allowNegative={false}
+											decimalScale={2}
+											type={"number" as any}
+											onValueChange={(values) =>
+												field.onChange(values.floatValue ?? 0)
+											}
+											customInput={Input}
 										/>
 										{fieldState.invalid && (
 											<FieldError errors={[fieldState.error]} />
@@ -310,7 +322,10 @@ export function CreateInventoryItemForm() {
 																Recently added item
 															</FieldDescription>
 														</FieldContent>
-														<RadioGroupItem value={ItemBadge.NEW} id="badge-new" />
+														<RadioGroupItem
+															value={ItemBadge.NEW}
+															id="badge-new"
+														/>
 													</Field>
 												</FieldLabel>
 												<FieldLabel htmlFor="badge-sale">
