@@ -9,6 +9,7 @@ import apiServer from "@/lib/api-server";
 import { Category, CategoryLabel, InventoryItem, ItemBadge } from "@/lib/types";
 import api from "@/lib/api";
 import { AddToCartButton } from "@/components/ui/custom/add-to-cart-button";
+import { Input } from "@/components/ui/input";
 
 const priceRanges = [
 	{ id: "under50", label: "Under $50", min: 0, max: 50 },
@@ -148,11 +149,13 @@ export default async function Home({
 										<p className="font-bold">${product.itemCost.toFixed(2)}</p>
 									</div>
 
+
 									<p className="text-muted-foreground">
 										{product.itemDescription}
 									</p>
-									{/* TODO: remember to implement the quantity */}
+
 									<AddToCartButton itemId={product.id} quantity={1}/>
+
 								</CardFooter>
 							</Card>
 						))}

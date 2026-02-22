@@ -12,7 +12,7 @@ export function AddToCartButton({
 	itemId: number;
 	quantity: number;
 }) {
-	const { cart, setCart } = useCart();
+	const { cart, setCart, cartDrawer, setCartDrawer} = useCart();
 	const addCartItem = function(id: number, quantity: number) {
 		api
 			.post("/cartitem", {
@@ -26,6 +26,7 @@ export function AddToCartButton({
 					const updatedCart = { ...previous!, items: updatedItems };
 					return updatedCart;
 				});
+				setCartDrawer(true);
 			})
 			.catch((err) => {
 				console.log("Error: " + err.message);

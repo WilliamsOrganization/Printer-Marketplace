@@ -6,12 +6,17 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 type CartContextType = {
 	cart: Cart | undefined;
 	setCart: React.Dispatch<React.SetStateAction<Cart | undefined>>;
+	cartDrawer: boolean;
+	setCartDrawer: React.Dispatch<React.SetStateAction<boolean>>;
+
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
 	const [cart, setCart] = useState<Cart | undefined>();
+	const [cartDrawer, setCartDrawer] = useState<boolean>(false);
+
 	useEffect(() => {
 		api
 			.get("/cart")
@@ -24,7 +29,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 			});
 	}, []);
 	return (
-		<CartContext.Provider value={{ cart, setCart }}>{children}</CartContext.Provider>
+		<CartContext.Provider value={{ cart, setCart, cartDrawer, setCartDrawer }}>{children}</CartContext.Provider>
 	);
 }
 
