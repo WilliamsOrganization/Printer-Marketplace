@@ -11,6 +11,7 @@ import api from "@/lib/api";
 import { AddToCartButton } from "@/components/ui/custom/add-to-cart-button";
 import { Input } from "@/components/ui/input";
 
+// TODO: these button toggles for prices arent working
 const priceRanges = [
 	{ id: "under50", label: "Under $50", min: 0, max: 50 },
 	{ id: "50to75", label: "$50 - $75", min: 50, max: 75 },
