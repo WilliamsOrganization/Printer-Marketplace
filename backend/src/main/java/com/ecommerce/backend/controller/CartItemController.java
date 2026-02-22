@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
+
 
 /**
  * REST controller for cart item operations.
@@ -58,10 +60,21 @@ public class CartItemController {
 		return result.getCartItem();
 	}
 
+
+	@PutMapping("/quantity/{id}")
+	@PreAuthorize("hasRole('CUSTOMER')")
+		public CartItem updateCartItemQuantity(@PathVariable Long id, @RequestBody Integer quantity) {
+			CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
+			cartItem.setQuantity(quantity);
+			return cartItemRepository.save(cartItem);
+		}
+
 	@DeleteMapping("/{id}")
 	@PreAuthorize("hasRole('CUSTOMER')")
 	@Transactional
 	public void deleteCartItem(@PathVariable Long id) {
 			cartService.deleteCartItem(id);
 	}
+
+
 }

@@ -11,7 +11,7 @@ import {
 	NavigationMenuTrigger,
 	navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import CartSidebarDrawer from "./cartsidebardrawer";
+import CartSidebarDrawer from "./cart-sidebar-drawer";
 
 const components: { title: string; href: string; description: string }[] = [
 	{

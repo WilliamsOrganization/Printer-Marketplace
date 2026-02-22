@@ -92,7 +92,7 @@ function ListItem({
 					<p className="text-muted-foreground">
 						{inventoryItem.itemDescription}
 					</p>
-					<DeleteFromCartButton itemId={cartItem.id} />
+					<DeleteFromCartButton cartItem={cartItem} />
 				</CardFooter>
 			</Card>
 		</li>
