@@ -15,7 +15,7 @@ import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
-
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -37,39 +37,41 @@ public class CartService {
 	private final InventoryItemRepository inventoryItemRepository;
 
 	public AddCartItemResponse createCartItem(AddCartItemRequest cartItemRequest) {
-		CartItem cartItem = new CartItem();
 		InventoryItem inventoryItem = inventoryItemRepository.findById(cartItemRequest.getItemId())
 				.orElseThrow();
+
+		CartItem cartItem = new CartItem();
 		cartItem.setItem(inventoryItem);
 		cartItem.setQuantity(cartItemRequest.getQuantity());
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth != null && auth.isAuthenticated() &&
 				auth.getPrincipal() instanceof Users user) {
 			// TODO: if a user exists without a cart they wont be able to create
-			// a cart. fix me pls :)
-			// NO LOGIC YET JUMP TO NEXT CONDITIONAL
-
+			// a cart. fix me pls non urgent
 			Cart cart = cartRepository.findByUser(user).orElseThrow();
-			cartItem.setCart(cart);
-			cartItem = cartItemRepository.save(cartItem);
+			Optional<CartItem> existing = cartItemRepository.findByCartAndItem(cart, inventoryItem);
+			if (existing.isPresent()) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT);
+			} else {
+				cartItem.setCart(cart);
+				cartItem = cartItemRepository.save(cartItem);
+			}
 			AddCartItemResponse response = new AddCartItemResponse(
 					cartItem,
 					sessionRepository.findByUser(user).orElseThrow().getToken());
 			return response;
 		} else if (auth instanceof AnonymousAuthenticationToken) {
 			// create user/cart/cartItem
-			// TODO: add duplicate InventoryItem handling use to update CartItem
-			// quantity rather than append new
 			Users user = new Users();
 			user.setUserRole(Users.Role.CUSTOMER);
 			user = userRepository.save(user);
+			Cart cart = new Cart();
+			cart.setUser(user);
+			cart = cartRepository.save(cart);
 			Sessions session = new Sessions();
 			session.setUser(user);
 			session.setExpiresAt(LocalDateTime.now().plusDays(30));
 			sessionRepository.save(session);
-			Cart cart = new Cart();
-			cart.setUser(user);
-			cart = cartRepository.save(cart);
 			cartItem.setCart(cart);
 			cartItem = cartItemRepository.save(cartItem);
 			AddCartItemResponse response = new AddCartItemResponse(cartItem, session.getToken());
@@ -94,7 +96,7 @@ public class CartService {
 				auth.getPrincipal() instanceof Users user) {
 			Cart cart = cartRepository.findByUser(user).orElseThrow();
 			cartItemRepository.deleteByIdAndCart(id, cart);
-			return; 
+			return;
 		}
 		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 	}

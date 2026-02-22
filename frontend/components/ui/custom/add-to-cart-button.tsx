@@ -12,7 +12,7 @@ export function AddToCartButton({
 	itemId: number;
 	quantity: number;
 }) {
-	const { cart, setCart, cartDrawer, setCartDrawer} = useCart();
+	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
 	const addCartItem = function(id: number, quantity: number) {
 		api
 			.post("/cartitem", {
@@ -30,7 +30,11 @@ export function AddToCartButton({
 			})
 			.catch((err) => {
 				console.log("Error: " + err.message);
-				toast.error("Failed to add item to cart");
+				if (err.response?.status === 409) {
+					toast.error("Item exists in cart already");
+				} else {
+					toast.error("Failed to add item to cart");
+				}
 			});
 	};
 	return (
