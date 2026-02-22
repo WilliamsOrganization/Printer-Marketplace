@@ -30,6 +30,7 @@ import api from "@/lib/api";
 import { ShoppingBasket } from "lucide-react";
 import { DeleteFromCartButton } from "./delete-from-cart-button";
 import { useCart } from "@/src/context/cart-context";
+import Link from "next/link";
 
 export function CartSidebarDrawer() {
 	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
@@ -42,8 +43,12 @@ export function CartSidebarDrawer() {
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>
-					<DrawerTitle>Move Goal</DrawerTitle>
-					<DrawerDescription>Set your daily activity goal.</DrawerDescription>
+
+					<div className="flex flex-row gap-2 text-3xl items-center">
+						<ShoppingBasket className="size-10"/>
+						<DrawerTitle >Your Cart</DrawerTitle>
+					</div>
+					<DrawerDescription className="text-lg text-muted-foreground">Edit your cart items before checkout</DrawerDescription>
 				</DrawerHeader>
 				<div className="no-scrollbar overflow-y-auto px-4">
 					<ul className="flex flex-col gap-2">
@@ -59,9 +64,12 @@ export function CartSidebarDrawer() {
 					</ul>
 				</div>
 				<DrawerFooter>
-					<Button>Submit</Button>
+
+					<Link href="/checkout/">
+						<Button>Go to checkout</Button>
+					</Link>
 					<DrawerClose asChild>
-						<Button variant="outline">Cancel</Button>
+						<Button variant="outline">Close</Button>
 					</DrawerClose>
 				</DrawerFooter>
 			</DrawerContent>

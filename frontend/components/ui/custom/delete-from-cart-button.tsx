@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { useCart } from "@/src/context/cart-context";
 import { Input } from "../input";
 import { NumericFormat } from "react-number-format";
+import { CardAction, CardContent, CardTitle } from "../card";
 
 export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 	const { cart, setCart } = useCart();
@@ -55,6 +56,7 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 	return (
 		<>
 			{/* TODO: shitty solution but better */}
+			<CardTitle className="text-md font-bold">Quantity</CardTitle>
 			<NumericFormat
 				defaultValue={cartItem.quantity}
 				max={20}
