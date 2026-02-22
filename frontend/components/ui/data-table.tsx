@@ -191,10 +191,10 @@ export function DataTable() {
 		api.delete(`/inventoryitem/${id}`).then((res) => {
 			console.log("successfully deleted item" + res.data)
 			toast.success("Successfully deleted inventory item")
-			setData(prev => prev.filter(item=>item.id !==id))
+			setInventory(prev => prev.filter(item => item.id !== id))
 		}).catch((err) => {
 			console.log("Error occured here: " + err.message)
-			toast.success("Error deleting inventory item: "+ err.message)
+			toast.error("Error deleting inventory item: "+ err.message)
 		})
 	}
 

@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Category, ItemBadge } from "@/lib/types";
 import api from "@/lib/api";
+import { useDashboard } from "@/src/context/dashboard-context";
 
 const formSchema = z.object({
 	itemTitle: z.string().min(1, "Item title is required"),
@@ -56,6 +57,7 @@ type EditInventoryProps = {
 };
 
 export function EditInventory({ item }: EditInventoryProps) {
+	const { setInventory } = useDashboard();
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -69,11 +71,13 @@ export function EditInventory({ item }: EditInventoryProps) {
 	});
 
 	function onSubmit(data: FormValues) {
-		// TODO: The Parent table needs to update with the new values
 		api
 			.put(`/inventoryitem/${item.id}`, data)
 			.then(() => {
 				toast.success("Inventory Item Updated");
+				setInventory(prev => prev.map(i =>
+					i.id === item.id ? { ...i, ...data } : i
+				));
 			})
 			.catch(() => {
 				toast.error("Failed to update item");
