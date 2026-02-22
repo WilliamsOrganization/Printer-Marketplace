@@ -15,16 +15,16 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 			const updatedItems = previous!.items.map((item) =>
 				item.id === cartItem.id ? { ...item, quantity: quantity } : item,
 			);
-			return { ...previous!, itms: updatedItems };
+			return { ...previous!, items: updatedItems };
 		});
 		//update on server
 		api
 			.put(`/cartitem/quantity/${cartItem.id}`, quantity)
 			.then((res) => {
-				console.log("Successfully updated Cart quantity");
+				toast.success("Successfully updated Cart quantity");
 			})
 			.catch(() => {
-				console.log("failed to update cart quantity");
+				toast.error("failed to update cart quantity");
 			});
 	};
 
