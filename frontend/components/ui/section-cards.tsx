@@ -32,12 +32,9 @@ export function SectionCards() {
 						</Badge>
 					</CardAction>
 				</CardHeader>
-				<CardFooter className="flex-row text-md w-full gap-2 items-center justify-between">
-						<Button className="" variant="default">Edit Inventory</Button>
-						<Link href="/admin/dashboard/item/" >
-
-						{/* TODO: confure an editing route for the individual items */}
-							<Button className="" variant="outline">Create Inventory</Button>
+				<CardFooter className="flex-row text-md min-w-full ">
+						<Link href="/admin/dashboard/item/" className="min-w-full">
+							<Button className="min-w-full" variant="outline">Create Inventory item</Button>
 						</Link>
 				</CardFooter>
 			</Card>
