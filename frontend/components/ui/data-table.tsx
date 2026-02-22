@@ -102,6 +102,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EditInventory from "./custom/dialog-popup-edit";
 import api from "@/lib/api";
+import { useDashboard } from "@/src/context/dashboard-context";
+import { InventoryItem } from "@/lib/types";
 
 export const schema = z.object({
 	id: z.number(),
@@ -136,7 +138,7 @@ function DragHandle({ id }: { id: number }) {
 
 
 
-function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
+function DraggableRow({ row }: { row: Row<InventoryItem> }) {
 	const { transform, transition, setNodeRef, isDragging } = useSortable({
 		id: row.original.id,
 	});
@@ -161,7 +163,8 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 	);
 }
 
-export function DataTable({ data: initialData, }: { data: z.infer<typeof schema>[]; }) {
+export function DataTable() {
+	const { inventory: initialData, setInventory } = useDashboard();
 	const [data, setData] = React.useState(() => initialData);
 	React.useEffect(() => {
 		setData(initialData);
@@ -195,7 +198,7 @@ export function DataTable({ data: initialData, }: { data: z.infer<typeof schema>
 		})
 	}
 
-	const columns: ColumnDef<z.infer<typeof schema>>[] = [
+	const columns: ColumnDef<InventoryItem>[] = [
 		{
 			id: "drag",
 			header: () => null,
@@ -592,7 +595,7 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
-function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
+function TableCellViewer({ item }: { item: InventoryItem }) {
 	const isMobile = useIsMobile();
 
 	return (

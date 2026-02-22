@@ -1,3 +1,5 @@
+"use client";
+
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -9,19 +11,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { InventoryItem, User } from "@/lib/types";
 import { Button } from "./button";
 import Link from "next/link";
+import { useDashboard } from "@/src/context/dashboard-context";
 
-type SectionCardsProps = {
-	inventory: InventoryItem[];
-	users: User[];
-	sessionCount: number;
-	activeSessionCount: number;
-	uniqueUserCount: number;
-}
-
-export function SectionCards({ inventory, users, sessionCount, activeSessionCount, uniqueUserCount }: SectionCardsProps) {
+export function SectionCards() {
+	const { inventory, users, sessionCount, activeSessionCount, uniqueUserCount } = useDashboard();
 	return (
 		<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
 			{/* this is the important card I want to actually mess with */}
