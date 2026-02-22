@@ -5,12 +5,18 @@ import { toast } from "sonner";
 import React, { useState } from "react";
 import { useCart } from "@/src/context/cart-context";
 import { Input } from "../input";
+import { NumericFormat } from "react-number-format";
 
 export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 	const { cart, setCart } = useCart();
 
 	const updateQuantityServer = (cartItem: CartItem, quantity: number) => {
 		//update locally on blur
+		//
+		if (quantity < 0) {
+			toast.error("Cannot be a negative number");
+		}
+
 		setCart((previous) => {
 			const updatedItems = previous!.items.map((item) =>
 				item.id === cartItem.id ? { ...item, quantity: quantity } : item,
@@ -55,13 +61,17 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 			>
 				Delete From Cart
 			</Button>
-			<Input
+			{/* TODO: shitty solution but better uses react-number-format npm package */}
+			<NumericFormat
 				defaultValue={cartItem.quantity}
 				max={20}
-				min={0}
-				type="number"
-				onBlur={(e) => updateQuantityServer(cartItem, Number(e.target.value))}
-			></Input>
+				min={1}
+				allowNegative={false}
+				decimalScale={0}
+				onBlur={(e) => updateQuantityServer(cartItem, Number( e.target.value ))}
+				type={ "number" as any }
+				customInput={Input}
+			></NumericFormat>
 		</>
 	);
 }
