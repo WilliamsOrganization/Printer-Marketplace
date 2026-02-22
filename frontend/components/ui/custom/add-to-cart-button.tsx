@@ -22,7 +22,8 @@ export function AddToCartButton({
 			.then((res) => {
 				toast.success("Item successfuly added to cart");
 				setCart((previous) => {
-					const updatedItems = previous!.items.concat(res.data);
+
+					const updatedItems = (previous?.items ?? []).concat(res.data);                              
 					const updatedCart = { ...previous!, items: updatedItems };
 					return updatedCart;
 				});
