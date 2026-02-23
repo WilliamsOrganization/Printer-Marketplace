@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react"
 
 export function PromoBanner() {
   return (
-    <div className="w-full bg-zinc-900 text-white">
+    <div className="w-full bg-primary text-white">
       <div className="mx-auto max-w-7xl px-6 py-2 flex items-center justify-between text-sm">
         <p>
           <Badge variant="secondary" className="mr-2">New</Badge>
