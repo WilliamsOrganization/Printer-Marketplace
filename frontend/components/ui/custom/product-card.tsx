@@ -98,10 +98,9 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 							{/* Right — Product info */}
 							<div className="flex flex-col flex-1 p-8 gap-4 overflow-y-auto">
-								<X
-									onClick={() => setSelected(null)}
-									className="self-end text-muted-foreground hover:text-foreground transition-colors text-sm"
-								/>
+								<Button size="icon" className="self-end rounded-full" variant="outline" onClick={() => setSelected(null)}>
+									<X className="size-5"/>
+								</Button>
 
 								{selected.badge && (
 									<Badge
