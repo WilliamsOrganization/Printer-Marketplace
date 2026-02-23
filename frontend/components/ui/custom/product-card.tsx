@@ -96,7 +96,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 						{/* Expanded card */}
 						<motion.div
 							layoutId={`card-${selected.id}`}
-							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-white rounded-2xl shadow-2xl overflow-hidden w-[800px] max-w-[90vw] max-h-[85vh] flex"
+							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-white rounded-2xl shadow-2xl overflow-hidden w-[1100px] max-w-[90vw] max-h-[90vh] flex"
 						>
 							{/* Left — Carousel */}
 							<div className="w-1/2 shrink-0 bg-muted self-stretch flex items-center">
