@@ -4,87 +4,162 @@ import {
 	Drawer,
 	DrawerClose,
 	DrawerContent,
-	DrawerDescription,
 	DrawerFooter,
 	DrawerHeader,
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
-
-import {
-	Card,
-	CardAction,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "../card";
-import { IconTrendingUp } from "@tabler/icons-react";
-import { AddToCartButton } from "./add-to-cart-button";
-import { Cart, CartItem, InventoryItem, ItemBadge, User } from "@/lib/types";
+import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import api from "@/lib/api";
-import { PackageOpen, ShoppingBasket, ShoppingCart } from "lucide-react";
-import { DeleteFromCartButton } from "./delete-from-cart-button";
+import {
+	Minus,
+	PackageOpen,
+	Plus,
+	ShoppingBasket,
+	ShoppingCart,
+	Trash2,
+} from "lucide-react";
+import { CartItem } from "@/lib/types";
 import { useCart } from "@/src/context/cart-context";
-import Link from "next/link";
+import api from "@/lib/api";
+import { toast } from "sonner";
 
 export function CartSidebarDrawer() {
 	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
+
+	const itemCount =
+		cart?.items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
+	const subtotal =
+		cart?.items?.reduce(
+			(sum, i) => sum + i.quantity * i.item.itemCost,
+			0
+		) ?? 0;
+
+	const handleQuantityChange = (id: number, qty: number) => {
+		if (qty < 1) return;
+		setCart((prev) => ({
+			...prev!,
+			items: prev!.items.map((i) =>
+				i.id === id ? { ...i, quantity: qty } : i
+			),
+		}));
+		api
+			.put(`/cartitem/quantity/${id}`, qty)
+			.catch(() => toast.error("Failed to update quantity"));
+	};
+
+	const handleRemove = (id: number) => {
+		api
+			.delete(`/cartitem/${id}`)
+			.then(() => {
+				toast.success("Item removed");
+				setCart((prev) => ({
+					...prev!,
+					items: prev!.items.filter((i) => i.id !== id),
+				}));
+			})
+			.catch(() => toast.error("Failed to remove item"));
+	};
+
 	return (
 		<Drawer direction="right" open={cartDrawer} onOpenChange={setCartDrawer}>
 			<DrawerTrigger asChild>
-				<Button variant="outline" size="icon">
-					<ShoppingBasket className="size-5"/>
+				<Button variant="outline" size="icon" className="relative">
+					<ShoppingBasket className="size-5" />
+					{itemCount > 0 && (
+						<span className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+							{itemCount > 9 ? "9+" : itemCount}
+						</span>
+					)}
 				</Button>
 			</DrawerTrigger>
+
 			<DrawerContent>
-				<DrawerHeader>
-					<div className="flex flex-row gap-2 text-3xl items-center">
-						<ShoppingBasket className="size-10" />
-						<DrawerTitle>Your Cart</DrawerTitle>
-					</div>
-					<DrawerDescription className="text-lg text-muted-foreground">
-						Edit your cart items before checkout
-					</DrawerDescription>
-				</DrawerHeader>
-				<div className="no-scrollbar overflow-y-auto px-4">
-					<ul className="flex flex-col gap-2 h-[80vh]">
-						{(cart?.items?.length !== 0 && cart!== undefined) ? (
-							cart?.items?.map((cartItem) => (
-								<ListItem
-									key={cartItem.id}
-									inventoryItem={cartItem.item}
-									cartItem={cartItem}
-								>
-									{cartItem.item.itemTitle}
-								</ListItem>
-							))
-						) : (
-							<div className="min-h-full min-w-full flex flex-col gap-2 justify-center items-center text-muted-foreground/60 text-xl">
-								<PackageOpen className="size-8 text-muted-foreground/60"/>
-								Your Cart is Empty
-							</div>
+				{/* Header */}
+				<DrawerHeader className="border-b">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-2">
+							<ShoppingBasket className="size-4" />
+							<DrawerTitle>Cart</DrawerTitle>
+						</div>
+						{itemCount > 0 && (
+							<Badge variant="secondary">
+								{itemCount} {itemCount === 1 ? "item" : "items"}
+							</Badge>
 						)}
-					</ul>
+					</div>
+				</DrawerHeader>
+
+				{/* Items */}
+				<div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3">
+					{cart?.items?.length ? (
+						<ul className="flex flex-col gap-3">
+							{cart.items.map((cartItem) => (
+								<CartItemCard
+									key={cartItem.id}
+									cartItem={cartItem}
+									onQuantityChange={handleQuantityChange}
+									onRemove={handleRemove}
+								/>
+							))}
+						</ul>
+					) : (
+						<div className="flex flex-col items-center justify-center h-[60vh] gap-3 text-muted-foreground">
+							<div className="size-16 rounded-full bg-muted flex items-center justify-center">
+								<PackageOpen className="size-7" />
+							</div>
+							<div className="text-center">
+								<p className="font-medium text-foreground text-sm">
+									Your cart is empty
+								</p>
+								<p className="text-xs mt-1">Add some items to get started</p>
+							</div>
+						</div>
+					)}
 				</div>
+
+				{/* Subtotal */}
+				{itemCount > 0 && (
+					<>
+						<Separator />
+						<div className="px-4 py-3 space-y-1.5 text-sm">
+							<div className="flex justify-between text-muted-foreground">
+								<span>Subtotal</span>
+								<span>${subtotal.toFixed(2)}</span>
+							</div>
+							<div className="flex justify-between text-muted-foreground">
+								<span>Shipping</span>
+								<span className="text-xs italic">Calculated at checkout</span>
+							</div>
+							<div className="flex justify-between font-semibold text-foreground pt-1 border-t">
+								<span>Total</span>
+								<span>${subtotal.toFixed(2)}</span>
+							</div>
+						</div>
+					</>
+				)}
+
+				{/* Footer */}
 				<DrawerFooter>
-					{/* TODO: this stripe hook is working and needs configuring to pass the price_id and quantity array */}
 					<form
 						action="/checkout_sessions"
 						method="POST"
-						className="min-w-full"
+						className="w-full"
 					>
-						<Button type="submit" className="min-w-full">
-							<ShoppingCart/>
-							Go to checkout
+						<Button
+							type="submit"
+							className="w-full"
+							disabled={!cart?.items?.length}
+						>
+							<ShoppingCart className="size-4" />
+							Checkout · ${subtotal.toFixed(2)}
 						</Button>
 					</form>
 					<DrawerClose asChild>
-						<Button variant="outline">Close</Button>
+						<Button variant="outline" className="w-full">
+							Continue Shopping
+						</Button>
 					</DrawerClose>
 				</DrawerFooter>
 			</DrawerContent>
@@ -92,33 +167,84 @@ export function CartSidebarDrawer() {
 	);
 }
 
-function ListItem({
-	key,
-	inventoryItem,
+function CartItemCard({
 	cartItem,
-	...props
-}: React.ComponentPropsWithoutRef<"li"> & {
-	inventoryItem: InventoryItem;
+	onQuantityChange,
+	onRemove,
+}: {
 	cartItem: CartItem;
+	onQuantityChange: (id: number, qty: number) => void;
+	onRemove: (id: number) => void;
 }) {
+	const { item, quantity } = cartItem;
+	const imageSrc =
+		item.imageUrl?.[0] ?? `/stock-${(item.id % 18) + 1}.jpg`;
+
 	return (
-		<li {...props}>
-			<Card key={inventoryItem.id} className="group overflow-hidden p-0">
-				<CardFooter className="flex flex-col items-start gap-2 p-4">
-					<div className="flex flex-row justify-between min-w-full">
-						<p className="font-bold truncate">{inventoryItem.itemTitle}</p>
-						<p className="font-bold">
-							${cartItem.quantity * Number(inventoryItem.itemCost.toFixed(2))}
-						</p>
+		<li className="flex items-center gap-3 rounded-xl border bg-card p-3">
+			{/* Thumbnail */}
+			<div className="relative size-16 rounded-lg overflow-hidden shrink-0 bg-muted">
+				<Image
+					src={imageSrc}
+					alt={item.itemTitle}
+					fill
+					className="object-cover"
+				/>
+			</div>
+
+			{/* Info */}
+			<div className="flex flex-col flex-1 min-w-0 gap-1">
+				<div className="flex items-start justify-between gap-1">
+					<p className="font-medium text-sm leading-snug line-clamp-1">
+						{item.itemTitle}
+					</p>
+					<Button
+						size="icon"
+						variant="ghost"
+						className="size-6 shrink-0 -mt-0.5 text-muted-foreground hover:text-destructive"
+						onClick={() => onRemove(cartItem.id)}
+					>
+						<Trash2 className="size-3.5" />
+					</Button>
+				</div>
+
+				<p className="text-xs text-muted-foreground capitalize">
+					{item.category.toLowerCase()}
+				</p>
+
+				{/* Quantity + price row */}
+				<div className="flex items-center justify-between mt-auto pt-1">
+					<div className="flex items-center rounded-md border overflow-hidden">
+						<Button
+							size="icon"
+							variant="ghost"
+							className="size-6 rounded-none border-r"
+							onClick={() => onQuantityChange(cartItem.id, quantity - 1)}
+							disabled={quantity <= 1}
+						>
+							<Minus className="size-3" />
+						</Button>
+						<span className="w-7 text-center text-xs font-medium">
+							{quantity}
+						</span>
+						<Button
+							size="icon"
+							variant="ghost"
+							className="size-6 rounded-none border-l"
+							onClick={() => onQuantityChange(cartItem.id, quantity + 1)}
+							disabled={quantity >= 20}
+						>
+							<Plus className="size-3" />
+						</Button>
 					</div>
 
-					<p className="text-muted-foreground line-clamp-2">
-						{inventoryItem.itemDescription}
+					<p className="text-sm font-semibold">
+						${(quantity * item.itemCost).toFixed(2)}
 					</p>
-					<DeleteFromCartButton cartItem={cartItem} />
-				</CardFooter>
-			</Card>
+				</div>
+			</div>
 		</li>
 	);
 }
+
 export default CartSidebarDrawer;
