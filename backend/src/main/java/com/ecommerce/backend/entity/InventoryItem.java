@@ -41,8 +41,16 @@ public class InventoryItem {
 	private String[] imageUrls;
 
 	// TODO: configure this to be stripePriceId  May need to add product_id to be able to modify it on the backend. 
-	private String stripeId;
+	private String stripePriceId;
 	// TODO: private String stripeProductId
+	private String stripeProductId;
+	
+	// TODO: add the quantity variable stripe will track available quanities
+	private Long quantity;
+
+	private String currency;
+
+
 	private Boolean sale;
 
 	@Enumerated(EnumType.STRING)
@@ -57,4 +65,6 @@ public class InventoryItem {
 	public enum Badge {
 		BESTSELLER, NEW, SALE
 	}
+
+
 }

@@ -27,17 +27,29 @@ import {
 	FieldSet,
 	FieldTitle,
 } from "@/components/ui/field";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { NumericFormat } from "react-number-format";
 import { Category, ItemBadge } from "@/lib/types";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
+
+const CURRENCIES = Intl.supportedValuesOf("currency");
 
 const formSchema = z.object({
 	itemTitle: z.string().min(1, "Item title is required"),
 	itemDescription: z.string().min(1, "Item description is required"),
 	itemCost: z.number().positive("Item cost must be positive"),
+	quantity: z.number().int().positive("Quantity must be a positive number"),
+	currency: z.string().length(3, "Currency must be a 3-letter code (e.g. CAD)"),
 	sale: z.boolean(),
 	category: z.nativeEnum(Category),
 	badge: z.nativeEnum(ItemBadge),
@@ -51,6 +63,8 @@ type EditInventoryProps = {
 		itemTitle: string;
 		itemDescription: string;
 		itemCost: number;
+		quantity: number;
+		currency: string;
 		category: string;
 		badge?: string | null;
 	};
@@ -64,6 +78,8 @@ export function EditInventory({ item }: EditInventoryProps) {
 			itemTitle: item.itemTitle,
 			itemDescription: item.itemDescription,
 			itemCost: item.itemCost,
+			quantity: item.quantity,
+			currency: item.currency ?? "CAD",
 			sale: false,
 			category: item.category as Category,
 			badge: (item.badge ?? ItemBadge.NEW) as ItemBadge,
@@ -141,16 +157,63 @@ export function EditInventory({ item }: EditInventoryProps) {
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor="edit-itemCost">Item Cost</FieldLabel>
-										<Input
+										<NumericFormat
 											id="edit-itemCost"
-											type="number"
-											step="0.01"
-											placeholder="0.00"
-											{...field}
-											onChange={(e) =>
-												field.onChange(parseFloat(e.target.value) || 0)
+											defaultValue={item.itemCost}
+											allowNegative={false}
+											decimalScale={2}
+											fixedDecimalScale
+											onValueChange={(values) =>
+												field.onChange(values.floatValue ?? 0)
 											}
+											customInput={Input}
 										/>
+										{fieldState.invalid && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
+							<Controller
+								name="quantity"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="edit-quantity">Quantity</FieldLabel>
+										<NumericFormat
+											id="edit-quantity"
+											defaultValue={item.quantity}
+											allowNegative={false}
+											decimalScale={0}
+											onValueChange={(values) =>
+												field.onChange(values.floatValue ?? 1)
+											}
+											customInput={Input}
+										/>
+										{fieldState.invalid && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
+							<Controller
+								name="currency"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="edit-currency">Currency</FieldLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<SelectTrigger id="edit-currency" className="w-full">
+												<SelectValue placeholder="Select currency" />
+											</SelectTrigger>
+											<SelectContent>
+												{CURRENCIES.map((code) => (
+													<SelectItem key={code} value={code}>
+														{code}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 										{fieldState.invalid && (
 											<FieldError errors={[fieldState.error]} />
 										)}

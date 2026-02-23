@@ -28,19 +28,27 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Category, ItemBadge } from "@/lib/types";
 import { ImageDropField } from "./drag-drop";
-import axios from "axios";
 import api from "@/lib/api";
-import { redirect } from "next/navigation";
 import { NumericFormat } from "react-number-format";
+
+const CURRENCIES = Intl.supportedValuesOf("currency");
 
 const formSchema = z.object({
 	itemTitle: z.string().min(0, "Item title is required"),
 	itemDescription: z.string().min(1, "Item description is required"),
 	itemCost: z.number().positive("Item cost must be positive"),
+	quantity: z.number().int().positive("Quantity must be a positive number"),
 	image: z.array(z.instanceof(File)),
-	stripeId: z.string().min(1, "Stripe ID is required"),
+	currency: z.string().length(3, "Currency must be a 3-letter code (e.g. CAD)"),
 	sale: z.boolean(),
 	category: z.nativeEnum(Category),
 	badge: z.nativeEnum(ItemBadge),
@@ -55,8 +63,9 @@ export function CreateInventoryItemForm() {
 			itemTitle: "",
 			itemDescription: "",
 			itemCost: 0,
+			quantity: 1,
 			image: [],
-			stripeId: "",
+			currency: "CAD",
 			sale: false,
 			category: Category.ELECTRONICS,
 			badge: ItemBadge.NEW,
@@ -71,7 +80,7 @@ export function CreateInventoryItemForm() {
 				toast.success("Inventory Item Created");
 				form.reset();
 			})
-			.catch((err) => {
+			.catch(() => {
 				toast.error("Inventory Item Not Created");
 			});
 	}
@@ -132,18 +141,36 @@ export function CreateInventoryItemForm() {
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor="itemCost">Item Cost</FieldLabel>
-										Number
 										<NumericFormat
 											id="itemCost"
 											defaultValue={0.0}
-											max={200}
-											min={1}
-											step="0.01"
 											allowNegative={false}
 											decimalScale={2}
-											type={"number" as any}
+											fixedDecimalScale
 											onValueChange={(values) =>
 												field.onChange(values.floatValue ?? 0)
+											}
+											customInput={Input}
+										/>
+										{fieldState.invalid && (
+											<FieldError errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
+							<Controller
+								name="quantity"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="quantity">Quantity</FieldLabel>
+										<NumericFormat
+											id="quantity"
+											defaultValue={1}
+											allowNegative={false}
+											decimalScale={0}
+											onValueChange={(values) =>
+												field.onChange(values.floatValue ?? 1)
 											}
 											customInput={Input}
 										/>
@@ -171,16 +198,23 @@ export function CreateInventoryItemForm() {
 								)}
 							/>
 							<Controller
-								name="stripeId"
+								name="currency"
 								control={form.control}
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="stripeId">Stripe ID</FieldLabel>
-										<Input
-											id="stripeId"
-											placeholder="Enter Stripe product ID"
-											{...field}
-										/>
+										<FieldLabel htmlFor="currency">Currency</FieldLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<SelectTrigger id="currency" className="w-full">
+												<SelectValue placeholder="Select currency" />
+											</SelectTrigger>
+											<SelectContent>
+												{CURRENCIES.map((code) => (
+													<SelectItem key={code} value={code}>
+														{code}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 										{fieldState.invalid && (
 											<FieldError errors={[fieldState.error]} />
 										)}

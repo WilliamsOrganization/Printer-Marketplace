@@ -26,13 +26,10 @@ import {
 	IconChevronRight,
 	IconChevronsLeft,
 	IconChevronsRight,
-	IconCircleCheckFilled,
 	IconDotsVertical,
 	IconGripVertical,
 	IconLayoutColumns,
-	IconLoader,
 	IconPlus,
-	IconTrendingUp,
 } from "@tabler/icons-react";
 import {
 	flexRender,
@@ -49,19 +46,12 @@ import {
 	type SortingState,
 	type VisibilityState,
 } from "@tanstack/react-table";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	ChartContainer,
-	ChartTooltip,
-	ChartTooltipContent,
-	type ChartConfig,
-} from "@/components/ui/chart";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Drawer,
@@ -90,7 +80,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import {
 	Table,
 	TableBody,
@@ -100,10 +89,13 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NumericFormat } from "react-number-format";
 import EditInventory from "./custom/dialog-popup-edit";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { InventoryItem } from "@/lib/types";
+
+const CURRENCIES = Intl.supportedValuesOf("currency");
 
 export const schema = z.object({
 	id: z.number(),
@@ -577,26 +569,6 @@ export function DataTable() {
 	);
 }
 
-const chartData = [
-	{ month: "January", desktop: 186, mobile: 80 },
-	{ month: "February", desktop: 305, mobile: 200 },
-	{ month: "March", desktop: 237, mobile: 120 },
-	{ month: "April", desktop: 73, mobile: 190 },
-	{ month: "May", desktop: 209, mobile: 130 },
-	{ month: "June", desktop: 214, mobile: 140 },
-];
-
-const chartConfig = {
-	desktop: {
-		label: "Desktop",
-		color: "var(--primary)",
-	},
-	mobile: {
-		label: "Mobile",
-		color: "var(--primary)",
-	},
-} satisfies ChartConfig;
-
 function TableCellViewer({ item }: { item: InventoryItem }) {
 	const isMobile = useIsMobile();
 
@@ -627,12 +599,41 @@ function TableCellViewer({ item }: { item: InventoryItem }) {
 						<div className="grid grid-cols-2 gap-4">
 							<div className="flex flex-col gap-3">
 								<Label htmlFor="itemCost">Price</Label>
-								<Input
+								<NumericFormat
 									id="itemCost"
-									type="number"
-									step="0.01"
 									defaultValue={item.itemCost}
+									allowNegative={false}
+									decimalScale={2}
+									fixedDecimalScale
+									customInput={Input}
 								/>
+							</div>
+							<div className="flex flex-col gap-3">
+								<Label htmlFor="quantity">Quantity</Label>
+								<NumericFormat
+									id="quantity"
+									defaultValue={item.quantity}
+									allowNegative={false}
+									decimalScale={0}
+									customInput={Input}
+								/>
+							</div>
+						</div>
+						<div className="grid grid-cols-2 gap-4">
+							<div className="flex flex-col gap-3">
+								<Label htmlFor="currency">Currency</Label>
+								<Select defaultValue={item.currency ?? "CAD"}>
+									<SelectTrigger id="currency" className="w-full">
+										<SelectValue placeholder="Select currency" />
+									</SelectTrigger>
+									<SelectContent>
+										{CURRENCIES.map((code) => (
+											<SelectItem key={code} value={code}>
+												{code}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 							</div>
 							<div className="flex flex-col gap-3">
 								<Label htmlFor="category">Category</Label>

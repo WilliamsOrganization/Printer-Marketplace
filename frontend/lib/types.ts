@@ -24,8 +24,11 @@ export interface InventoryItem {
 	itemTitle: string;
 	itemDescription: string;
 	itemCost: number;
-	imageUrl: string[];
-	stripeId: string;
+	quantity: number;
+	currency: string;
+	imageUrls: string[];
+	stripeProductId: string;
+	stripePriceId: string;
 	sale: boolean;
 	category: Category;
 	badge: ItemBadge;
@@ -44,6 +47,15 @@ export interface Cart {
 	updatedAt: string;
 	user: User;
 	items: CartItem[];
+}
+
+
+export interface StripeCatalogRequest{
+	name: string,
+	description: string,
+	unitAmount: number,
+	currency: string,
+	stockQty: number
 }
 
 export enum UserRole {
