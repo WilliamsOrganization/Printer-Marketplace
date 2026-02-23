@@ -72,7 +72,7 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 				className="w-full mt-2"
 				onClick={() => removeCartItem(cartItem.id)}
 			>
-				Delete From Cart
+				Remove From Cart
 			</Button>
 		</>
 	);

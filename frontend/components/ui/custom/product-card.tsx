@@ -28,13 +28,17 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 								{product.badge && (
 									<Badge
 										className="absolute top-2 left-2 z-10"
-										variant={product.badge === ItemBadge.SALE ? "destructive" : "secondary"}
+										variant={
+											product.badge === ItemBadge.SALE
+												? "destructive"
+												: "secondary"
+										}
 									>
 										{product.badge}
 									</Badge>
 								)}
 								<Image
-									src={product.imageUrl?.[0] || `/stock-${i+1}.jpg`}
+									src={product.imageUrl?.[0] || `/stock-${i + 1}.jpg`}
 									alt={product.itemTitle}
 									fill
 									className="object-cover group-hover:scale-105 transition-transform"
@@ -44,7 +48,10 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 						<CardFooter className="flex flex-col items-start gap-2 p-4 mt-auto pt-0">
 							<div className="flex flex-row justify-between min-w-full">
-								<motion.p layoutId={`title-${product.id}`} className="font-bold line-clamp-1">
+								<motion.p
+									layoutId={`title-${product.id}`}
+									className="font-bold line-clamp-1"
+								>
 									{product.itemTitle}
 								</motion.p>
 								<p className="font-bold">${product.itemCost.toFixed(2)}</p>
@@ -52,10 +59,14 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 							<p className="text-muted-foreground line-clamp-2">
 								{product.itemDescription}
 							</p>
-							<Button className="w-full" onClick={() => setSelected(product)}>
+							<Button
+								className="w-full"
+								onClick={() => setSelected(product)}
+								variant="outline"
+							>
 								See More
 							</Button>
-							<AddToCartButton itemId={product.id} quantity={1} />
+							<AddToCartButton item={product} quantity={1} />
 						</CardFooter>
 					</MotionCard>
 				))}
@@ -90,7 +101,11 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 									<div className="flex flex-col gap-2">
 										{selected.badge && (
 											<Badge
-												variant={selected.badge === ItemBadge.SALE ? "destructive" : "secondary"}
+												variant={
+													selected.badge === ItemBadge.SALE
+														? "destructive"
+														: "secondary"
+												}
 												className="w-fit"
 											>
 												{selected.badge}
@@ -103,7 +118,12 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 											{selected.itemTitle}
 										</motion.h2>
 									</div>
-									<Button size="icon" variant="ghost" className="shrink-0 rounded-full" onClick={() => setSelected(null)}>
+									<Button
+										size="icon"
+										variant="ghost"
+										className="shrink-0 rounded-full"
+										onClick={() => setSelected(null)}
+									>
 										<X className="size-5" />
 									</Button>
 								</div>

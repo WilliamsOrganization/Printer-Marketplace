@@ -4,12 +4,13 @@ import api from "@/lib/api";
 import { Button } from "../button";
 import { toast } from "sonner";
 import { useCart } from "@/src/context/cart-context";
+import { InventoryItem } from "@/lib/types";
 
 export function AddToCartButton({
-	itemId,
+	item,
 	quantity,
 }: {
-	itemId: number;
+	item: InventoryItem;
 	quantity: number;
 }) {
 	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
@@ -22,8 +23,7 @@ export function AddToCartButton({
 			.then((res) => {
 				toast.success("Item successfuly added to cart");
 				setCart((previous) => {
-
-					const updatedItems = (previous?.items ?? []).concat(res.data);                              
+					const updatedItems = (previous?.items ?? []).concat(res.data);
 					const updatedCart = { ...previous!, items: updatedItems };
 					return updatedCart;
 				});
@@ -42,11 +42,18 @@ export function AddToCartButton({
 		// TODO: make this dependend on cart item state. if it exists in the cart -> see in cart
 		<Button
 			size="sm"
-			variant="outline"
 			className="w-full"
-			onClick={() => addCartItem(itemId, quantity)}
+			onClick={() => {
+				if (cart?.items?.some((i) => i.item.id === item.id)) {
+					setCartDrawer(true);
+				} else {
+					addCartItem(item.id, quantity);
+				}
+			}}
 		>
-			Add to cart
+			{cart?.items?.some((i) => i.item.id === item.id)
+				? "See in cart"
+				: "Add to cart"}
 		</Button>
 	);
 }
