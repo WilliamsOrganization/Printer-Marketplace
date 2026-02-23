@@ -10,6 +10,7 @@ import { Category, CategoryLabel, InventoryItem, ItemBadge } from "@/lib/types";
 import api from "@/lib/api";
 import { AddToCartButton } from "@/components/ui/custom/add-to-cart-button";
 import { Input } from "@/components/ui/input";
+import ProductGrid from "@/components/ui/custom/product-card";
 
 // TODO: these button toggles for prices arent working
 const priceRanges = [
@@ -118,50 +119,7 @@ export default async function Home({
 						</p>
 						<SortSelect currentSort={sortBy} />
 					</div>
-
-					<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-						{filteredProducts.map((product) => (
-							<Card key={product.id} className="group overflow-hidden flex flex-col p-0">
-								<CardContent className="p-0">
-									<div className="relative aspect-square bg-muted">
-										{product.badge && (
-											<Badge
-												className="absolute top-2 left-2 z-10"
-												variant={
-													product.badge === ItemBadge.SALE
-														? "destructive"
-														: "secondary"
-												}
-											>
-												{product.badge}
-											</Badge>
-										)}
-										<Image
-											src={product.imageUrl?.[0] || "/globe.svg"}
-											alt={product.itemTitle}
-											fill
-											className="object-cover p-8 group-hover:scale-105 transition-transform"
-										/>
-									</div>
-
-								</CardContent>
-								<CardFooter className="flex flex-col items-start gap-2 p-4 mt-auto pt-0">
-
-									<div className="flex flex-row justify-between min-w-full ">
-										<p className="font-bold line-clamp-1">{product.itemTitle}</p>
-										<p className="font-bold">${product.itemCost.toFixed(2)}</p>
-									</div>
-
-									<p className="text-muted-foreground line-clamp-2">
-										{product.itemDescription}
-									</p>
-
-									<AddToCartButton itemId={product.id} quantity={1}/>
-
-								</CardFooter>
-							</Card>
-						))}
-					</div>
+						<ProductGrid products={products}/>
 
 					{filteredProducts.length === 0 && (
 						<div className="text-center py-12">

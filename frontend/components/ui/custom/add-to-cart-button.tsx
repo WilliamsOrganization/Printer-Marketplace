@@ -39,6 +39,7 @@ export function AddToCartButton({
 			});
 	};
 	return (
+		// TODO: make this dependend on cart item state. if it exists in the cart -> see in cart
 		<Button
 			size="sm"
 			className="w-full mt-2"
