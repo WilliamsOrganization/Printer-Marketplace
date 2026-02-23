@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "../button";
 import { useState } from "react";
 import { ProductCarousel } from "./product-carousel";
+import { X } from "lucide-react";
 
 const MotionCard = motion(Card);
 
@@ -65,7 +66,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 									setSelected(product);
 								}}
 							>
-								Expand Me
+								See More
 							</Button>
 							<AddToCartButton itemId={product.id} quantity={1} />
 						</CardFooter>
@@ -97,13 +98,10 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 							{/* Right — Product info */}
 							<div className="flex flex-col flex-1 p-8 gap-4 overflow-y-auto">
-								{/* Close button */}
-								<button
+								<X
 									onClick={() => setSelected(null)}
 									className="self-end text-muted-foreground hover:text-foreground transition-colors text-sm"
-								>
-									✕ Close
-								</button>
+								/>
 
 								{selected.badge && (
 									<Badge

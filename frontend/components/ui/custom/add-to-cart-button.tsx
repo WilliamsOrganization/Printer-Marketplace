@@ -42,7 +42,8 @@ export function AddToCartButton({
 		// TODO: make this dependend on cart item state. if it exists in the cart -> see in cart
 		<Button
 			size="sm"
-			className="w-full mt-2"
+			variant="outline"
+			className="w-full"
 			onClick={() => addCartItem(itemId, quantity)}
 		>
 			Add to cart
