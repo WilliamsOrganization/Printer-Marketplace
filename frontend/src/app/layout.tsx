@@ -19,8 +19,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "PrintMarket",
+	title: "PrintMarket Shop",
 	description: "Find new printables market",
+	icons: {
+		icon: "/globe.svg",
+	},
 };
 
 export default function RootLayout({
@@ -30,13 +33,15 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
-			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`} >
+			<body
+				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+			>
 				<CartProvider>
-					<Header/>
+					<Header />
 					<PromoBanner />
 					<TooltipProvider>{children}</TooltipProvider>
-					<Toaster position="top-center"/>
-					<Footer/>
+					<Toaster position="top-center" />
+					<Footer />
 				</CartProvider>
 			</body>
 		</html>
