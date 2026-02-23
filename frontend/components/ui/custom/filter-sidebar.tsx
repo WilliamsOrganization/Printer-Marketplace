@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover"
+import { ChevronDown } from "lucide-react"
 
 type Category = { id: string; label: string }
 type PriceRange = { id: string; label: string; min: number; max: number }
@@ -30,15 +36,13 @@ export function FilterSidebar({
     (key: string, value: string, checked: boolean) => {
       const params = new URLSearchParams(searchParams.toString())
       const current = params.getAll(key)
-
       if (checked) {
         params.append(key, value)
       } else {
         params.delete(key)
         current.filter(v => v !== value).forEach(v => params.append(key, v))
       }
-
-      router.push(`/?${params.toString()}`, { scroll: false })
+      router.push(`/shop?${params.toString()}`, { scroll: false })
     },
     [router, searchParams]
   )
@@ -46,70 +50,89 @@ export function FilterSidebar({
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams.toString())
     params.delete("category")
-    params.delete("price")
-    const newUrl = params.toString() ? `/?${params.toString()}` : "/"
-    router.push(newUrl, { scroll: false })
+    params.delete("itemCost")
+    router.push(`/shop?${params.toString()}`, { scroll: false })
   }
 
   const hasFilters = selectedCategories.length > 0 || selectedPriceRanges.length > 0
 
   return (
-    <div>
-      <h3 className="font-semibold mb-4">Filters</h3>
+    <div className="flex items-center gap-2 flex-wrap">
+      {/* Category filter */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1">
+            Category
+            {selectedCategories.length > 0 && (
+              <span className="ml-1 rounded-full bg-primary text-primary-foreground text-xs size-4 flex items-center justify-center">
+                {selectedCategories.length}
+              </span>
+            )}
+            <ChevronDown className="size-3 ml-1" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-3" align="start">
+          <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Category</p>
+          <div className="space-y-2">
+            {categories.map(category => (
+              <div key={category.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={category.id}
+                  checked={selectedCategories.includes(category.id)}
+                  onCheckedChange={(checked) =>
+                    updateParams("category", category.id, checked as boolean)
+                  }
+                />
+                <Label htmlFor={category.id} className="text-sm cursor-pointer">
+                  {category.label}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
 
-      {/* Categories */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium mb-3">Category</h4>
-        <div className="space-y-2">
-          {categories.map(category => (
-            <div key={category.id} className="flex items-center gap-2">
-              <Checkbox
-                id={category.id}
-                checked={selectedCategories.includes(category.id)}
-                onCheckedChange={(checked) =>
-                  updateParams("category", category.id, checked as boolean)
-                }
-              />
-              <Label htmlFor={category.id} className="text-sm cursor-pointer">
-                {category.label}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Separator className="my-4" />
-
-      {/* Price Range */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium mb-3">Price</h4>
-        <div className="space-y-2">
-          {priceRanges.map(range => (
-            <div key={range.id} className="flex items-center gap-2">
-              <Checkbox
-                id={range.id}
-                checked={selectedPriceRanges.includes(range.id)}
-                onCheckedChange={(checked) =>
-                  updateParams("price", range.id, checked as boolean)
-                }
-              />
-              <Label htmlFor={range.id} className="text-sm cursor-pointer">
-                {range.label}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Price filter */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1">
+            Price
+            {selectedPriceRanges.length > 0 && (
+              <span className="ml-1 rounded-full bg-primary text-primary-foreground text-xs size-4 flex items-center justify-center">
+                {selectedPriceRanges.length}
+              </span>
+            )}
+            <ChevronDown className="size-3 ml-1" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-3" align="start">
+          <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Price</p>
+          <div className="space-y-2">
+            {priceRanges.map(range => (
+              <div key={range.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={range.id}
+                  checked={selectedPriceRanges.includes(range.id)}
+                  onCheckedChange={(checked) =>
+                    updateParams("itemCost", range.id, checked as boolean)
+                  }
+                />
+                <Label htmlFor={range.id} className="text-sm cursor-pointer">
+                  {range.label}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
 
       {hasFilters && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={clearFilters}
-        >
-          Clear Filters
-        </Button>
+        <>
+          <Separator orientation="vertical" className="h-5" />
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear
+          </Button>
+        </>
       )}
     </div>
   )
