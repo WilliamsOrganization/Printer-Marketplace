@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Header from "@/components/ui/custom/header";
@@ -18,6 +18,12 @@ const geistMono = Geist_Mono({
 	subsets: ["latin"],
 });
 
+const playfair = Playfair_Display({
+	variable: "--font-playfair",
+	subsets: ["latin"],
+	style: ["normal", "italic"],
+});
+
 export const metadata: Metadata = {
 	title: "PrintMarket Shop",
 	description: "Find new printables market",
@@ -34,7 +40,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+				className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
 			>
 				<CartProvider>
 					<Header />

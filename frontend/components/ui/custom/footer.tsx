@@ -2,13 +2,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Github, Twitter, Instagram, Mail } from "lucide-react"
+import { Twitter, Instagram, Mail, Layers } from "lucide-react"
 
 const footerLinks = {
   shop: [
-    { label: "All Products", href: "/products" },
-    { label: "New Arrivals", href: "/new" },
-    { label: "Sale", href: "/sale" },
+    { label: "All Products", href: "/shop" },
+    { label: "New Arrivals", href: "/shop?sort=new" },
+    { label: "Sale", href: "/shop?badge=SALE" },
   ],
   company: [
     { label: "About Us", href: "/about" },
@@ -29,22 +29,33 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="w-full border-t bg-muted/40 mt-auto">
-      <div className="mx-auto max-w-7xl px-6 py-12">
-        {/* Main footer content */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
+    <footer className="w-full border-t bg-muted/20 mt-auto">
+      <div className="mx-auto max-w-7xl px-6 py-14">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-5">
           {/* Brand + Newsletter */}
-          <div className="col-span-2">
-            <h3 className="text-lg font-semibold">PrintMarket</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Quality products, delivered to your door.
-            </p>
-            <div className="mt-4">
-              <p className="text-sm font-medium">Subscribe to our newsletter</p>
-              <div className="mt-2 flex gap-2">
-                <Input placeholder="Enter your email" type="email" className="max-w-[240px]" />
-                <Button size="sm">
-                  <Mail className="mr-2 h-4 w-4" />
+          <div className="col-span-2 flex flex-col gap-5">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Layers className="size-5" />
+                <span className="font-serif text-lg italic">PrintMarket</span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+                Printed to order. Made with care. Every piece leaves our studio built to last.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-3">
+                Stay in the loop
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="your@email.com"
+                  type="email"
+                  className="max-w-[200px] text-sm"
+                />
+                <Button size="sm" variant="outline">
+                  <Mail className="size-3.5" />
                   Subscribe
                 </Button>
               </div>
@@ -53,11 +64,14 @@ export function Footer() {
 
           {/* Link columns */}
           <div>
-            <h4 className="text-sm font-semibold">Shop</h4>
-            <ul className="mt-3 space-y-2">
+            <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Shop</p>
+            <ul className="space-y-2.5">
               {footerLinks.shop.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground">
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -66,11 +80,14 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold">Company</h4>
-            <ul className="mt-3 space-y-2">
+            <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Company</p>
+            <ul className="space-y-2.5">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground">
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -79,11 +96,14 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold">Support</h4>
-            <ul className="mt-3 space-y-2">
+            <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Support</p>
+            <ul className="space-y-2.5">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground">
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -92,34 +112,33 @@ export function Footer() {
           </div>
         </div>
 
-        <Separator className="my-8" />
+        <Separator className="my-10" />
 
-        {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} PrintMarket. All rights reserved.
           </p>
 
-          {/* Social icons */}
-          <div className="flex gap-4">
-            <Button variant="ghost" size="icon" asChild>
-            </Button>
+          <div className="flex gap-2">
             <Button variant="ghost" size="icon" asChild>
               <Link href="https://twitter.com" target="_blank">
-                <Twitter className="h-4 w-4" />
+                <Twitter className="size-4" />
               </Link>
             </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link href="https://instagram.com" target="_blank">
-                <Instagram className="h-4 w-4" />
+                <Instagram className="size-4" />
               </Link>
             </Button>
           </div>
 
-          {/* Legal links */}
           <div className="flex gap-4">
             {footerLinks.legal.map((link) => (
-              <Link key={link.href} href={link.href} className="text-xs text-muted-foreground hover:text-foreground">
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
                 {link.label}
               </Link>
             ))}

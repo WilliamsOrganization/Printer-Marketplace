@@ -3,7 +3,6 @@ import { Card, CardContent, CardFooter } from "../card";
 import Image from "next/image";
 import { AddToCartButton } from "./add-to-cart-button";
 import { InventoryItem, ItemBadge } from "@/lib/types";
-import { Badge } from "../badge";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "../button";
 import { useEffect, useState } from "react";
@@ -38,17 +37,17 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 							onClick={() => setSelected(product)}
 						>
 							<div className="relative aspect-square bg-muted overflow-hidden">
+								{/* Editorial badge label */}
 								{product.badge && (
-									<Badge
-										className="absolute top-2 left-2 z-10"
-										variant={
+									<span
+										className={`absolute top-2 left-2 z-10 text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${
 											product.badge === ItemBadge.SALE
-												? "destructive"
-												: "secondary"
-										}
+												? "bg-destructive text-destructive-foreground"
+												: "bg-background/90 text-foreground"
+										}`}
 									>
 										{product.badge}
-									</Badge>
+									</span>
 								)}
 								<Image
 									src={product.imageUrl?.[0] || `/stock-${i + 1}.jpg`}
@@ -58,8 +57,8 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 								/>
 								{/* Hover overlay */}
 								<div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors duration-300 flex items-end justify-center pb-4">
-									<span className="text-white text-xs font-semibold bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-										View Details
+									<span className="font-serif italic text-white text-sm bg-black/40 backdrop-blur-sm px-4 py-1.5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+										View details
 									</span>
 								</div>
 							</div>
@@ -70,15 +69,15 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 								<div className="flex items-start justify-between gap-2">
 									<motion.p
 										layoutId={`title-${product.id}`}
-										className="font-semibold leading-snug line-clamp-1"
+										className="font-serif leading-snug line-clamp-1"
 									>
 										{product.itemTitle}
 									</motion.p>
-									<p className="font-bold text-sm shrink-0">
+									<p className="text-sm shrink-0 tabular-nums text-muted-foreground">
 										${product.itemCost.toFixed(2)}
 									</p>
 								</div>
-								<p className="text-xs text-muted-foreground mt-0.5 capitalize">
+								<p className="text-xs text-muted-foreground mt-0.5 tracking-wide uppercase">
 									{product.category.toLowerCase()}
 								</p>
 							</div>
@@ -125,37 +124,36 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 								{/* Badge + title */}
 								<div className="flex flex-col gap-2 mb-2 pr-10">
 									{selected.badge && (
-										<Badge
-											variant={
+										<span
+											className={`w-fit text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${
 												selected.badge === ItemBadge.SALE
-													? "destructive"
-													: "secondary"
-											}
-											className="w-fit"
+													? "bg-destructive text-destructive-foreground"
+													: "bg-muted text-muted-foreground"
+											}`}
 										>
 											{selected.badge}
-										</Badge>
+										</span>
 									)}
 									<motion.h2
 										layoutId={`title-${selected.id}`}
-										className="text-2xl font-bold leading-tight"
+										className="text-3xl font-serif leading-tight"
 									>
 										{selected.itemTitle}
 									</motion.h2>
-									<p className="text-sm text-muted-foreground capitalize">
+									<p className="text-xs tracking-[0.15em] uppercase text-muted-foreground">
 										{selected.category.toLowerCase()}
 									</p>
 								</div>
 
 								{/* Price */}
-								<div className="flex items-baseline gap-1 my-4">
-									<span className="text-3xl font-bold tracking-tight">
+								<div className="flex items-baseline gap-1.5 my-5">
+									<span className="text-3xl font-serif">
 										${selected.itemCost.toFixed(2)}
 									</span>
-									<span className="text-sm text-muted-foreground">CAD</span>
+									<span className="text-xs tracking-wide text-muted-foreground uppercase">CAD</span>
 								</div>
 
-								<div className="w-full h-px bg-border mb-4" />
+								<div className="w-full h-px bg-border mb-5" />
 
 								{/* Description */}
 								<motion.p

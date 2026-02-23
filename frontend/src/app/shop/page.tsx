@@ -24,7 +24,7 @@ const categoryOptions = Object.entries(CategoryLabel).map(([id, label]) => ({
 	label,
 }));
 
-export default async function Home({
+export default async function ShopPage({
 	searchParams,
 }: {
 	searchParams: Promise<SearchParams>;
@@ -91,17 +91,22 @@ export default async function Home({
 		});
 
 	return (
-		<div className="mx-auto max-w-7xl px-6 py-10">
+		<div className="mx-auto max-w-7xl px-6 pt-8 pb-12">
 			{/* Page header */}
-			<div className="mb-4">
-				<h1 className="text-3xl font-bold tracking-tight">Catalogue</h1>
-				<p className="text-muted-foreground mt-1">
-					Browse our full range of 3D printed goods.
+			<div className="mb-6 border-b pb-6">
+				<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-2">
+					3D printed goods
+				</p>
+				<h1 className="text-4xl font-serif">
+					The <span className="italic">catalogue</span>
+				</h1>
+				<p className="text-muted-foreground mt-2 leading-relaxed">
+					Everything is printed to order. Browse, filter, and find your piece.
 				</p>
 			</div>
 
 			{/* Filter + sort bar */}
-			<div className="flex items-center justify-between gap-4 mb-6">
+			<div className="flex items-center justify-between gap-4 mb-8">
 				<FilterSidebar
 					categories={categoryOptions}
 					priceRanges={priceRanges}
@@ -109,8 +114,8 @@ export default async function Home({
 					selectedPriceRanges={selectedPriceRanges}
 				/>
 				<div className="flex items-center gap-3 ml-auto">
-					<p className="text-sm text-muted-foreground whitespace-nowrap">
-						{filteredProducts.length} products
+					<p className="text-xs tracking-wide text-muted-foreground whitespace-nowrap">
+						{filteredProducts.length} {filteredProducts.length === 1 ? "piece" : "pieces"}
 					</p>
 					<SortSelect currentSort={sortBy} />
 				</div>
@@ -120,17 +125,20 @@ export default async function Home({
 			<main>
 				<ProductGrid products={filteredProducts} />
 
-					{filteredProducts.length === 0 && (
-						<div className="text-center py-12">
-							<p className="text-muted-foreground">
-								No products match your filters.
-							</p>
-							<Button variant="link" asChild>
-								<Link href="/shop">Clear filters</Link>
-							</Button>
-						</div>
-					)}
-				</main>
+				{filteredProducts.length === 0 && (
+					<div className="text-center py-20 flex flex-col items-center gap-3">
+						<p className="font-serif text-xl italic text-muted-foreground">
+							Nothing here yet.
+						</p>
+						<p className="text-sm text-muted-foreground">
+							Try adjusting your filters.
+						</p>
+						<Button variant="link" asChild>
+							<Link href="/shop">Clear filters</Link>
+						</Button>
+					</div>
+				)}
+			</main>
 		</div>
 	);
 }

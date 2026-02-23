@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Layers, ArrowRight, Package, Paintbrush, Timer } from "lucide-react";
 import apiServer from "@/lib/api-server";
@@ -56,7 +55,7 @@ export default async function Home() {
 	return (
 		<div className="flex flex-col">
 			{/* Hero */}
-			<section className="min-h-[40vh] relative flex items-center overflow-hidden">
+			<section className="min-h-[50vh] relative flex items-center overflow-hidden">
 				<div className="absolute right-0 top-0 bottom-0 w-1/2 grid grid-cols-2 grid-rows-3">
 					{galleryImages.map((src, i) => (
 						<div key={i} className="relative overflow-hidden">
@@ -65,25 +64,32 @@ export default async function Home() {
 					))}
 				</div>
 				<div className="absolute inset-0 bg-gradient-to-r from-background from-40% via-background/80 via-60% to-transparent" />
-				<div className="relative z-10 w-1/2 flex items-center justify-center py-12">
-					<div className="flex flex-col gap-4 max-w-xl px-12">
-						<Badge variant="secondary" className="w-fit px-3 py-1">
-							Made to Order · Ships in 3–5 Days
-						</Badge>
-						<h1 className="text-4xl font-bold tracking-tight leading-none">
-							Built <span className="text-primary">Layer</span> by Layer
+				<div className="relative z-10 w-1/2 flex items-center justify-center py-16">
+					<div className="flex flex-col gap-6 max-w-xl px-12">
+						<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground">
+							Made to order · Ships in 3–5 days
+						</p>
+						<h1 className="text-5xl font-serif leading-[1.15]">
+							Built,{" "}
+							<span className="italic">layer by layer.</span>
 						</h1>
 						<p className="text-base text-muted-foreground leading-relaxed">
-							Custom 3D printed goods crafted with precision. Browse our
-							catalogue or send us your own design.
+							Custom 3D printed goods crafted with care. Browse our catalogue
+							or send us your own design.
 						</p>
-						<div className="flex gap-3">
+						<div className="flex items-center gap-5">
 							<Button asChild>
 								<Link href="/shop">
 									Browse Catalogue
 									<ArrowRight className="ml-2 size-4" />
 								</Link>
 							</Button>
+							<Link
+								href="/shop"
+								className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+							>
+								Send us a design
+							</Link>
 						</div>
 					</div>
 				</div>
@@ -92,15 +98,15 @@ export default async function Home() {
 			<Separator />
 
 			{/* Featured products */}
-			<section className="max-w-7xl mx-auto px-6 py-16 w-full">
-				<div className="flex items-end justify-between mb-8">
+			<section className="max-w-7xl mx-auto px-6 py-20 w-full">
+				<div className="flex items-end justify-between mb-10">
 					<div>
-						<h2 className="text-2xl font-bold tracking-tight">Featured</h2>
-						<p className="text-muted-foreground mt-1">
-							Our most popular prints.
+						<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-2">
+							From the studio
 						</p>
+						<h2 className="text-3xl font-serif">Our bestsellers</h2>
 					</div>
-					<Button variant="outline" asChild>
+					<Button variant="ghost" asChild className="text-muted-foreground">
 						<Link href="/shop">
 							View all <ArrowRight className="ml-2 size-4" />
 						</Link>
@@ -112,34 +118,60 @@ export default async function Home() {
 			<Separator />
 
 			{/* Features */}
-			<section className="max-w-7xl mx-auto px-6 py-16 w-full">
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-					{features.map(({ icon: Icon, title, description }) => (
-						<div key={title} className="flex flex-col gap-3">
-							<div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
-								<Icon className="size-5 text-primary" />
+			<section className="max-w-7xl mx-auto px-6 py-20 w-full">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+					{/* Left — brand statement */}
+					<div className="flex flex-col gap-5">
+						<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground">
+							Our craft
+						</p>
+						<h2 className="text-4xl font-serif leading-snug">
+							Precision printing,{" "}
+							<span className="italic">made personal.</span>
+						</h2>
+						<p className="text-muted-foreground leading-relaxed max-w-sm">
+							We believe every object should feel intentional. That's why every
+							print is made to order — no inventory, no waste, just your piece,
+							made right.
+						</p>
+					</div>
+
+					{/* Right — feature grid */}
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+						{features.map(({ icon: Icon, title, description }) => (
+							<div key={title} className="flex flex-col gap-2">
+								<div className="size-8 rounded-lg bg-muted flex items-center justify-center mb-1">
+									<Icon className="size-4 text-muted-foreground" />
+								</div>
+								<h3 className="font-semibold">{title}</h3>
+								<p className="text-sm text-muted-foreground leading-relaxed">
+									{description}
+								</p>
 							</div>
-							<h3 className="font-semibold text-lg">{title}</h3>
-							<p className="text-sm text-muted-foreground leading-relaxed">
-								{description}
-							</p>
-						</div>
-					))}
+						))}
+					</div>
 				</div>
 			</section>
 
 			<Separator />
 
-			{/* CTA Banner */}
-			<section className="max-w-7xl mx-auto px-6 py-16 w-full">
-				<div className="rounded-2xl bg-primary text-primary-foreground p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-					<div>
-						<h2 className="text-2xl font-bold mb-1">Have a design in mind?</h2>
-						<p className="text-primary-foreground/80">
-							Send us your file and we'll handle the rest.
+			{/* CTA */}
+			<section className="max-w-7xl mx-auto px-6 py-20 w-full">
+				<div className="rounded-2xl border bg-muted/30 px-12 py-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+					<div className="flex flex-col gap-3">
+						<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground">
+							Custom orders
+						</p>
+						<h2 className="text-3xl font-serif">
+							Have a design{" "}
+							<span className="italic">in mind?</span>
+						</h2>
+						<p className="text-muted-foreground max-w-sm leading-relaxed">
+							Send us your file and we'll handle the rest — material selection,
+							settings, and delivery.
 						</p>
 					</div>
-					<Button size="lg" variant="secondary" asChild className="shrink-0">
+					<Button size="lg" asChild className="shrink-0">
 						<Link href="/shop">
 							Get a Quote <ArrowRight className="ml-2 size-4" />
 						</Link>

@@ -81,7 +81,7 @@ export function CartSidebarDrawer() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							<ShoppingBasket className="size-4" />
-							<DrawerTitle>Cart</DrawerTitle>
+							<DrawerTitle className="font-serif italic font-normal">Your cart</DrawerTitle>
 						</div>
 						{itemCount > 0 && (
 							<Badge variant="secondary">
@@ -110,10 +110,10 @@ export function CartSidebarDrawer() {
 								<PackageOpen className="size-7" />
 							</div>
 							<div className="text-center">
-								<p className="font-medium text-foreground text-sm">
-									Your cart is empty
+								<p className="font-serif italic text-foreground">
+									Nothing here yet.
 								</p>
-								<p className="text-xs mt-1">Add some items to get started</p>
+								<p className="text-xs mt-1 tracking-wide">Add some items to get started</p>
 							</div>
 						</div>
 					)}
@@ -195,7 +195,7 @@ function CartItemCard({
 			{/* Info */}
 			<div className="flex flex-col flex-1 min-w-0 gap-1">
 				<div className="flex items-start justify-between gap-1">
-					<p className="font-medium text-sm leading-snug line-clamp-1">
+					<p className="font-serif leading-snug line-clamp-1 text-sm">
 						{item.itemTitle}
 					</p>
 					<Button
