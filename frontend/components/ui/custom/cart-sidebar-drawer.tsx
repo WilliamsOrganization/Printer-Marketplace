@@ -24,24 +24,21 @@ import { CartItem } from "@/lib/types";
 import { useCart } from "@/src/context/cart-context";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import axios from "axios";
 
 export function CartSidebarDrawer() {
 	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
 
-	const itemCount =
-		cart?.items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
+	const itemCount = cart?.items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 	const subtotal =
-		cart?.items?.reduce(
-			(sum, i) => sum + i.quantity * i.item.itemCost,
-			0
-		) ?? 0;
+		cart?.items?.reduce((sum, i) => sum + i.quantity * i.item.itemCost, 0) ?? 0;
 
 	const handleQuantityChange = (id: number, qty: number) => {
 		if (qty < 1) return;
 		setCart((prev) => ({
 			...prev!,
 			items: prev!.items.map((i) =>
-				i.id === id ? { ...i, quantity: qty } : i
+				i.id === id ? { ...i, quantity: qty } : i,
 			),
 		}));
 		api
@@ -60,6 +57,20 @@ export function CartSidebarDrawer() {
 				}));
 			})
 			.catch(() => toast.error("Failed to remove item"));
+	};
+
+	const handleCheckout = async () => {
+		const lineItems = cart!.items.map((cartItem) => ({
+			price: cartItem.item.stripePriceId,
+			quantity: cartItem.quantity,
+		}));
+		axios.post('/checkout_sessions', { lineItems }).then((res)=>{
+			if (res?.data?.url) window.location.href= res.data.url
+		
+		}).catch((err)=>{
+			console.log("Error: " + err.message)
+			toast.error("Error has occurred")
+		})
 	};
 
 	return (
@@ -81,7 +92,9 @@ export function CartSidebarDrawer() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							<ShoppingBasket className="size-4" />
-							<DrawerTitle className="font-serif italic font-normal">Your cart</DrawerTitle>
+							<DrawerTitle className="font-serif italic font-normal">
+								Your cart
+							</DrawerTitle>
 						</div>
 						{itemCount > 0 && (
 							<Badge variant="secondary">
@@ -113,7 +126,9 @@ export function CartSidebarDrawer() {
 								<p className="font-serif italic text-foreground">
 									Nothing here yet.
 								</p>
-								<p className="text-xs mt-1 tracking-wide">Add some items to get started</p>
+								<p className="text-xs mt-1 tracking-wide">
+									Add some items to get started
+								</p>
 							</div>
 						</div>
 					)}
@@ -142,20 +157,17 @@ export function CartSidebarDrawer() {
 
 				{/* Footer */}
 				<DrawerFooter>
-					<form
-						action="/checkout_sessions"
-						method="POST"
-						className="w-full"
-					>
-						<Button
-							type="submit"
-							className="w-full"
-							disabled={!cart?.items?.length}
-						>
-							<ShoppingCart className="size-4" />
-							Checkout · ${subtotal.toFixed(2)}
-						</Button>
-					</form>
+
+				<Button
+					type="submit"
+					className="w-full"
+					disabled={!cart?.items?.length}
+					onClick={handleCheckout}
+				>
+					<ShoppingCart className="size-4" />
+					Checkout · ${subtotal.toFixed(2)}
+				</Button>
+
 					<DrawerClose asChild>
 						<Button variant="outline" className="w-full">
 							Continue Shopping
@@ -177,8 +189,7 @@ function CartItemCard({
 	onRemove: (id: number) => void;
 }) {
 	const { item, quantity } = cartItem;
-	const imageSrc =
-		item.imageUrl?.[0] ?? `/stock-${(item.id % 18) + 1}.jpg`;
+	const imageSrc = item.imageUrl?.[0] ?? `/stock-${(item.id % 18) + 1}.jpg`;
 
 	return (
 		<li className="flex items-center gap-3 rounded-xl border bg-card p-3">

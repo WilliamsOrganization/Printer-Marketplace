@@ -35,7 +35,7 @@ public class StripeCatalogService {
         PriceCreateParams priceCreateParams =
             PriceCreateParams.builder()
                 .setProduct(product.getId())
-                .setUnitAmount(req.getUnitAmount())
+                .setUnitAmount(req.getUnitAmount() * 100)
                 .setCurrency(req.getCurrency().toLowerCase())
                 .build();
 
