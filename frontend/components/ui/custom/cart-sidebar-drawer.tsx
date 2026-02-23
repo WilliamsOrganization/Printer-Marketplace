@@ -53,7 +53,7 @@ export function CartSidebarDrawer() {
 				</DrawerHeader>
 				<div className="no-scrollbar overflow-y-auto px-4">
 					<ul className="flex flex-col gap-2 h-[80vh]">
-						{cart?.items?.length !== 0 ? (
+						{(cart?.items?.length !== 0 && cart!== undefined) ? (
 							cart?.items?.map((cartItem) => (
 								<ListItem
 									key={cartItem.id}

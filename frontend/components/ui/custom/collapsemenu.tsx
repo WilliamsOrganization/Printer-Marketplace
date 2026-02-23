@@ -10,7 +10,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 export function CollapsibleBasic() {
 	return (
-		<Collapsible className="group data-[state=open]:bg-muted ">
+		<Collapsible className="group data-[state=open]:bg-muted">
 			<CollapsibleTrigger asChild>
 				<Button variant="ghost" className="w-full">
 					Product details
