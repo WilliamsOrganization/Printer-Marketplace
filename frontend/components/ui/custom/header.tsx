@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CartSidebarDrawer } from "./cart-sidebar-drawer";
-import { ChevronDown, ShoppingBag } from "lucide-react";
+import { ChevronDown, Layers } from "lucide-react";
 import Link from "next/link";
+import TypeIt  from "typeit-react"
 
 export function Header() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -22,9 +23,33 @@ export function Header() {
 			<div className="sticky top-0 w-full z-30">
 				{/* Header bar */}
 				<div className="flex items-center justify-between px-4 py-2 border-b bg-background">
-					<Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-						<ShoppingBag className="size-5" />
-						Shop
+					<Link
+						href="/"
+						className="flex items-center gap-2 font-semibold text-lg gap-2"
+					>
+
+						<Layers className="size-8" />
+						<TypeIt
+							options={{
+								loop: true,
+								speed: 50,
+								deleteSpeed: 30,
+								waitUntilVisible: true,
+							}}
+							getBeforeInit={(instance) => {
+								instance
+									.type("3D Printed Goods")
+									.pause(3000)
+									.delete()
+									.type("Custom Prints")
+									.pause(3000)
+									.delete()
+									.type("Made to Order")
+									.pause(3000)
+									.delete();
+								return instance;
+							}}
+						/>
 					</Link>
 					<div className="flex items-center gap-2">
 						<Button variant="ghost" onClick={() => setIsOpen(!isOpen)}>
@@ -45,7 +70,8 @@ export function Header() {
 						<div className="p-4">
 							<h3 className="font-semibold">Product details</h3>
 							<p className="text-sm text-muted-foreground mt-2">
-								This panel expands from the header and overlays the page content.
+								This panel expands from the header and overlays the page
+								content.
 							</p>
 							<Button size="sm" className="mt-4">
 								Learn More

@@ -37,8 +37,8 @@ export function CartSidebarDrawer() {
 	return (
 		<Drawer direction="right" open={cartDrawer} onOpenChange={setCartDrawer}>
 			<DrawerTrigger asChild>
-				<Button variant="outline">
-					<ShoppingBasket />
+				<Button variant="outline" size="icon">
+					<ShoppingBasket className="size-5"/>
 				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
