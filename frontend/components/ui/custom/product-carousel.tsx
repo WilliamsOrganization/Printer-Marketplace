@@ -11,9 +11,9 @@ import Image from "next/image";
 export function ProductCarousel({ product }: { product: InventoryItem }) {
 	return (
 		<Carousel className="w-full h-full">
-			<CarouselContent className="h-full">
+			<CarouselContent className="h-full -ml-0">
 				{Array.from({ length: 3 }).map((_, index) => (
-					<CarouselItem key={index}>
+					<CarouselItem key={index} className="pl-0">
 						<div className="relative aspect-square w-full">
 							<Image
 								src={product.imageUrl?.[index] || `/stock-${index + 1}.jpg`}

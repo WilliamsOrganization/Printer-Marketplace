@@ -6,7 +6,7 @@ import { InventoryItem, ItemBadge } from "@/lib/types";
 import { Badge } from "../badge";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "../button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductCarousel } from "./product-carousel";
 import { X } from "lucide-react";
 
@@ -14,6 +14,15 @@ const MotionCard = motion(Card);
 
 function ProductCard({ products }: { products: InventoryItem[] }) {
 	const [selected, setSelected] = useState<InventoryItem | null>(null);
+	{/* This is just for me to feel nice about escape closing all my popups and modals */}
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setSelected(null);
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, []);
+
 	return (
 		<>
 			<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
@@ -147,7 +156,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 								{/* CTA */}
 								<div className="mt-8">
-									<AddToCartButton itemId={selected.id} quantity={1} />
+									<AddToCartButton item={selected} quantity={1} />
 								</div>
 							</div>
 						</motion.div>

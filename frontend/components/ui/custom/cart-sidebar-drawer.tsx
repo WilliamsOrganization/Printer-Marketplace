@@ -27,7 +27,7 @@ import { Cart, CartItem, InventoryItem, ItemBadge, User } from "@/lib/types";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { ShoppingBasket } from "lucide-react";
+import { PackageOpen, ShoppingBasket, ShoppingCart } from "lucide-react";
 import { DeleteFromCartButton } from "./delete-from-cart-button";
 import { useCart } from "@/src/context/cart-context";
 import Link from "next/link";
@@ -52,22 +52,36 @@ export function CartSidebarDrawer() {
 					</DrawerDescription>
 				</DrawerHeader>
 				<div className="no-scrollbar overflow-y-auto px-4">
-					<ul className="flex flex-col gap-2">
-						{cart?.items?.map((cartItem) => (
-							<ListItem
-								key={cartItem.id}
-								inventoryItem={cartItem.item}
-								cartItem={cartItem}
-							>
-								{cartItem.item.itemTitle}
-							</ListItem>
-						))}
+					<ul className="flex flex-col gap-2 h-[80vh]">
+						{cart?.items?.length !== 0 ? (
+							cart?.items?.map((cartItem) => (
+								<ListItem
+									key={cartItem.id}
+									inventoryItem={cartItem.item}
+									cartItem={cartItem}
+								>
+									{cartItem.item.itemTitle}
+								</ListItem>
+							))
+						) : (
+							<div className="min-h-full min-w-full flex flex-col gap-2 justify-center items-center text-muted-foreground/60 text-xl">
+								<PackageOpen className="size-8 text-muted-foreground/60"/>
+								Your Cart is Empty
+							</div>
+						)}
 					</ul>
 				</div>
 				<DrawerFooter>
 					{/* TODO: this stripe hook is working and needs configuring to pass the price_id and quantity array */}
-					<form action="/checkout_sessions" method="POST" className="min-w-full">
-						<Button type="submit" className="min-w-full">Go to checkout</Button>
+					<form
+						action="/checkout_sessions"
+						method="POST"
+						className="min-w-full"
+					>
+						<Button type="submit" className="min-w-full">
+							<ShoppingCart/>
+							Go to checkout
+						</Button>
 					</form>
 					<DrawerClose asChild>
 						<Button variant="outline">Close</Button>
