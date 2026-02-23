@@ -7,6 +7,7 @@ import { Badge } from "../badge";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "../button";
 import { useState } from "react";
+import { ProductCarousel } from "./product-carousel";
 
 const MotionCard = motion(Card);
 
@@ -46,7 +47,12 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 						<CardFooter className="flex flex-col items-start gap-2 p-4 mt-auto pt-0">
 							<div className="flex flex-row justify-between min-w-full ">
-								<p className="font-bold line-clamp-1">{product.itemTitle}</p>
+								<motion.p
+									layoutId={`title-${product.id}`}
+									className="font-bold line-clamp-1"
+								>
+									{product.itemTitle}
+								</motion.p>
 								<p className="font-bold">${product.itemCost.toFixed(2)}</p>
 							</div>
 
@@ -54,18 +60,12 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 								{product.itemDescription}
 							</p>
 							<Button
-								asChild
+								className="w-full"
 								onClick={() => {
 									setSelected(product);
 								}}
 							>
-								<motion.div
-									key={product.id}
-									layoutId={`card-${product.id}`}
-									className="w-full"
-								>
-									Expand Me
-								</motion.div>
+								Expand Me
 							</Button>
 							<AddToCartButton itemId={product.id} quantity={1} />
 						</CardFooter>
@@ -85,16 +85,65 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 							onClick={() => setSelected(null)}
 						/>
 
-						{/* Expanded card — same layoutId as the grid card */}
+						{/* Expanded card */}
 						<motion.div
-							layoutId={`card-${selected.id}`} // ← matches grid card
-							className="fixed inset-10 z-20 bg-white rounded-2xl p-8 shadow-2xl"
+							layoutId={`card-${selected.id}`}
+							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-white rounded-2xl shadow-2xl overflow-hidden w-[800px] max-w-[90vw] max-h-[85vh] flex"
 						>
-							<motion.h2 layoutId={`title-${selected.id}`}>
-								{selected.itemTitle}
-							</motion.h2>
-							<p>{selected.itemDescription}</p>
-							<button onClick={() => setSelected(null)}>Close</button>
+							{/* Left — Carousel */}
+							<div className="w-1/2 shrink-0 bg-muted self-stretch flex items-center">
+								<ProductCarousel product={selected} />
+							</div>
+
+							{/* Right — Product info */}
+							<div className="flex flex-col flex-1 p-8 gap-4 overflow-y-auto">
+								{/* Close button */}
+								<button
+									onClick={() => setSelected(null)}
+									className="self-end text-muted-foreground hover:text-foreground transition-colors text-sm"
+								>
+									✕ Close
+								</button>
+
+								{selected.badge && (
+									<Badge
+										variant={
+											selected.badge === ItemBadge.SALE
+												? "destructive"
+												: "secondary"
+										}
+										className="w-fit"
+									>
+										{selected.badge}
+									</Badge>
+								)}
+
+								<motion.p
+									layoutId={`title-${selected.id}`}
+									className="text-2xl font-bold leading-tight"
+								>
+									{selected.itemTitle}
+								</motion.p>
+
+								<p className="text-2xl font-semibold text-primary">
+									${selected.itemCost.toFixed(2)}
+								</p>
+
+								<div className="w-12 h-px bg-border" />
+
+								<motion.p
+									initial={{ opacity: 0, y: 8 }}
+									animate={{ opacity: 1, y: 0 }}
+									exit={{ opacity: 0, y: 8 }}
+									className="text-muted-foreground leading-relaxed"
+								>
+									{selected.itemDescription}
+								</motion.p>
+
+								<div className="mt-auto pt-4 flex flex-col gap-2">
+									<AddToCartButton itemId={selected.id} quantity={1} />
+								</div>
+							</div>
 						</motion.div>
 					</>
 				)}
