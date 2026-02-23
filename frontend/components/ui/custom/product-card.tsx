@@ -30,7 +30,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 					<MotionCard
 						key={product.id}
 						layoutId={`card-${product.id}`}
-						className="group overflow-hidden flex flex-col p-0 hover:shadow-lg transition-shadow duration-200"
+						className="group overflow-hidden flex flex-col p-0 py-0 gap-0 hover:shadow-lg transition-shadow duration-200"
 					>
 						{/* Image — clicking opens modal */}
 						<CardContent
@@ -65,7 +65,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 							</div>
 						</CardContent>
 
-						<CardFooter className="flex flex-col items-start gap-3 p-4 mt-auto">
+						<CardFooter className="flex flex-col items-start gap-3 p-4">
 							<div className="w-full">
 								<div className="flex items-start justify-between gap-2">
 									<motion.p

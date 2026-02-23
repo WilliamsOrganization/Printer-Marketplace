@@ -5,6 +5,7 @@ import { Button } from "../button";
 import { toast } from "sonner";
 import { useCart } from "@/src/context/cart-context";
 import { InventoryItem } from "@/lib/types";
+import { ShoppingCart, ShoppingBasket } from "lucide-react";
 
 export function AddToCartButton({
 	item,
@@ -13,7 +14,7 @@ export function AddToCartButton({
 	item: InventoryItem;
 	quantity: number;
 }) {
-	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
+	const { cart, setCart, setCartDrawer } = useCart();
 	const addCartItem = function(id: number, quantity: number) {
 		api
 			.post("/cartitem", {
@@ -38,22 +39,26 @@ export function AddToCartButton({
 				}
 			});
 	};
+
+	const inCart = cart?.items?.some((i) => i.item.id === item.id);
+
 	return (
-		// TODO: make this dependend on cart item state. if it exists in the cart -> see in cart
 		<Button
 			size="sm"
 			className="w-full"
 			onClick={() => {
-				if (cart?.items?.some((i) => i.item.id === item.id)) {
+				if (inCart) {
 					setCartDrawer(true);
 				} else {
 					addCartItem(item.id, quantity);
 				}
 			}}
 		>
-			{cart?.items?.some((i) => i.item.id === item.id)
-				? "See in cart"
-				: "Add to cart"}
+			{inCart ? (
+				<><ShoppingBasket className="size-4" /> See in cart</>
+			) : (
+				<><ShoppingCart className="size-4" /> Add to cart</>
+			)}
 		</Button>
 	);
 }
