@@ -27,6 +27,10 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
 				{products.map((product, i) => (
 					<MotionCard
+						initial={{ opacity: 0, y: 16 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						transition={{ duration: 1.2 }}
+						viewport={{ once: true }}
 						key={product.id}
 						layoutId={`card-${product.id}`}
 						className="group overflow-hidden flex flex-col p-0 py-0 gap-0 hover:shadow-lg transition-shadow duration-200"
@@ -40,11 +44,10 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 								{/* Editorial badge label */}
 								{product.badge && (
 									<span
-										className={`absolute top-2 left-2 z-10 text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${
-											product.badge === ItemBadge.SALE
+										className={`absolute top-2 left-2 z-10 text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${product.badge === ItemBadge.SALE
 												? "bg-destructive text-destructive-foreground"
 												: "bg-background/90 text-foreground"
-										}`}
+											}`}
 									>
 										{product.badge}
 									</span>
@@ -125,11 +128,10 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 								<div className="flex flex-col gap-2 mb-2 pr-10">
 									{selected.badge && (
 										<span
-											className={`w-fit text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${
-												selected.badge === ItemBadge.SALE
+											className={`w-fit text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${selected.badge === ItemBadge.SALE
 													? "bg-destructive text-destructive-foreground"
 													: "bg-muted text-muted-foreground"
-											}`}
+												}`}
 										>
 											{selected.badge}
 										</span>
@@ -150,7 +152,9 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 									<span className="text-3xl font-serif">
 										${selected.itemCost.toFixed(2)}
 									</span>
-									<span className="text-xs tracking-wide text-muted-foreground uppercase">CAD</span>
+									<span className="text-xs tracking-wide text-muted-foreground uppercase">
+										CAD
+									</span>
 								</div>
 
 								<div className="w-full h-px bg-border mb-5" />

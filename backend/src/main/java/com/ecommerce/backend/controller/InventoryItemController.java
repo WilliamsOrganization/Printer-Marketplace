@@ -87,6 +87,7 @@ public class InventoryItemController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
+		// TODO: needs to also delete from the stripe catalog
         inventoryItemRepository.deleteById(id);
     }
     // TODO: big todo to create the upload image route for the item creation
