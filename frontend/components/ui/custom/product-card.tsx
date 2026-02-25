@@ -53,7 +53,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 									</span>
 								)}
 								<Image
-									src={product.imageUrl?.[0] || `/stock-${i + 1}.jpg`}
+									src={product.imageUrls?.[0] || `/stock-${i + 1}.jpg`}
 									alt={product.itemTitle}
 									fill
 									className="object-cover group-hover:scale-105 transition-transform duration-300"

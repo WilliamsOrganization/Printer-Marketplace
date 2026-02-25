@@ -16,7 +16,7 @@ export function ProductCarousel({ product }: { product: InventoryItem }) {
 					<CarouselItem key={index} className="pl-0">
 						<div className="relative aspect-square w-full">
 							<Image
-								src={product.imageUrl?.[index] || `/stock-${index + 1}.jpg`}
+								src={product.imageUrls?.[index] || `/stock-${index + 1}.jpg`}
 								alt={product.itemTitle}
 								fill
 								className="object-cover"

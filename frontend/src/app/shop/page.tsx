@@ -91,22 +91,22 @@ export default async function ShopPage({
 		});
 
 	return (
-		<div className="mx-auto max-w-7xl px-6 pt-8 pb-12">
+		<div className="mx-auto max-w-7xl px-4 py-4">
 			{/* Page header */}
-			<div className="mb-6 border-b pb-6">
+			<div className="border-b mb-4">
 				<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-2">
 					3D printed goods
 				</p>
-				<h1 className="text-4xl font-serif">
+				<h1 className="text-3xl font-serif">
 					The <span className="italic">catalogue</span>
 				</h1>
-				<p className="text-muted-foreground mt-2 leading-relaxed">
+				<p className="text-sm text-muted-foreground my-2 leading-relaxed">
 					Everything is printed to order. Browse, filter, and find your piece.
 				</p>
 			</div>
 
 			{/* Filter + sort bar */}
-			<div className="flex items-center justify-between gap-4 mb-8">
+			<div className="flex items-center justify-between gap-4 mb-4">
 				<FilterSidebar
 					categories={categoryOptions}
 					priceRanges={priceRanges}
