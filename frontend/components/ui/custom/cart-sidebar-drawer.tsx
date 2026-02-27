@@ -189,7 +189,7 @@ function CartItemCard({
 	onRemove: (id: number) => void;
 }) {
 	const { item, quantity } = cartItem;
-	const imageSrc = item.imageUrl?.[0] ?? `/stock-${(item.id % 18) + 1}.jpg`;
+	const imageSrc = item.imageUrls?.[0] ?? `/stock-${(item.id % 18) + 1}.jpg`;
 
 	return (
 		<li className="flex items-center gap-3 rounded-xl border bg-card p-3">

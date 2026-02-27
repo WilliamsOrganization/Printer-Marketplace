@@ -6,11 +6,12 @@ import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
 import com.stripe.exception.StripeException;
-
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +21,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+// import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 /**
  * REST controller for product inventory operations.
@@ -33,6 +39,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class InventoryItemController {
     private final StripeCatalogService stripeCatalogService;
     private final InventoryItemRepository inventoryItemRepository;
+    private final S3Client s3Client;
+
+    @Value("${aws.s3.bucket}") 
+	private String bucket;
 
     @GetMapping
     public List<InventoryItem> getAll() {
@@ -55,7 +65,9 @@ public class InventoryItemController {
             item.getCurrency(), item.getQuantity());
 
         try {
-            CreateCatalogResponse stripeResponse = stripeCatalogService.createProductAndPrice(createCatalogRequest);
+            CreateCatalogResponse stripeResponse =
+                stripeCatalogService.createProductAndPrice(
+                    createCatalogRequest);
             item.setStripePriceId(stripeResponse.stripePriceId());
             item.setStripeProductId(stripeResponse.stripeProductId());
             log.info("Stripe Item was created");
@@ -87,8 +99,34 @@ public class InventoryItemController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
-		// TODO: needs to also delete from the stripe catalog
+        // TODO: needs to also delete from the stripe catalog
         inventoryItemRepository.deleteById(id);
     }
+
     // TODO: big todo to create the upload image route for the item creation
+    @PostMapping("/images")
+    public List<String>
+    uploadImages(@RequestParam("images") List<MultipartFile> files) {
+        // TODO : set up S3 Url for images
+        return files.stream()
+            .map(file -> {
+                String key = "public/products/" + UUID.randomUUID() + "-" +
+                             file.getOriginalFilename();
+                try {
+                    s3Client.putObject(
+                        PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .contentType(file.getContentType())
+                            .build(),
+                        software.amazon.awssdk.core.sync.RequestBody.fromInputStream(file.getInputStream(),
+                                                    file.getSize()));
+                } catch (IOException e) {
+                    throw new RuntimeException(
+                        "Failed to upload " + file.getOriginalFilename(), e);
+                }
+                return "https://" + bucket + ".s3.amazonaws.com/" + key;
+            })
+            .toList();
+    }
 }

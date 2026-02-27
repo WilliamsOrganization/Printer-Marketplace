@@ -72,10 +72,30 @@ export function CreateInventoryItemForm() {
 		},
 	});
 
-	function onSubmit(data: FormValues) {
+	async function onSubmit(data: FormValues) {
 		// TODO: Upload images, then POST to /server/inventoryitem
+		const multiFormData = new FormData();
+		data.image.forEach((file) => {
+			multiFormData.append("images", file);
+		});
+
+		const res = await api
+			.post<string[]>("/inventoryitem/images", multiFormData, {
+				headers: { "Content-Type": "multipart/form-data" },
+			})
+			.catch((err) => {
+				console.log("Error uploading images");
+				toast.error("Error Uploading Images: " + err.message);
+				return null;
+			});
+		if (!res) return;
+
 		api
-			.post("/inventoryitem", data)
+			.post("/inventoryitem", {
+				...data,
+				imageUrls: res.data,
+				image: undefined,
+			})
 			.then(() => {
 				toast.success("Inventory Item Created");
 				form.reset();
