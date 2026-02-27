@@ -100,7 +100,6 @@ public class InventoryItemController {
         inventoryItemRepository.deleteById(id);
     }
 
-    // TODO: big todo to create the upload image route for the item creation
     @PostMapping("/images")
     public List<String>
     uploadImages(@RequestParam("images") List<MultipartFile> files) {

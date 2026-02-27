@@ -73,7 +73,6 @@ export function CreateInventoryItemForm() {
 	});
 
 	async function onSubmit(data: FormValues) {
-		// TODO: Upload images, then POST to /server/inventoryitem
 		const multiFormData = new FormData();
 		data.image.forEach((file) => {
 			multiFormData.append("images", file);
