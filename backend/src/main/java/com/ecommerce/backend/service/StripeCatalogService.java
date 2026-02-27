@@ -10,6 +10,9 @@ import com.stripe.model.Product;
 import com.stripe.param.PriceCreateParams;
 import com.stripe.param.ProductCreateParams;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 /**
@@ -26,6 +29,7 @@ public class StripeCatalogService {
             ProductCreateParams.builder()
                 .setName(req.getName())
                 .setDescription(req.getDescription())
+                .addAllImage(req.getImageUrls())
                 .putMetadata("source", "springboot")
                 .putMetadata("stock_qty_snapshot",
                              String.valueOf(req.getQuantity()))

@@ -8,9 +8,7 @@ import com.ecommerce.backend.service.StripeCatalogService;
 import com.stripe.exception.StripeException;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID; import lombok.RequiredArgsConstructor; import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,8 +39,7 @@ public class InventoryItemController {
     private final InventoryItemRepository inventoryItemRepository;
     private final S3Client s3Client;
 
-    @Value("${aws.s3.bucket}") 
-	private String bucket;
+    @Value("${aws.s3.bucket}") private String bucket;
 
     @GetMapping
     public List<InventoryItem> getAll() {
@@ -61,8 +58,8 @@ public class InventoryItemController {
         InventoryItem item = inventoryItemRepository.save(inventoryitem);
 
         CreateCatalogRequest createCatalogRequest = new CreateCatalogRequest(
-            item.getItemTitle(), item.getItemDescription(), item.getItemCost(),
-            item.getCurrency(), item.getQuantity());
+            item.getItemTitle(), item.getItemDescription(), List.of(item.getImageUrls()),
+            item.getItemCost(), item.getCurrency(), item.getQuantity());
 
         try {
             CreateCatalogResponse stripeResponse =
@@ -111,7 +108,7 @@ public class InventoryItemController {
         return files.stream()
             .map(file -> {
                 String key = "public/products/" + UUID.randomUUID() + "-" +
-                             file.getOriginalFilename();
+                             file.getOriginalFilename().replaceAll("\\s+", "-");
                 try {
                     s3Client.putObject(
                         PutObjectRequest.builder()
@@ -119,8 +116,9 @@ public class InventoryItemController {
                             .key(key)
                             .contentType(file.getContentType())
                             .build(),
-                        software.amazon.awssdk.core.sync.RequestBody.fromInputStream(file.getInputStream(),
-                                                    file.getSize()));
+                        software.amazon.awssdk.core.sync.RequestBody
+                            .fromInputStream(file.getInputStream(),
+                                             file.getSize()));
                 } catch (IOException e) {
                     throw new RuntimeException(
                         "Failed to upload " + file.getOriginalFilename(), e);

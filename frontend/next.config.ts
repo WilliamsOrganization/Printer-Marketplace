@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
 	images: {
 		remotePatterns: [
 			{
+				// TODO: point this properly to the .env folder
 				protocol: 'https',
 				hostname: "ecommerce-bucket-william-ewanchuk.s3.amazonaws.com",
 				pathname: "/public/**"
