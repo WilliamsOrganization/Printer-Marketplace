@@ -48,6 +48,7 @@ export default async function Success({ searchParams }) {
 						</div>
 
 						{lineItems.length > 0 && (
+// TODO: This component needs to access the Image url that we configured rather than a generic count
 							<>
 								<Separator />
 								<div className="w-full flex flex-col gap-3">
