@@ -10,7 +10,7 @@ terraform {
 
 variable "virtual_environment_endpoint" { type = string }
 variable "virtual_environment_secret" { type = string }
-variable "ssh_public_key_file" { type = string }
+variable "ssh_public_key_file" { type = string}   
 
 provider "proxmox" {
   endpoint  = var.virtual_environment_endpoint 
