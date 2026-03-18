@@ -80,3 +80,8 @@ data/
 
 /frontend/src/app/test/*
 
+terraform/.terraform/providers/registry.terraform.io/bpg/proxmox/0.98.1/linux_amd64
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
