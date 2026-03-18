@@ -10,11 +10,14 @@ terraform {
 
 variable "virtual_environment_endpoint" { type = string }
 variable "virtual_environment_secret" { type = string }
-variable "ssh_public_key_file" { type = string}   
+variable "ssh_public_key_file" { type = string}
+
 
 provider "proxmox" {
-  endpoint  = var.virtual_environment_endpoint 
+
+  endpoint  = var.virtual_environment_endpoint
   api_token = var.virtual_environment_secret
+  # TODO: configure a CI/CD pipeline simple ssh onto server git pul and docker compose up --build
   # username =  var.virtual_environment_username
   # password = var.virtual_environment_password
   insecure = true
@@ -26,7 +29,7 @@ provider "proxmox" {
 }
 
 resource "proxmox_virtual_environment_container" "debian" {
-  node_name   = "plex" # your proxmox node name
+  node_name    = "plex" # your proxmox node name
   unprivileged = true
 
   initialization {
@@ -64,3 +67,17 @@ resource "proxmox_virtual_environment_container" "debian" {
   }
 
 }
+
+# provisioner "remote-exec" {
+#   inline = [
+#     "apt-get update && apt-get install -y docker.io docker-compose-plugin git",
+#     "git clone https://github.com/ewanchukwilliam/Printer-Marketplace /app",
+#     "cd /app && docker compose up -d --build"
+#   ]
+# connection {
+# type = "ssh"
+# user = "root"
+# agent = true
+# host = "192.168.1.54"
+# }
+# }
