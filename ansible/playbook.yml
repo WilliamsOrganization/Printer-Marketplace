@@ -24,6 +24,7 @@
         repo: https://github.com/ewanchukwilliam/Printer-Marketplace.git
         dest: /app
         version: main
+        force: yes
 
     - name: install lazydocker
       shell: curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_via_script.sh | bash
