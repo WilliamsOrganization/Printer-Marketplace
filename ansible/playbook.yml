@@ -9,6 +9,7 @@
           - curl
           - vim
           - docker.io
+          - docker-compose
         state: present
         update_cache: true
 
@@ -18,17 +19,9 @@
         key: "{{ lookup('env', 'SSH_PUBLIC_KEY') }}"
         state: present
 
-    - name: copy git credentials
-      copy:
-        src: ~/.ssh/popos_desktop
-        dest: /root/.ssh/popos_desktop
-        mode: '0600'
-        
     - name: clone repo
       git:
-        repo: git@github.com:ewanchukwilliam/Printer-Marketplace.git
+        repo: https://github.com/ewanchukwilliam/Printer-Marketplace.git
         dest: /app
         version: main
-        key_file: /root/.ssh/popos_desktop
-        accept_hostkey: yes
 
