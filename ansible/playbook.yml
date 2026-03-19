@@ -27,3 +27,5 @@
 
     - name: install lazydocker
       shell: curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_via_script.sh | bash
+      args: 
+        creates: /usr/local/bin/lazydocker
