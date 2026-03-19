@@ -1,0 +1,50 @@
+name: Deply
+on:
+  push:
+    branches: [main]
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: terraform apply -auto-approve
+        env:
+          TF_VAR_virual_environment_endpoint: ${{secrets.TF_ENDPOINT}}
+          TF_VAR_virtual_environment_secret: ${{ secrets.TF_SECRET }}
+          TF_VAR_ssh_public_key_file: ${{ secrets.SSH_PUBLIC_KEY }}
+  provision:
+    needs: terraform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ansible
+        run: sudo apt-get install -y ansible
+      - name: Run Ansible
+        run: ansible-playbook -i ansible/inventory.ini ansible/playbook.yaml
+        env:
+          ANSIBLE_PRIVATE_KEY_FILE: ${{ secrets.SSH_PRIVATE_KEY }}
+  deploy:
+    needs: provision
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        uses: apployboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /app
+            git pull
+            docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
