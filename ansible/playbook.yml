@@ -15,7 +15,7 @@
     - name: copy public key
       authorized_key:
         user: root
-        key: "{{ lookup('file','~/.ssh/id_ed25519.pub')}}"
+        key: "{{ lookup('env', 'SSH_PUBLIC_KEY') }}"
         state: present
 
     - name: copy git credentials
