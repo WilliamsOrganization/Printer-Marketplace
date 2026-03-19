@@ -66,5 +66,11 @@ resource "proxmox_virtual_environment_container" "debian" {
     nesting = true
   }
 
+  mount_point{
+    path = "/data"
+    volume = "local-lvm"
+    size = "10G"
+  }
+
 }
 

@@ -8,6 +8,7 @@
           - openssh-server
           - curl
           - vim
+          - docker.io
         state: present
         update_cache: true
 
