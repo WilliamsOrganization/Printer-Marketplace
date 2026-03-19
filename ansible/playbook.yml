@@ -10,6 +10,7 @@
           - vim
           - docker.io
           - docker-compose
+          - htop
         state: present
         update_cache: true
 
@@ -27,6 +28,8 @@
         force: yes
 
     - name: install lazydocker
-      shell: curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_via_script.sh | bash
-      args: 
+      shell: |
+        curl -Lo /tmp/lazydocker.tar.gz https://github.com/jesseduffield/lazydocker/releases/latest/download/lazydocker_Linux_x86_64.tar.gz
+        tar -xf /tmp/lazydocker.tar.gz -C /usr/local/bin lazydocker
+      args:
         creates: /usr/local/bin/lazydocker
