@@ -60,7 +60,7 @@ resource "proxmox_virtual_environment_container" "debian" {
     size         = 8
   }
 
-  cpu { cores = 1 }
+  cpu { cores = 2 }
   memory { dedicated = 512 }
   features {
     nesting = true

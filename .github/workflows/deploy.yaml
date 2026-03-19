@@ -1,3 +1,6 @@
+# TODO: open outward facing port on router and configure DNS
+# TODO: configure nginx/prod/nginx.conf for production reverse proxy routing
+# TODO: migrate to Kubernetes (Talos on Proxmox) when scaling is needed
 name: Deploy
 on:
   push:
