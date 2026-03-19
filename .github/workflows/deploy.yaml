@@ -16,9 +16,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/Projects/Ecommerce/my-app/terraform
+            SSH_KEY=$(cat ~/.ssh/id_ed25519.pub | tr -d '\n')
             TF_VAR_virtual_environment_endpoint="${{ secrets.TF_ENDPOINT }}" \
             TF_VAR_virtual_environment_secret="${{ secrets.TF_SECRET }}" \
-            TF_VAR_ssh_public_key="$(cat ~/.ssh/id_ed25519.pub | tr -d '\n')" \
+            TF_VAR_ssh_public_key="$SSH_KEY" \
             terraform apply -auto-approve
 
   provision:
