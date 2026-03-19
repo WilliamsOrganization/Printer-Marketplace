@@ -55,10 +55,10 @@ jobs:
           proxy_username: ${{ secrets.DESKTOP_USER }}
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: ENV_FILE
-        env:
-          ENV_FILE: ${{ secrets.ENV_FILE }}
           script: |
-            echo "$ENV_FILE" | base64 -d > /app/.env
+            echo "$ENV_FILE" > /app/.env
             cd /app
             git pull
             docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
