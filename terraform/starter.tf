@@ -10,7 +10,7 @@ terraform {
 
 variable "virtual_environment_endpoint" { type = string }
 variable "virtual_environment_secret" { type = string }
-variable "ssh_public_key" { type = string}
+variable "ssh_public_key" { type = string }
 
 
 provider "proxmox" {
@@ -61,16 +61,15 @@ resource "proxmox_virtual_environment_container" "debian" {
   }
 
   cpu { cores = 2 }
-  memory { dedicated = 512 }
+  memory { dedicated = 2048 }
   features {
     nesting = true
   }
 
-  mount_point{
-    path = "/data"
+  mount_point {
+    path   = "/data"
     volume = "local-lvm"
-    size = "10G"
+    size   = "10G"
   }
 
 }
-
