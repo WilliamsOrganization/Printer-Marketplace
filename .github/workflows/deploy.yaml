@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Ansible
-        run: sudo apt-get install -y ansible
+        run: pip install ansible
       - name: Setup SSH Keys
         run: |
           mkdir -p ~/.ssh
@@ -54,7 +54,11 @@ jobs:
           proxy_port: 2222
           proxy_username: ${{ secrets.DESKTOP_USER }}
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: ENV_FILE
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
           script: |
+            echo "$ENV_FILE" | base64 -d > /app/.env
             cd /app
             git pull
             docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
