@@ -10,7 +10,7 @@ terraform {
 
 variable "virtual_environment_endpoint" { type = string }
 variable "virtual_environment_secret" { type = string }
-variable "ssh_public_key_file" { type = string}
+variable "ssh_public_key" { type = string}
 
 
 provider "proxmox" {
@@ -35,7 +35,7 @@ resource "proxmox_virtual_environment_container" "debian" {
   initialization {
     hostname = "debian-test"
     user_account {
-      keys = [file(var.ssh_public_key_file)]
+      keys = [var.ssh_public_key]
     }
 
     ip_config {

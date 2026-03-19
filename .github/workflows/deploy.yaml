@@ -19,7 +19,7 @@ jobs:
         env:
           TF_VAR_virtual_environment_endpoint: ${{ secrets.TF_ENDPOINT }}
           TF_VAR_virtual_environment_secret: ${{ secrets.TF_SECRET }}
-          TF_VAR_ssh_public_key_file: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
   provision:
     needs: terraform
