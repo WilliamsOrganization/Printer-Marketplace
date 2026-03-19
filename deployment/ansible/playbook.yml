@@ -1,0 +1,17 @@
+- hosts: app
+  become: true
+  tasks:
+    - name: install packages
+      apt:
+        name:
+          - git
+          - openssh-server
+          - curl
+          - vim
+        state: present
+        update_cache: true
+    - name: copy public key
+      authorized_key:
+        user: root
+        key: "{{ lookup('file','~/.ssh/id_ed25519.pub')}}"
+        state: present

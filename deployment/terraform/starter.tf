@@ -41,7 +41,7 @@ resource "proxmox_virtual_environment_container" "debian" {
     ip_config {
       ipv4 {
         address = "192.168.1.54/24"
-        gateway = "192.168.1.1"
+        gateway = "192.168.1.254"
       }
     }
   }
@@ -68,16 +68,3 @@ resource "proxmox_virtual_environment_container" "debian" {
 
 }
 
-# provisioner "remote-exec" {
-#   inline = [
-#     "apt-get update && apt-get install -y docker.io docker-compose-plugin git",
-#     "git clone https://github.com/ewanchukwilliam/Printer-Marketplace /app",
-#     "cd /app && docker compose up -d --build"
-#   ]
-# connection {
-# type = "ssh"
-# user = "root"
-# agent = true
-# host = "192.168.1.54"
-# }
-# }
