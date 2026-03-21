@@ -46,8 +46,6 @@ public class CartService {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth != null && auth.isAuthenticated() &&
 				auth.getPrincipal() instanceof Users user) {
-			// TODO: if a user exists without a cart they wont be able to create
-			// a cart. fix me pls non urgent
 			Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
 				Cart newCart = new Cart();
 				newCart.setUser(user);
