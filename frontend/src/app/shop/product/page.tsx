@@ -19,6 +19,9 @@ export default async function ShopPage() {
 				<p>
 					fix before finishing me or else you'll be annoyed :)
 				</p>
+				<p>
+					Testing build pipeline	
+				</p>
 
 			</main>
 		</div>
