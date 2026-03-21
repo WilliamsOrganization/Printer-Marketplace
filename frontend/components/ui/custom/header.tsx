@@ -11,7 +11,7 @@ export function Header() {
 		<div className="sticky top-0 w-full z-30">
 			<div className="flex items-center justify-between px-6 py-3 border-b bg-background/95 backdrop-blur-sm">
 				{/* Logo */}
-				<Link href="/" className="flex items-center gap-2.5">
+				<Link href="/shop" className="flex items-center gap-2.5">
 					<Layers className="size-5 shrink-0" />
 					<span className="font-serif italic text-lg leading-none">
 						<TypeIt
