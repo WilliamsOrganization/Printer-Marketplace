@@ -1,4 +1,6 @@
 "use client";
+// TODO **PRIORITY** product pages cannot be indexed if they arent wrapped inside a server component at runtime 
+// remove "use client" -> "user server"
 import { Card, CardContent, CardFooter } from "../card";
 import Image from "next/image";
 import { AddToCartButton } from "./add-to-cart-button";
