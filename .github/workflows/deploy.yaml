@@ -64,6 +64,6 @@ jobs:
             git pull
             docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
             # TODO: unimporant. maybe create backups later if this breaks 
-            docker system prune -a
+            docker image prune -f
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
