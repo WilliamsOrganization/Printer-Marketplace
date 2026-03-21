@@ -40,8 +40,7 @@ export function Footer() {
 								<span className="font-serif text-lg italic">PrintMarket</span>
 							</div>
 							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-								Printed to order. Made with care. Every piece leaves our studio
-								built to last.
+								Support A Small Local Canadian business!
 							</p>
 						</div>
 

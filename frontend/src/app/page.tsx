@@ -80,7 +80,7 @@ export default async function Home() {
 						<div className="flex items-center gap-5">
 							<Button asChild>
 								<Link href="/shop">
-									Browse Catalogue
+									Shop
 									<ArrowRight className="ml-2 size-4" />
 								</Link>
 							</Button>
@@ -98,13 +98,10 @@ export default async function Home() {
 			<Separator />
 
 			{/* Featured products */}
-			<section className="max-w-7xl mx-auto px-6 py-20 w-full">
+			<section className="max-w-7xl mx-auto px-6 py-12 w-full">
 				<div className="flex items-end justify-between mb-10">
 					<div>
-						<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-2">
-							From the studio
-						</p>
-						<h2 className="text-3xl font-serif">Our bestsellers</h2>
+						<h2 className="text-3xl font-serif capitalize">bestsellers</h2>
 					</div>
 					<Button variant="ghost" asChild className="text-muted-foreground">
 						<Link href="/shop">
@@ -115,48 +112,8 @@ export default async function Home() {
 				<ProductGrid products={featured} />
 			</section>
 
-			<Separator />
-
-			{/* Features */}
-			<section className="max-w-7xl mx-auto px-6 py-20 w-full">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-					{/* Left — brand statement */}
-					<div className="flex flex-col gap-5">
-						<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground">
-							Our craft
-						</p>
-						<h2 className="text-4xl font-serif leading-snug">
-							Precision printing,{" "}
-							<span className="italic">made personal.</span>
-						</h2>
-						<p className="text-muted-foreground leading-relaxed max-w-sm">
-							We believe every object should feel intentional. That's why every
-							print is made to order — no inventory, no waste, just your piece,
-							made right.
-						</p>
-					</div>
-
-					{/* Right — feature grid */}
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-						{features.map(({ icon: Icon, title, description }) => (
-							<div key={title} className="flex flex-col gap-2">
-								<div className="size-8 rounded-lg bg-muted flex items-center justify-center mb-1">
-									<Icon className="size-4 text-muted-foreground" />
-								</div>
-								<h3 className="font-semibold">{title}</h3>
-								<p className="text-sm text-muted-foreground leading-relaxed">
-									{description}
-								</p>
-							</div>
-						))}
-					</div>
-				</div>
-			</section>
-
-			<Separator />
-
 			{/* CTA */}
-			<section className="max-w-7xl mx-auto px-6 py-20 w-full">
+			<section className="max-w-7xl mx-auto px-6 py-12 w-full">
 				<div className="rounded-2xl border bg-muted/30 px-12 py-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
 					<div className="flex flex-col gap-3">
 						<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground">
