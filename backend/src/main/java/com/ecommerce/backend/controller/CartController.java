@@ -36,7 +36,7 @@ public class CartController {
     // }
 
     @GetMapping
-	@PreAuthorize("hasRole('CUSTOMER')")
+	@PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
     public Cart getOne() {
 		return cartService.getCartItems();
     }

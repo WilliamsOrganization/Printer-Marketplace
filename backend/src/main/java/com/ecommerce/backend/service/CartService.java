@@ -48,7 +48,12 @@ public class CartService {
 				auth.getPrincipal() instanceof Users user) {
 			// TODO: if a user exists without a cart they wont be able to create
 			// a cart. fix me pls non urgent
-			Cart cart = cartRepository.findByUser(user).orElseThrow();
+			Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
+				Cart newCart = new Cart();
+				newCart.setUser(user);
+				return cartRepository.save(newCart);
+			});
+
 			Optional<CartItem> existing = cartItemRepository.findByCartAndItem(cart, inventoryItem);
 			if (existing.isPresent()) {
 				throw new ResponseStatusException(HttpStatus.CONFLICT);
