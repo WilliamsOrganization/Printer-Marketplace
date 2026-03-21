@@ -12,7 +12,13 @@ export default async function ShopPage() {
 		<div className="mx-auto max-w-7xl px-4 py-4">
 			{/* Product Grid */}
 			<main className="min-h-[60vh] flex flex-col items-center justify-center">
-				welcome 
+				<p>
+					TODO: all page links to me must be wrapped in server component for SEO indexing
+				</p>
+			 
+				<p>
+					fix before finishing me or else you'll be annoyed :)
+				</p>
 
 			</main>
 		</div>
