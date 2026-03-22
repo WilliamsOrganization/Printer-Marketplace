@@ -57,7 +57,7 @@ resource "proxmox_virtual_environment_container" "debian" {
 
   disk {
     datastore_id = "local-lvm"
-    size         = 8
+    size         = 20
   }
 
   cpu { cores = 2 }
