@@ -107,5 +107,8 @@ TODOS:
 - email account verification path through SMTP
 - add color configuration for the itemsf for Amy
 - Customer support contact (maybe websocker or direct email for now to keep it simple)
+- partition server ubuntu proxmox provisioned server into staging and production (prod gets nginx configured firewall protected path)
+- auto generate longterm disc drive backups cron jobs onto the HD drives
+- configure secondary Nginx route (routes based on destination url) requires the fancy firewall protections you configured. 
 
 MIT
