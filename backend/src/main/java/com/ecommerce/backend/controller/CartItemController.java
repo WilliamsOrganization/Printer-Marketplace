@@ -62,7 +62,7 @@ public class CartItemController {
 
 
 	@PutMapping("/quantity/{id}")
-	@PreAuthorize("hasRole('CUSTOMER')")
+	@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
 		public CartItem updateCartItemQuantity(@PathVariable Long id, @RequestBody Integer quantity) {
 			CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
 			cartItem.setQuantity(quantity);
@@ -70,7 +70,7 @@ public class CartItemController {
 		}
 
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasRole('CUSTOMER')")
+	@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
 	@Transactional
 	public void deleteCartItem(@PathVariable Long id) {
 			cartService.deleteCartItem(id);
