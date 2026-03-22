@@ -60,6 +60,7 @@ export function CartSidebarDrawer() {
 	};
 
 	const handleCheckout = async () => {
+		// TODO: Add a checkout email gate to verify existing accounts page before the stripe redirect
 		const lineItems = cart!.items.map((cartItem) => ({
 			price: cartItem.item.stripePriceId,
 			quantity: cartItem.quantity,
@@ -162,7 +163,7 @@ export function CartSidebarDrawer() {
 					type="submit"
 					className="w-full"
 					disabled={!cart?.items?.length}
-					onClick={handleCheckout}
+					onClick={handleCheckout }
 				>
 					<ShoppingCart className="size-4" />
 					Checkout · ${subtotal.toFixed(2)}
