@@ -6,7 +6,7 @@ import Header from "@/components/ui/custom/header";
 import Footer from "@/components/ui/custom/footer";
 import { PromoBanner } from "@/components/ui/custom/promo-banner";
 import { Toaster } from "sonner";
-import { CartProvider } from "../context/cart-context";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -42,13 +42,13 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
 			>
-				<CartProvider>
+				<Providers>
 					<Header />
 					<PromoBanner />
 					<TooltipProvider>{children}</TooltipProvider>
 					<Toaster position="top-center" />
 					<Footer />
-				</CartProvider>
+				</Providers>
 			</body>
 		</html>
 	);

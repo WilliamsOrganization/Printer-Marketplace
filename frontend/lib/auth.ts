@@ -2,8 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
-import z, { email } from "zod";
-import { AuthResponse } from "./types";
+import z from "zod";
 
 const AuthResponseSchema = z.object({
 	sessionToken: z.string(),
@@ -43,6 +42,21 @@ export const authOptions: NextAuthOptions = {
 				};
 			},
 		}),
+		CredentialsProvider({
+			id: "guest",
+			name: "Guest",
+			credentials: {
+				sessionToken: { type: "text" },
+			},
+			async authorize(credentials) {
+				if (!credentials?.sessionToken) return null;
+				return {
+					id: "guest",
+					backendToken: credentials.sessionToken,
+				}
+			}
+		})
+		,
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID!,
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -57,7 +71,7 @@ export const authOptions: NextAuthOptions = {
 	},
 	callbacks: {
 		async signIn({ user, account, profile }) {
-			if (account?.provider == "google" || account?.provider == "apple") {
+			if (account?.provider === "google" || account?.provider === "apple") {
 				// TODO: finish auth login route
 				const res = await fetch(`${BACKEND_URL}/server/auth/login`, {
 					method: "POST",
@@ -80,6 +94,8 @@ export const authOptions: NextAuthOptions = {
 				user.id = String( parsed.data.userId );
 				return true;
 			}
+			if(account?.provider==="guest")return true;
+			if(account?.provider==="credentials")return true;
 			return false;
 		},
 		async jwt({ token, user }) {
@@ -93,7 +109,7 @@ export const authOptions: NextAuthOptions = {
 		async session({ session, token }) {
 			if (session.user) {
 				session.backendToken = token.backendToken as string
-				session.user.id =token.userId as string
+				session.user.id = token.userId as string
 			};
 			return session;
 		},

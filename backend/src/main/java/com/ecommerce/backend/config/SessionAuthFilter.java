@@ -3,11 +3,9 @@ package com.ecommerce.backend.config;
 import com.ecommerce.backend.service.AuthService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -38,16 +36,6 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 		if (authHeader != null && authHeader.startsWith("Bearer ")){
 			return authHeader.substring(7);
 		}
-		return getCookieValue(request, "session_token");
-	}
-
-	private String getCookieValue(HttpServletRequest request, String name) {
-		if (request.getCookies() == null)
-			return null;
-		return Arrays.stream(request.getCookies())
-				.filter(c -> c.getName().equals(name))
-				.map(Cookie::getValue)
-				.findFirst()
-				.orElse(null);
+		return null;
 	}
 }

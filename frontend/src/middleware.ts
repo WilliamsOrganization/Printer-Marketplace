@@ -8,11 +8,17 @@ export async function middleware(req: NextRequest) {
 	const isDashboard = req.nextUrl.pathname.startsWith("/admin/dashboard");
 
 	if (isLoginPage && token) {
-		return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+		const res = await fetch(`${process.env.SPRINGBOOT_BACKEND_URL}/server/auth/verify-admin`, {
+			headers: { Authorization: `Bearer ${token?.backendToken}` }
+		})
+		if (res.ok) return NextResponse.redirect(new URL("/admin/dashboard", req.url))
 	}
 
-	if (isDashboard && !token) {
-		return NextResponse.redirect(new URL("/admin", req.url));
+	if (isDashboard) {
+		const res = await fetch(`${process.env.SPRINGBOOT_BACKEND_URL}/server/auth/verify-admin`, {
+			headers: { Authorization: `Bearer ${token?.backendToken}` }
+		})
+		if (!res.ok) return NextResponse.redirect(new URL("/admin", req.url))
 	}
 }
 

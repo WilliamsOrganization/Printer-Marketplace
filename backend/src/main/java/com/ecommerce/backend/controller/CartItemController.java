@@ -5,10 +5,7 @@ import com.ecommerce.backend.dto.AddCartItemResponse;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.service.CartService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
-
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +14,10 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PutMapping;
-
 
 /**
  * REST controller for cart item operations.
@@ -45,37 +41,24 @@ public class CartItemController {
 	}
 
 	@PostMapping
-	public CartItem create(@RequestBody AddCartItemRequest request,
-			HttpServletResponse response) {
+	public AddCartItemResponse create(@RequestBody AddCartItemRequest request) {
 		AddCartItemResponse result = cartService.createCartItem(request);
-		if (result.getSessionToken() != null) {
-			// TODO: I think this is where the bug is for partitioning the logged in vs not logged in states
-			Cookie cookie = new Cookie("session_token", result.getSessionToken());
-			cookie.setHttpOnly(true);
-			cookie.setPath("/");
-			cookie.setMaxAge(30 * 24 * 60 * 60);
-			response.addCookie(cookie);
-		} else {
-			log.info("No Session token was created or assigned");
-		}
-		return result.getCartItem();
+		return result;
 	}
-
 
 	@PutMapping("/quantity/{id}")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-		public CartItem updateCartItemQuantity(@PathVariable Long id, @RequestBody Integer quantity) {
-			CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
-			cartItem.setQuantity(quantity);
-			return cartItemRepository.save(cartItem);
-		}
+	public CartItem updateCartItemQuantity(@PathVariable Long id,
+			@RequestBody Integer quantity) {
+		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
+		cartItem.setQuantity(quantity);
+		return cartItemRepository.save(cartItem);
+	}
 
 	@DeleteMapping("/{id}")
 	@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
 	@Transactional
 	public void deleteCartItem(@PathVariable Long id) {
-			cartService.deleteCartItem(id);
+		cartService.deleteCartItem(id);
 	}
-
-
 }

@@ -1,6 +1,7 @@
 "use client"
 import api from "@/lib/api";
 import { Cart } from "@/lib/types";
+import { useSession } from "next-auth/react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type CartContextType = {
@@ -16,8 +17,11 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
 	const [cart, setCart] = useState<Cart | undefined>();
 	const [cartDrawer, setCartDrawer] = useState<boolean>(false);
+	const { data: session } = useSession();
+
 
 	useEffect(() => {
+		if (!session?.backendToken) return;
 		api
 			.get("/cart")
 			.then((res) => {
@@ -27,7 +31,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 			.catch((err) => {
 				console.log("failed to fetch cart with context");
 			});
-	}, []);
+	}, [session]);
 	return (
 		<CartContext.Provider value={{ cart, setCart, cartDrawer, setCartDrawer }}>{children}</CartContext.Provider>
 	);
