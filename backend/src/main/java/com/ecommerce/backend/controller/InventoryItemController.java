@@ -100,6 +100,7 @@ public class InventoryItemController {
         inventoryItemRepository.deleteById(id);
     }
 
+	// TODO: this shouldnt be hit when no images are attached.
     @PostMapping("/images")
     public List<String>
     uploadImages(@RequestParam("images") List<MultipartFile> files) {

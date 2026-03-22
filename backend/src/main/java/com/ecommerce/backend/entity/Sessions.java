@@ -10,6 +10,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Data;
@@ -20,7 +22,7 @@ import org.hibernate.annotations.CreationTimestamp;
  */
 @Data
 @Entity
-@Table(name = "session")
+@Table(name = "session", uniqueConstraints = @UniqueConstraint(columnNames="user_id"))
 public class Sessions {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

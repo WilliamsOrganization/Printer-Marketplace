@@ -11,16 +11,12 @@ import com.ecommerce.backend.exception.UserNotFoundException;
 import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,55 +29,68 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final UserRepository userRepository;
-    private final SessionRepository sessionRepository;
-    private final CartRepository cartRepository;
+	private final UserRepository userRepository;
+	private final SessionRepository sessionRepository;
+	private final CartRepository cartRepository;
 
-	public Optional<Authentication> authenticateFromToken(String token){
-		if(token ==null) return Optional.empty();
+	public Optional<Authentication> authenticateFromToken(String token) {
+		if (token == null)
+			return Optional.empty();
 		Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
-		
-		if (sessionOpt.isEmpty() || sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+
+		if (sessionOpt.isEmpty() ||
+				sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
 			return Optional.empty();
 		}
 		Users user = sessionOpt.get().getUser();
 		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-		authorities.add(new SimpleGrantedAuthority("ROLE_"+ user.getUserRole().name()));
+		authorities.add(
+				new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name()));
 		if (Boolean.TRUE.equals(user.getIsAdmin())) {
 			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 		}
-		return Optional.of(new UsernamePasswordAuthenticationToken(user, null, authorities));
+		return Optional.of(
+				new UsernamePasswordAuthenticationToken(user, null, authorities));
 	}
 
-    public AuthResponse handleLogin(LoginRequest request) {
-        Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(()->new UserNotFoundException("User does not exist"));
+	public AuthResponse handleLogin(LoginRequest request) {
+		Users user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(
+						() -> new UserNotFoundException("User does not exist"));
 		Sessions session = sessionCreate(user, request);
-        return new AuthResponse(session.getToken(), user.getId());
-    }
+		return new AuthResponse(session.getToken(), user.getId());
+	}
 
 	public AuthResponse handlePasswordLogin(LoginRequest request) {
-        Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(()->new UserNotFoundException("User does not exist"));
-		// this exists if the user logged in previously through oauth and hasn't set a password
-		if(user.getPassword()==null) throw new InvalidCredentials("Invalid Email Or Password");
+		Users user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(
+						() -> new UserNotFoundException("User does not exist"));
+		// this exists if the user logged in previously through oauth and hasn't
+		// set a password
+		if (user.getPassword() == null)
+			throw new InvalidCredentials("Invalid Email Or Password");
 		// TODO: requires email authentication layer ie copy past password
 
 		Sessions session = sessionCreate(user, request);
-        return new AuthResponse(session.getToken(), user.getId());
-    }
+		return new AuthResponse(session.getToken(), user.getId());
+	}
 
-    private Users createUser(LoginRequest request) {
-        Users user = new Users();
-        user.setEmail(request.getEmail());
-        user.setUserRole(Role.CUSTOMER);
-        user.setIsAdmin(false);
-        return userRepository.save(user);
-    }
+	private Users createUser(LoginRequest request) {
+		Users user = new Users();
+		user.setEmail(request.getEmail());
+		user.setUserRole(Role.CUSTOMER);
+		user.setIsAdmin(false);
+		return userRepository.save(user);
+	}
 
-    private Sessions sessionCreate(Users user, LoginRequest request) {
-        Sessions session = new Sessions();
-        session.setUser(user);
-        session.setExpiresAt(LocalDateTime.now().plusDays(30));
-		session.setProviderAccountID(request.getProviderAccountID());
-        return sessionRepository.save(session);
-    }
+	private Sessions sessionCreate(Users user, LoginRequest request) {
+		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
+			Sessions sessionNew = new Sessions();
+			sessionNew.setUser(user);
+			sessionNew.setExpiresAt(LocalDateTime.now().plusDays(30));
+			sessionNew.setProviderAccountID(request.getProviderAccountID());
+			return sessionNew;
+		});
+		return sessionRepository.save(session);
+	}
 }

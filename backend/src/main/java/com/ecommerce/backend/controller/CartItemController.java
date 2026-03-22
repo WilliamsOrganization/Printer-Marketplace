@@ -49,6 +49,7 @@ public class CartItemController {
 			HttpServletResponse response) {
 		AddCartItemResponse result = cartService.createCartItem(request);
 		if (result.getSessionToken() != null) {
+			// TODO: I think this is where the bug is for partitioning the logged in vs not logged in states
 			Cookie cookie = new Cookie("session_token", result.getSessionToken());
 			cookie.setHttpOnly(true);
 			cookie.setPath("/");
