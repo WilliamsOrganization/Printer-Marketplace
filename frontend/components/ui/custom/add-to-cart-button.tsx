@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useCart } from "@/src/context/cart-context";
 import { InventoryItem } from "@/lib/types";
 import { ShoppingCart, ShoppingBasket } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 export function AddToCartButton({
 	item,
@@ -16,6 +16,7 @@ export function AddToCartButton({
 	quantity: number;
 }) {
 	const { cart, setCart, setCartDrawer } = useCart();
+	const {data: session} = useSession();
 	const addCartItem = function(id: number, quantity: number) {
 		api
 			.post("/cartitem", {
@@ -24,7 +25,7 @@ export function AddToCartButton({
 			})
 			.then((res) => {
 				toast.success("Item successfuly added to cart");
-				if (res.data.sessionToken) {
+				if (res.data.sessionToken && !session) {
 					signIn("guest", { sessionToken: res.data.sessionToken, redirect: false });
 				}
 				setCart((previous) => {
