@@ -102,4 +102,10 @@ docker compose exec postgres psql -U $DB_USER -d $DB_NAME
 
 ## License
 
+TODOS:
+- add long term account persistence and pre string email gateway for checkout (not a hard login unless email exists)
+- email account verification path through SMTP
+- add color configuration for the itemsf for Amy
+- Customer support contact (maybe websocker or direct email for now to keep it simple)
+
 MIT
