@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import api from "@/lib/api"
+import { useDashboard } from "@/src/context/dashboard-context"
+
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import {
@@ -42,26 +43,21 @@ const chartConfig = {
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
+  const { sessionDates } = useDashboard()
   const [timeRange, setTimeRange] = React.useState("90d")
-  const [chartData, setChartData] = React.useState<{ date: string; sessions: number }[]>([])
 
   React.useEffect(() => {
     if (isMobile) setTimeRange("7d")
   }, [isMobile])
 
-  React.useEffect(() => {
-    api.get("/session/dates").then((res) => {
-      const counts: Record<string, number> = {}
-      res.data.forEach((ts: string) => {
-        const date = ts.split("T")[0]
-        counts[date] = (counts[date] ?? 0) + 1
-      })
-      const data = Object.entries(counts)
-        .map(([date, sessions]) => ({ date, sessions }))
-        .sort((a, b) => a.date.localeCompare(b.date))
-      setChartData(data)
-    })
-  }, [])
+  const counts: Record<string, number> = {}
+  sessionDates.forEach((ts: string) => {
+    const date = ts.split("T")[0]
+    counts[date] = (counts[date] ?? 0) + 1
+  })
+  const chartData = Object.entries(counts)
+    .map(([date, sessions]) => ({ date, sessions }))
+    .sort((a, b) => a.date.localeCompare(b.date))
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date)
