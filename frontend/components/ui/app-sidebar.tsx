@@ -11,18 +11,19 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
-  IconInnerShadowTop,
   IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react"
+import { Layers } from "lucide-react"
 
 import { NavDocuments } from "@/components/ui/nav-documents"
 import { NavMain } from "@/components/ui/nav-main"
 import { NavSecondary } from "@/components/ui/nav-secondary"
 import { NavUser } from "@/components/ui/nav-user"
+import { useSession } from "next-auth/react"
 import {
   Sidebar,
   SidebarContent,
@@ -151,6 +152,13 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: session } = useSession()
+  const user = {
+    name: session?.user?.name ?? "Admin",
+    email: session?.user?.email ?? "",
+    avatar: session?.user?.image ?? "",
+  }
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -161,8 +169,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <Layers className="!size-5" />
+                <span className="text-base font-semibold">PrintMarket</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -174,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )
