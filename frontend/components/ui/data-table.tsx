@@ -180,8 +180,11 @@ export function DataTable() {
 		api
 			.delete(`/inventoryitem/${id}`)
 			.then((res) => {
-				console.log("successfully deleted item" + res.data);
-				toast.success("Successfully deleted inventory item");
+				if (res.data === "archived") {
+					toast.warning("Item has prior orders and could not be fully deleted — it has been archived in Stripe.");
+				} else {
+					toast.success("Successfully deleted inventory item");
+				}
 				setInventory((prev) => prev.filter((item) => item.id !== id));
 			})
 			.catch((err) => {
@@ -285,9 +288,18 @@ export function DataTable() {
 							<span className="sr-only">Open menu</span>
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-32">
+					<DropdownMenuContent align="end" className="w-40">
 						<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
 							<EditInventory item={row.original} />
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild>
+							<a
+								href={`https://dashboard.stripe.com/${process.env.NEXT_PUBLIC_STRIPE_ACCOUNT_ID}/test/products/${row.original.stripeProductId}`}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								View in Stripe
+							</a>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem

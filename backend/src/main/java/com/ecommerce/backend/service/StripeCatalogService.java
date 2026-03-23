@@ -8,45 +8,60 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Price;
 import com.stripe.model.Product;
 import com.stripe.param.PriceCreateParams;
+import com.stripe.param.PriceListParams;
+import com.stripe.param.PriceUpdateParams;
 import com.stripe.param.ProductCreateParams;
-import lombok.RequiredArgsConstructor;
-
+import com.stripe.param.ProductUpdateParams;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
  * StripeCatalogService
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StripeCatalogService {
-    private final InventoryItemRepository inventoryItemRepository;
+	private final InventoryItemRepository inventoryItemRepository;
 
-    public CreateCatalogResponse createProductAndPrice(CreateCatalogRequest req)
-        throws StripeException {
-        ProductCreateParams productCreateParams =
-            ProductCreateParams.builder()
-                .setName(req.getName())
-                .setDescription(req.getDescription())
-                .addAllImage(req.getImageUrls())
-                .putMetadata("source", "springboot")
-                .putMetadata("stock_qty_snapshot",
-                             String.valueOf(req.getQuantity()))
-                .build();
-        Product product = Product.create(productCreateParams);
+	public CreateCatalogResponse createProductAndPrice(CreateCatalogRequest req)
+			throws StripeException {
+		ProductCreateParams productCreateParams = ProductCreateParams.builder()
+				.setName(req.getName())
+				.setDescription(req.getDescription())
+				.addAllImage(req.getImageUrls())
+				.putMetadata("source", "springboot")
+				.putMetadata("stock_qty_snapshot",
+						String.valueOf(req.getQuantity()))
+				.build();
+		Product product = Product.create(productCreateParams);
 
-        PriceCreateParams priceCreateParams =
-            PriceCreateParams.builder()
-                .setProduct(product.getId())
-                .setUnitAmount(req.getUnitAmount() * 100)
-                .setCurrency(req.getCurrency().toLowerCase())
-                .build();
+		PriceCreateParams priceCreateParams = PriceCreateParams.builder()
+				.setProduct(product.getId())
+				.setUnitAmount(req.getUnitAmount() * 100)
+				.setCurrency(req.getCurrency().toLowerCase())
+				.build();
 
-        Price price = Price.create(priceCreateParams);
+		Price price = Price.create(priceCreateParams);
 
-        return new CreateCatalogResponse(
-            product.getId(), price.getId(), product.getName(),
-            price.getUnitAmount(), price.getCurrency());
-    }
+		return new CreateCatalogResponse(
+				product.getId(), price.getId(), product.getName(),
+				price.getUnitAmount(), price.getCurrency());
+	}
+
+	public Product deleteProduct(String id) throws StripeException {
+		Product resource = Product.retrieve(id);
+		try {
+			return resource.delete();
+		} catch (StripeException e) {
+			log.warn("Could not delete product {}, archiving instead: {}", id, e.getMessage());
+			PriceListParams priceListParams = PriceListParams.builder().setProduct(id).build();
+			for (Price price : Price.list(priceListParams).getData()) {
+				Price.retrieve(price.getId()).update(PriceUpdateParams.builder().setActive(false).build());
+			}
+			return resource.update(ProductUpdateParams.builder().setActive(false).build());
+		}
+	}
 }

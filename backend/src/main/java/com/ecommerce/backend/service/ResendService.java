@@ -22,7 +22,7 @@ public class ResendService {
 	@Value("${resend.email_from}")
 	private String from;
 
-	// TODO: fix me for later to have 3 emailing endpoints for users table and order confirmation tables
+	// TODO: DELETE ME FOR LATER
 	public void testEmailEndpoint(String toEmail, String body) {
 		CreateEmailOptions params = CreateEmailOptions.builder()
 				.from("Support@printmarket.ca")

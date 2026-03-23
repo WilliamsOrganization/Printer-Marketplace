@@ -13,6 +13,8 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 /**
@@ -40,6 +42,7 @@ public class CartItem {
 
 	@ManyToOne
 	@JoinColumn(name = "item_id")
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private InventoryItem item;
 
 	private Integer quantity;

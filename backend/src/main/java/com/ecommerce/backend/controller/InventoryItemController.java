@@ -6,10 +6,14 @@ import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Product;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID; import lombok.RequiredArgsConstructor; import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,96 +39,112 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @RequestMapping("/server/inventoryitem")
 @RequiredArgsConstructor
 public class InventoryItemController {
-    private final StripeCatalogService stripeCatalogService;
-    private final InventoryItemRepository inventoryItemRepository;
-    private final S3Client s3Client;
+	private final StripeCatalogService stripeCatalogService;
+	private final InventoryItemRepository inventoryItemRepository;
+	private final S3Client s3Client;
 
-    @Value("${aws.s3.bucket}") private String bucket;
+	@Value("${aws.s3.bucket}")
+	private String bucket;
 
-    @GetMapping
-    public List<InventoryItem> getAll() {
-        return inventoryItemRepository.findAll(
-            Sort.by(Sort.Direction.ASC, "id"));
-    }
+	@GetMapping
+	public List<InventoryItem> getAll() {
+		return inventoryItemRepository.findAll(
+				Sort.by(Sort.Direction.ASC, "id"));
+	}
 
-    @GetMapping("/{id}")
-    public InventoryItem getOne(@PathVariable Long id) {
-        return inventoryItemRepository.findById(id).orElseThrow();
-    }
+	@GetMapping("/{id}")
+	public InventoryItem getOne(@PathVariable Long id) {
+		return inventoryItemRepository.findById(id).orElseThrow();
+	}
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public InventoryItem create(@RequestBody InventoryItem inventoryitem) {
-        InventoryItem item = inventoryItemRepository.save(inventoryitem);
+	@PostMapping
+	@PreAuthorize("hasRole('ADMIN')")
+	public InventoryItem create(@RequestBody InventoryItem inventoryitem) {
+		InventoryItem item = inventoryItemRepository.save(inventoryitem);
 
-        CreateCatalogRequest createCatalogRequest = new CreateCatalogRequest(
-            item.getItemTitle(), item.getItemDescription(), List.of(item.getImageUrls()),
-            item.getItemCost(), item.getCurrency(), item.getQuantity());
+		CreateCatalogRequest createCatalogRequest = new CreateCatalogRequest(
+				item.getItemTitle(), item.getItemDescription(),
+				List.of(item.getImageUrls()), item.getItemCost(),
+				item.getCurrency(), item.getQuantity());
 
-        try {
-            CreateCatalogResponse stripeResponse =
-                stripeCatalogService.createProductAndPrice(
-                    createCatalogRequest);
-            item.setStripePriceId(stripeResponse.stripePriceId());
-            item.setStripeProductId(stripeResponse.stripeProductId());
-            log.info("Stripe Item was created");
-            return inventoryItemRepository.save(item);
-        } catch (StripeException e) {
-            log.error("Stripe Item was not created: " + e.getMessage());
-        }
-        return item;
-    }
+		try {
+			CreateCatalogResponse stripeResponse = stripeCatalogService.createProductAndPrice(
+					createCatalogRequest);
+			item.setStripePriceId(stripeResponse.stripePriceId());
+			item.setStripeProductId(stripeResponse.stripeProductId());
+			log.info("Stripe Item was created");
+			return inventoryItemRepository.save(item);
+		} catch (StripeException e) {
+			log.error("Stripe Item was not created: " + e.getMessage());
+		}
+		return item;
+	}
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public InventoryItem update(@PathVariable Long id,
-                                @RequestBody InventoryItem updated) {
-        InventoryItem existing =
-            inventoryItemRepository.findById(id).orElseThrow();
-        existing.setItemTitle(updated.getItemTitle());
-        existing.setItemDescription(updated.getItemDescription());
-        existing.setItemCost(updated.getItemCost());
-        existing.setImageUrls(updated.getImageUrls());
-        existing.setQuantity(updated.getQuantity());
-        existing.setCurrency(updated.getCurrency());
-        existing.setCategory(updated.getCategory());
-        existing.setBadge(updated.getBadge());
-        existing.setSale(updated.getSale());
-        return inventoryItemRepository.save(existing);
-    }
+	@PutMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public InventoryItem update(@PathVariable Long id,
+			@RequestBody InventoryItem updated) {
+		InventoryItem existing = inventoryItemRepository.findById(id).orElseThrow();
+		existing.setItemTitle(updated.getItemTitle());
+		existing.setItemDescription(updated.getItemDescription());
+		existing.setItemCost(updated.getItemCost());
+		existing.setImageUrls(updated.getImageUrls());
+		existing.setQuantity(updated.getQuantity());
+		existing.setCurrency(updated.getCurrency());
+		existing.setCategory(updated.getCategory());
+		existing.setBadge(updated.getBadge());
+		existing.setSale(updated.getSale());
+		return inventoryItemRepository.save(existing);
+	}
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void delete(@PathVariable Long id) {
-        // TODO: needs to also delete from the stripe catalog
-        inventoryItemRepository.deleteById(id);
-    }
+	@DeleteMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<String> delete(@PathVariable Long id) {
+		InventoryItem item = inventoryItemRepository.findById(id).orElse(null);
+		if (item == null) {
+			log.warn("Delete requested for non-existent item id: {}", id);
+			return ResponseEntity.notFound().build();
+		}
+		try {
+			Product product = stripeCatalogService.deleteProduct(item.getStripeProductId());
+			if (Boolean.FALSE.equals(product.getActive())) {
+				log.info("Stripe product {} archived (has prior prices)", product.getId());
+				inventoryItemRepository.deleteById(id);
+				return ResponseEntity.ok("archived");
+			}
+			log.info("Stripe product {} deleted", product.getId());
+			inventoryItemRepository.deleteById(id);
+			return ResponseEntity.ok("deleted");
+		} catch (StripeException e) {
+			log.error("Stripe failed to delete item {}: {}", item.getStripeProductId(), e.getMessage());
+			return ResponseEntity.internalServerError().body("stripe_error");
+		}
+	}
 
 	// TODO: this shouldnt be hit when no images are attached.
-    @PostMapping("/images")
-    public List<String>
-    uploadImages(@RequestParam("images") List<MultipartFile> files) {
-        // TODO : set up S3 Url for images
-        return files.stream()
-            .map(file -> {
-                String key = "public/products/" + UUID.randomUUID() + "-" +
-                             file.getOriginalFilename().replaceAll("\\s+", "-");
-                try {
-                    s3Client.putObject(
-                        PutObjectRequest.builder()
-                            .bucket(bucket)
-                            .key(key)
-                            .contentType(file.getContentType())
-                            .build(),
-                        software.amazon.awssdk.core.sync.RequestBody
-                            .fromInputStream(file.getInputStream(),
-                                             file.getSize()));
-                } catch (IOException e) {
-                    throw new RuntimeException(
-                        "Failed to upload " + file.getOriginalFilename(), e);
-                }
-                return "https://" + bucket + ".s3.amazonaws.com/" + key;
-            })
-            .toList();
-    }
+	@PostMapping("/images")
+	public List<String> uploadImages(@RequestParam("images") List<MultipartFile> files) {
+		// TODO : set up S3 Url for images
+		return files.stream()
+				.map(file -> {
+					String key = "public/products/" + UUID.randomUUID() + "-" +
+							file.getOriginalFilename().replaceAll("\\s+", "-");
+					try {
+						s3Client.putObject(
+								PutObjectRequest.builder()
+										.bucket(bucket)
+										.key(key)
+										.contentType(file.getContentType())
+										.build(),
+								software.amazon.awssdk.core.sync.RequestBody
+										.fromInputStream(file.getInputStream(),
+												file.getSize()));
+					} catch (IOException e) {
+						throw new RuntimeException(
+								"Failed to upload " + file.getOriginalFilename(), e);
+					}
+					return "https://" + bucket + ".s3.amazonaws.com/" + key;
+				})
+				.toList();
+	}
 }
