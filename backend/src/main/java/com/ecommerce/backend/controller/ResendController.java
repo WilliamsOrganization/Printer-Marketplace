@@ -1,5 +1,6 @@
 package com.ecommerce.backend.controller;
 
+import com.ecommerce.backend.dto.TestResend;
 import com.ecommerce.backend.service.ResendService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,8 @@ public class ResendController {
 	private final ResendService resendService;
 
 	@PostMapping("/test")
-	public String sendEmail(@RequestBody String content) {
-		resendService.testEmailEndpoint("ewanchukwilliam@gmail.com", "testing hello world");
-		return content;
+	public String sendEmail(@RequestBody TestResend content) {
+		resendService.testEmailEndpoint("ewanchukwilliam@gmail.com", content.getContent());
+		return content.getContent();
 	}
 }
