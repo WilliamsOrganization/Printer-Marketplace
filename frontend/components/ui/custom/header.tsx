@@ -21,13 +21,16 @@ export function Header() {
 							}}
 							getBeforeInit={(instance) => {
 								instance
-									.type("3D Printed Goods")
+									.type("PrintMarket")
+									.pause(3000)
+									.delete()
+									.type("Made to Order")
 									.pause(3000)
 									.delete()
 									.type("Custom Prints")
 									.pause(3000)
 									.delete()
-									.type("Made to Order")
+									.type("Ships from Canada")
 									.pause(3000)
 									.delete();
 								return instance;
