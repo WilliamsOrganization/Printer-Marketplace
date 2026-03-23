@@ -28,9 +28,16 @@ public class SessionController {
 	@GetMapping("/stats")
 	public Map<String, Long> getStats() {
 		return Map.of(
-			"totalSessions", repository.count(), 
+			"totalSessions", repository.count(),
 			"activeSessions", repository.countByExpiresAtAfter(LocalDateTime.now()),
 			"uniqueUsers", repository.countUniqueUsers());
+	}
+
+	@GetMapping("/dates")
+	public List<LocalDateTime> getDates() {
+		return repository.findAll().stream()
+				.map(Sessions::getCreatedAt)
+				.toList();
 	}
 
 	// @GetMapping
