@@ -2,12 +2,14 @@ package com.ecommerce.backend.service;
 
 import com.ecommerce.backend.dto.CreateCatalogRequest;
 import com.ecommerce.backend.dto.CreateCatalogResponse;
+import com.ecommerce.backend.dto.EditCatalogRequest;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Price;
 import com.stripe.model.Product;
 import com.stripe.param.PriceCreateParams;
+import com.stripe.param.PriceUpdateParams;
 import com.stripe.param.ProductCreateParams;
 import com.stripe.param.ProductUpdateParams;
 import lombok.RequiredArgsConstructor;
@@ -51,14 +53,48 @@ public class StripeCatalogService {
 	// returns true if deleted, false if archived
 	public boolean deleteProduct(String id) throws StripeException {
 		Product resource = Product.retrieve(id);
-		// TODO: change this from delete to archive. all Prices prevent deletion so all products cannnot be deleted via api needs to be deleted by link. annoying as fuck 
 		try {
 			resource.delete();
 			return true;
 		} catch (StripeException e) {
-			log.warn("Could not delete product {}, archiving instead: {}", id, e.getMessage());
-			resource.update(ProductUpdateParams.builder().setActive(false).build());
+			log.warn("Could not delete product {}, archiving instead: {}", id,
+					e.getMessage());
+			resource.update(
+					ProductUpdateParams.builder().setActive(false).build());
 			return false;
 		}
+	}
+
+	public Product editProduct(String id, EditCatalogRequest req)
+			throws StripeException {
+		Product resource = Product.retrieve(id);
+
+		ProductUpdateParams.Builder updateBuilder = ProductUpdateParams.builder();
+		if (req.getName() != null)
+			updateBuilder.setName(req.getName());
+		if (req.getDescription() != null)
+			updateBuilder.setDescription(req.getDescription());
+		if (req.getImageUrls() != null)
+			updateBuilder.addAllImage(req.getImageUrls());
+
+		if (req.getUnitAmount() != null) {
+			String oldPriceId = resource.getDefaultPrice();
+			String currency = req.getCurrency() != null
+					? req.getCurrency().toLowerCase()
+					: "cad";
+			Price newPrice = Price.create(PriceCreateParams.builder()
+					.setProduct(id)
+					.setUnitAmount(req.getUnitAmount() * 100)
+					.setCurrency(currency)
+					.build());
+			updateBuilder.setDefaultPrice(newPrice.getId());
+
+			if (oldPriceId != null) {
+				Price.retrieve(oldPriceId).update(
+						PriceUpdateParams.builder().setActive(false).build());
+			}
+		}
+
+		return resource.update(updateBuilder.build());
 	}
 }

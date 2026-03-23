@@ -72,6 +72,7 @@ export function CreateInventoryItemForm() {
 		},
 	});
 
+	// TODO: needs to support the ability to create multiple pricing tiers for the product. (expensive vs non expensive)
 	async function onSubmit(data: FormValues) {
 		const multiFormData = new FormData();
 		data.image.forEach((file) => {

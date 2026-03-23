@@ -38,6 +38,7 @@ public class InventoryItem {
 	@Column(columnDefinition = "text[]")
 	private String[] imageUrls;
 
+	// TODO: needs to support multiple priceIds for tiered products 
 	private String stripePriceId;
 	private String stripeProductId;
 

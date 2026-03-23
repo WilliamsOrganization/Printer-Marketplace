@@ -2,10 +2,12 @@ package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.dto.CreateCatalogRequest;
 import com.ecommerce.backend.dto.CreateCatalogResponse;
+import com.ecommerce.backend.dto.EditCatalogRequest;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Product;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -89,6 +91,17 @@ public class InventoryItemController {
 	public InventoryItem update(@PathVariable Long id,
 			@RequestBody InventoryItem updated) {
 		InventoryItem existing = inventoryItemRepository.findById(id).orElseThrow();
+
+		try {
+			EditCatalogRequest editReq = new EditCatalogRequest(
+					updated.getItemTitle(), updated.getItemDescription(),
+					updated.getImageUrls() != null ? List.of(updated.getImageUrls()) : null,
+					updated.getItemCost(), updated.getCurrency());
+			Product stripeProduct = stripeCatalogService.editProduct(existing.getStripeProductId(), editReq);
+			existing.setStripePriceId(stripeProduct.getDefaultPrice());
+		} catch (StripeException e) {
+			log.error("Stripe failed to update product {}: {}", existing.getStripeProductId(), e.getMessage());
+		}
 		existing.setItemTitle(updated.getItemTitle());
 		existing.setItemDescription(updated.getItemDescription());
 		existing.setItemCost(updated.getItemCost());
@@ -98,6 +111,7 @@ public class InventoryItemController {
 		existing.setCategory(updated.getCategory());
 		existing.setBadge(updated.getBadge());
 		existing.setSale(updated.getSale());
+
 		return inventoryItemRepository.save(existing);
 	}
 
