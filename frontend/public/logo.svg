@@ -1,0 +1,47 @@
+<svg width="600" height="170" viewBox="55 2 600 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rightFace" x1="185" y1="72" x2="145" y2="135" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#707E86"/>
+      <stop offset="1" stop-color="#4A5860"/>
+    </linearGradient>
+    <linearGradient id="topFace" x1="105" y1="72" x2="185" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4C7A37"/>
+      <stop offset="1" stop-color="#356628"/>
+    </linearGradient>
+    <style>
+      .sans { font-family: Inter, Helvetica, Arial, sans-serif; }
+      .serif { font-family: "Cormorant Garamond", "Iowan Old Style", "Times New Roman", Georgia, serif; }
+    </style>
+  </defs>
+
+  <!-- Hex frame — integer coords, no transform, no shadow -->
+  <path d="M145 26L205 60V128L145 162L85 128V60Z" fill="#2B2B2B"/>
+
+  <!-- Cube faces -->
+  <path d="M145 49L185 72L145 94L105 72Z" fill="url(#topFace)"/>
+  <path d="M105 72L145 94V135L105 113Z" fill="#4E5A62"/>
+  <path d="M185 72L145 94V135L185 113Z" fill="url(#rightFace)"/>
+
+  <!-- Layer lines — geometrically parallel to face edges, wider reach -->
+  <path d="M113 81L145 99L177 81" stroke="#F0ECE6" stroke-width="4.5" stroke-linecap="round" opacity="0.92"/>
+  <path d="M113 94L145 112L177 94" stroke="#F0ECE6" stroke-width="4.5" stroke-linecap="round" opacity="0.62"/>
+  <path d="M113 107L145 125L177 107" stroke="#F0ECE6" stroke-width="4.5" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Hex top-edge highlights -->
+  <path d="M145 26L205 60" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+  <path d="M145 26L85 60" stroke="rgba(255,255,255,0.04)" stroke-width="1.5"/>
+
+  <!-- Nozzle — simplified cap + taper + filament dot -->
+  <rect x="137" y="8" width="16" height="14" rx="4" fill="#4A5860"/>
+  <path d="M139 22H151L148 34H142Z" fill="#8A949A"/>
+  <circle cx="145" cy="40" r="3.5" fill="#3C6E2E"/>
+
+  <!-- Wordmark -->
+  <text x="215" y="103" class="sans" font-size="50" font-weight="500" letter-spacing="0.2" fill="#2B2B2B">Print</text>
+  <text x="328" y="103" class="serif" font-size="64" font-style="italic" font-weight="500" fill="#2B2B2B">Market</text>
+
+  <text x="217" y="130" class="sans" font-size="20" font-weight="500" letter-spacing="5" fill="#6F7C84">
+    3D PRINTING
+  </text>
+
+</svg>

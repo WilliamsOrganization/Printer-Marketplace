@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { FilterSidebar } from "@/components/ui/custom/filter-sidebar";
 import { SortSelect } from "@/components/ui/custom/sort-select";
@@ -15,12 +16,10 @@ export default async function ShopPage() {
 				<p>
 					TODO: all page links to me must be wrapped in server component for SEO indexing
 				</p>
-			 
+
+				<Image src="/logo.svg" alt="PrintMarket" width={860} height={220} />
 				<p>
-					fix before finishing me or else you'll be annoyed :)
-				</p>
-				<p>
-					Testing build pipeline	
+					Testing build pipeline
 				</p>
 
 			</main>

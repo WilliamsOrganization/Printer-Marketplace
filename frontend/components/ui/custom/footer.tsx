@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Twitter, Instagram, Mail, Layers } from "lucide-react";
+import { Twitter, Instagram, Mail } from "lucide-react";
 
 const footerLinks = {
 	shop: [
@@ -30,21 +31,15 @@ const footerLinks = {
 export function Footer() {
 	return (
 		<footer className="w-full border-t bg-muted/20 mt-auto">
-			<div className="mx-auto max-w-7xl px-6 py-14">
+			<div className="mx-auto max-w-7xl px-6 pt-4 pb-14">
 				<div className="grid grid-cols-2 gap-10 md:grid-cols-5">
 					{/* Brand + Newsletter */}
 					<div className="col-span-2 flex flex-col gap-5">
 						<div>
-							<div className="flex items-center gap-2 mb-2">
-								<Layers className="size-5" />
-								<span className="font-serif text-lg italic">PrintMarket</span>
-							</div>
-							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-								Support A Small Local Canadian business!
-							</p>
+							<Image src="/logo.svg" alt="PrintMarket" width={450} height={150} className="mb-2" />
 						</div>
 
-						{false ? 
+						{false ?
 							(
 								<div>
 									<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-3">
@@ -122,9 +117,9 @@ export function Footer() {
 					</div>
 				</div>
 
-				<Separator className="my-10" />
+				<Separator className="my-6" />
 
-				<div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+				<div className="flex items-center justify-between">
 					<p className="text-xs text-muted-foreground">
 						&copy; {new Date().getFullYear()} PrintMarket. All rights reserved.
 					</p>
@@ -142,17 +137,9 @@ export function Footer() {
 						</Button>
 					</div>
 
-					<div className="flex gap-4">
-						{footerLinks.legal.map((link) => (
-							<Link
-								key={link.href}
-								href={link.href}
-								className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-							>
-								{link.label}
-							</Link>
-						))}
-					</div>
+					<p className="text-xs text-muted-foreground">
+						Support A Small Local Canadian Business!
+					</p>
 				</div>
 			</div>
 		</footer>
