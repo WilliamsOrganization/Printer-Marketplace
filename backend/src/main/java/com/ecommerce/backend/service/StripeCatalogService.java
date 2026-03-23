@@ -54,6 +54,7 @@ public class StripeCatalogService {
 	// returns true if deleted, false if archived
 	public boolean deleteProduct(String id) throws StripeException {
 		Product resource = Product.retrieve(id);
+		// TODO: change this from delete to archive. all Prices prevent deletion so all products cannnot be deleted via api needs to be deleted by link. annoying as fuck 
 		try {
 			resource.delete();
 			return true;
