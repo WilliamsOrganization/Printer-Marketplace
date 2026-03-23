@@ -51,17 +51,20 @@ public class StripeCatalogService {
 				price.getUnitAmount(), price.getCurrency());
 	}
 
-	public Product deleteProduct(String id) throws StripeException {
+	// returns true if deleted, false if archived
+	public boolean deleteProduct(String id) throws StripeException {
 		Product resource = Product.retrieve(id);
 		try {
-			return resource.delete();
+			resource.delete();
+			return true;
 		} catch (StripeException e) {
 			log.warn("Could not delete product {}, archiving instead: {}", id, e.getMessage());
 			PriceListParams priceListParams = PriceListParams.builder().setProduct(id).build();
 			for (Price price : Price.list(priceListParams).getData()) {
 				Price.retrieve(price.getId()).update(PriceUpdateParams.builder().setActive(false).build());
 			}
-			return resource.update(ProductUpdateParams.builder().setActive(false).build());
+			resource.update(ProductUpdateParams.builder().setActive(false).build());
+			return false;
 		}
 	}
 }

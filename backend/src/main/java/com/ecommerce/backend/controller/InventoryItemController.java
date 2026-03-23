@@ -6,7 +6,6 @@ import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Product;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -106,15 +105,14 @@ public class InventoryItemController {
 			return ResponseEntity.notFound().build();
 		}
 		try {
-			Product product = stripeCatalogService.deleteProduct(item.getStripeProductId());
-			if (Boolean.FALSE.equals(product.getActive())) {
-				log.info("Stripe product {} archived (has prior prices)", product.getId());
-				inventoryItemRepository.deleteById(id);
-				return ResponseEntity.ok("archived");
-			}
-			log.info("Stripe product {} deleted", product.getId());
+			boolean deleted = stripeCatalogService.deleteProduct(item.getStripeProductId());
 			inventoryItemRepository.deleteById(id);
-			return ResponseEntity.ok("deleted");
+			if (deleted) {
+				log.info("Stripe product {} deleted", item.getStripeProductId());
+				return ResponseEntity.ok("deleted");
+			}
+			log.info("Stripe product {} archived (has prior prices)", item.getStripeProductId());
+			return ResponseEntity.ok("archived");
 		} catch (StripeException e) {
 			log.error("Stripe failed to delete item {}: {}", item.getStripeProductId(), e.getMessage());
 			return ResponseEntity.internalServerError().body("stripe_error");
