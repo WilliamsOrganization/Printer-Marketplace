@@ -22,7 +22,7 @@ public class ResendController {
 
 	@PostMapping("/test")
 	public String sendEmail(@RequestBody TestResend content) {
-		resendService.testEmailEndpoint("ewanchukwilliam@gmail.com", content.getContent());
+		resendService.testEmailEndpoint(content.getEmail(), content.getContent());
 		return content.getContent();
 	}
 }

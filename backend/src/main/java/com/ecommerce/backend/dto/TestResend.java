@@ -8,4 +8,5 @@ import lombok.Data;
 @Data
 public class TestResend {
 	private String content;
+	private String email;
 }
