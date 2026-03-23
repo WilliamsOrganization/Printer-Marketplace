@@ -24,7 +24,7 @@ public class ResendService {
 
 	public void testEmailEndpoint(String toEmail, String body) {
 		CreateEmailOptions params = CreateEmailOptions.builder()
-				.from("onboarding@resend.dev")
+				.from("noreply@printmarket.ca")
 				.to(toEmail)
 				.subject("it works!")
 				.html("<strong>" + body + "</strong>")
