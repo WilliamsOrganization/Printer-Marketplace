@@ -106,8 +106,8 @@ public class InventoryItemController {
 		}
 		try {
 			boolean deleted = stripeCatalogService.deleteProduct(item.getStripeProductId());
-			inventoryItemRepository.deleteById(id);
 			if (deleted) {
+				inventoryItemRepository.deleteById(id);
 				log.info("Stripe product {} deleted", item.getStripeProductId());
 				return ResponseEntity.ok("deleted");
 			}
