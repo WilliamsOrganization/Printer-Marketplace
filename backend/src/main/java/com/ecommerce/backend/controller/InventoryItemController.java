@@ -47,8 +47,13 @@ public class InventoryItemController {
 
 	@GetMapping
 	public List<InventoryItem> getAll() {
-		return inventoryItemRepository.findAll(
-				Sort.by(Sort.Direction.ASC, "id"));
+		return inventoryItemRepository.findByIsArchivedFalse(Sort.by(Sort.Direction.ASC, "id"));
+	}
+
+	@GetMapping("/admin/all")
+	@PreAuthorize("hasRole('ADMIN')")
+	public List<InventoryItem> getAll_admin() {
+		return inventoryItemRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
 	}
 
 	@GetMapping("/{id}")
@@ -111,7 +116,9 @@ public class InventoryItemController {
 				log.info("Stripe product {} deleted", item.getStripeProductId());
 				return ResponseEntity.ok("deleted");
 			}
-			log.info("Stripe product {} archived (has prior prices)", item.getStripeProductId());
+			item.setIsArchived(true);
+			inventoryItemRepository.save(item);
+			log.info("Stripe product {} archived, inventory item {} marked archived", item.getStripeProductId(), id);
 			return ResponseEntity.ok("archived");
 		} catch (StripeException e) {
 			log.error("Stripe failed to delete item {}: {}", item.getStripeProductId(), e.getMessage());

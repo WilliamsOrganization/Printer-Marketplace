@@ -8,11 +8,8 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Price;
 import com.stripe.model.Product;
 import com.stripe.param.PriceCreateParams;
-import com.stripe.param.PriceListParams;
-import com.stripe.param.PriceUpdateParams;
 import com.stripe.param.ProductCreateParams;
 import com.stripe.param.ProductUpdateParams;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -60,10 +57,6 @@ public class StripeCatalogService {
 			return true;
 		} catch (StripeException e) {
 			log.warn("Could not delete product {}, archiving instead: {}", id, e.getMessage());
-			PriceListParams priceListParams = PriceListParams.builder().setProduct(id).build();
-			for (Price price : Price.list(priceListParams).getData()) {
-				Price.retrieve(price.getId()).update(PriceUpdateParams.builder().setActive(false).build());
-			}
 			resource.update(ProductUpdateParams.builder().setActive(false).build());
 			return false;
 		}

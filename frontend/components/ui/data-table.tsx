@@ -275,6 +275,16 @@ export function DataTable() {
 				) : null,
 		},
 		{
+			accessorKey: "isArchived",
+			header: "Archived",
+			cell: ({ row }) =>
+				row.original.isArchived ? (
+					<Badge variant="destructive" className="px-1.5">
+						Archived
+					</Badge>
+				) : null,
+		},
+		{
 			id: "actions",
 			cell: ({ row }) => (
 				<DropdownMenu>

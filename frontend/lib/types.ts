@@ -30,6 +30,7 @@ export interface InventoryItem {
 	stripeProductId: string;
 	stripePriceId: string;
 	sale: boolean;
+	isArchived: boolean;
 	category: Category;
 	badge: ItemBadge;
 }

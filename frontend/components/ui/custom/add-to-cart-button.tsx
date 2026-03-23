@@ -50,6 +50,7 @@ export function AddToCartButton({
 	return (
 		<Button
 			size="sm"
+			variant={inCart ? "secondary" : "default"}
 			className="w-full"
 			onClick={() => {
 				if (inCart) {

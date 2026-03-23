@@ -28,7 +28,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		api
-			.get("/inventoryitem")
+			.get("/inventoryitem/admin/all")
 			.then((res) => setInventory(res.data))
 			.catch((err) => console.log("Error: " + err.message));
 	}, []);

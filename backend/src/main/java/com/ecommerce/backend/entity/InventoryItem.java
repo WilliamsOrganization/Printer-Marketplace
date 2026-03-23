@@ -1,11 +1,5 @@
 package com.ecommerce.backend.entity;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -15,7 +9,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Product available for purchase in the store.
@@ -42,13 +40,15 @@ public class InventoryItem {
 
 	private String stripePriceId;
 	private String stripeProductId;
-	
+
 	private Long quantity;
 
 	private String currency;
 
-
 	private Boolean sale;
+
+	@Column(nullable = false, columnDefinition = "boolean default false")
+	private Boolean isArchived = false;
 
 	@Enumerated(EnumType.STRING)
 	private Category category;
@@ -59,9 +59,8 @@ public class InventoryItem {
 	public enum Category {
 		ELECTRONICS, PRINTS, CUSTOM
 	}
+
 	public enum Badge {
 		BESTSELLER, NEW, SALE
 	}
-
-
 }

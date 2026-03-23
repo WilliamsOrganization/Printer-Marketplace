@@ -17,6 +17,8 @@ import { useDashboard } from "@/src/context/dashboard-context";
 
 export function SectionCards() {
 	const { inventory, users, sessionCount, activeSessionCount, uniqueUserCount, growthRate } = useDashboard();
+	const archivedCount = inventory.filter((item) => item.isArchived).length;
+	const activeCount = inventory.length - archivedCount;
 	return (
 		<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
 			{/* this is the important card I want to actually mess with */}
@@ -24,18 +26,22 @@ export function SectionCards() {
 				<CardHeader>
 					<CardDescription>Inventory Items</CardDescription>
 					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-						{inventory.length}
+						<div className="flex justify-between w-full px-2">
+							<div className="flex flex-col">
+								<span>{activeCount}</span>
+								<span className="text-sm font-normal text-muted-foreground">Active</span>
+							</div>
+							<div className="flex flex-col">
+								<span>{archivedCount}</span>
+								<span className="text-sm font-normal text-muted-foreground">Archived</span>
+							</div>
+						</div>
 					</CardTitle>
-					<CardAction>
-						<Badge variant="outline">
-							<IconTrendingUp />
-						</Badge>
-					</CardAction>
 				</CardHeader>
-				<CardFooter className="flex-row text-md min-w-full ">
-						<Link href="/admin/dashboard/item/" className="min-w-full">
-							<Button className="min-w-full" variant="outline">Create Inventory item</Button>
-						</Link>
+				<CardFooter className="flex-col items-start gap-1.5 text-sm">
+					<Link href="/admin/dashboard/item/" className="min-w-full">
+						<Button className="min-w-full" variant="outline">Create Inventory item</Button>
+					</Link>
 				</CardFooter>
 			</Card>
 
