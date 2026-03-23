@@ -1,0 +1,27 @@
+package com.ecommerce.backend.controller;
+
+import com.ecommerce.backend.service.ResendService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * ResendController
+ */
+
+@Slf4j
+@RestController
+@RequestMapping("/server/email")
+@RequiredArgsConstructor
+public class ResendController {
+	private final ResendService resendService;
+
+	@PostMapping("/test")
+	public String sendEmail(@RequestBody String content) {
+		resendService.testEmailEndpoint("ewanchukwilliam@gmail.com", "testing hello world");
+		return content;
+	}
+}

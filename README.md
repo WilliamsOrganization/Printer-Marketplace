@@ -104,11 +104,12 @@ docker compose exec postgres psql -U $DB_USER -d $DB_NAME
 
 TODOS:
 - add long term account persistence and pre string email gateway for checkout (not a hard login unless email exists)
-- email account verification path through SMTP
+- email account verification path through SMTP in order confirmation
 - add color configuration for the itemsf for Amy
 - Customer support contact (maybe websocker or direct email for now to keep it simple)
 - partition server ubuntu proxmox provisioned server into staging and production (prod gets nginx configured firewall protected path)
 - auto generate longterm disc drive backups cron jobs onto the HD drives
 - configure secondary Nginx route (routes based on destination url) requires the fancy firewall protections you configured. 
+- add in Product pages (dream todo add STL support for the different colors)
 
 MIT
