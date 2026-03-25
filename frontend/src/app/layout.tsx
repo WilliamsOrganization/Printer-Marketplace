@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 	title: "PrintMarket Shop",
 	description: "Find new printables market",
 	icons: {
-		icon: "/globe.svg",
+		icon: "/logo-icon.svg",
 	},
 };
 

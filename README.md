@@ -111,6 +111,13 @@ TODOS:
 - auto generate longterm disc drive backups cron jobs onto the HD drives
 - configure secondary Nginx route (routes based on destination url) requires the fancy firewall protections you configured.
 - add in Product pages (dream todo add STL support for the different colors)
-- capture device_info on login to enable mobile/desktop split in session chart (column already exists, data not yet populated)
+# Easy Post 
+- this is used to calculate shipping on the checkout page. 
+- the checkout page is needed before a registered state for the user
+[EasyPost documentation link for the java module]( https://github.com/EasyPost/easypost-java )
+
+# Resend
+- this is for email configurations. this is relatively simple to work with. 
+- not much to mess around with easy java docs
 
 MIT

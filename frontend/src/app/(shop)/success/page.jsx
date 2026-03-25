@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { stripe } from "../../../lib/stripe";
+import { stripe } from "@/lib/stripe";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowRight, PackageCheck } from "lucide-react";
