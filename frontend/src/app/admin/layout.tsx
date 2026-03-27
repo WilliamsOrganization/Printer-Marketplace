@@ -1,7 +1,10 @@
-"use client";
-
-import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Admin Dashboard",
+	description: "Admin dashboard",
+};
 
 export default function AdminLayout({
 	children,
@@ -9,9 +12,9 @@ export default function AdminLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<SessionProvider>
+		<>
 			{children}
 			<Toaster position="top-center" />
-		</SessionProvider>
+		</>
 	);
 }

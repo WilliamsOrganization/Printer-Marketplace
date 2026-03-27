@@ -67,7 +67,7 @@ public class AuthService {
 						() -> new UserNotFoundException("User does not exist"));
 		// this exists if the user logged in previously through oauth and hasn't
 		// set a password
-		if (user.getPassword() == null)
+		if (user.getPassword() == null || !user.getPassword().equals(request.getPassword()))
 			throw new InvalidCredentials("Invalid Email Or Password");
 		// TODO: requires email authentication layer ie copy past password
 

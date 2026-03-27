@@ -16,11 +16,28 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signIn } from "next-auth/react";
+import { useState } from "react";
 
 export function LoginForm({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
+	const [error, useError] = useState(false)
+
+	const login = async function(formData: FormData) {
+		const result = await signIn("credentials", {
+			callbackUrl: '/admin/dashboard',
+			redirect: false,
+			email: formData.get("email"),
+			password: formData.get("password")
+		})
+		if (result?.error) {
+			useError(true)
+		} else {
+			window.location.href = "/admin/dashboard"
+		}
+	}
+
 	return (
 		<div className={cn("flex flex-col gap-6", className)} {...props}>
 			<Card>
@@ -31,7 +48,7 @@ export function LoginForm({
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form>
+					<form onSubmit={(e) => { e.preventDefault(); login(new FormData(e.currentTarget)) }}>
 						<FieldGroup>
 							<Field>
 								<Button
@@ -71,12 +88,19 @@ export function LoginForm({
 								Or continue with
 							</FieldSeparator>
 							<Field>
+								{error && (
+									<p className="text-sm text-red-500">
+										Invalid email or password.
+									</p>
+								)}
 								<FieldLabel htmlFor="email">Email</FieldLabel>
 								<Input
 									id="email"
+									name="email"
 									type="email"
 									placeholder="m@example.com"
 									required
+									className={error ? "border-red-500/50" : ""}
 								/>
 							</Field>
 							<Field>
@@ -89,7 +113,13 @@ export function LoginForm({
 										Forgot your password?
 									</a>
 								</div>
-								<Input id="password" type="password" required />
+								<Input
+									id="password"
+									name="password"
+									type="password"
+									required
+									className={error ? "border-red-500/50" : ""}
+								/>
 							</Field>
 							<Field>
 								<Button type="submit">Login</Button>
