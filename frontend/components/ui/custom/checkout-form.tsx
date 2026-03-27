@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import usePlacesAutocomplete, { getDetails } from "react-google-autocomplete/lib/usePlacesAutocompleteService";
+import Autocomplete from "react-google-autocomplete";
 
 interface AddressComponents {
 	street1: string;
@@ -30,46 +30,26 @@ export function CheckoutForm({
 	const [error, setError] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [address, setAddress] = useState<AddressComponents | null>(null)
-	const [addressInput, setAddressInput] = useState("")
-	const [showSuggestions, setShowSuggestions] = useState(false)
 
-	const {
-		placesService,
-		placePredictions,
-		getPlacePredictions,
-	} = usePlacesAutocomplete({
-		apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-		options: {
-			types: ["address"],
-			componentRestrictions: { country: ["ca", "us"] },
-		},
-	})
+	const handlePlaceSelected = (place: any) => {
+		console.log("place object:", place)
+		if (!place?.address_components) return
 
-	const handleSelect = (placeId: string, description: string) => {
-		setAddressInput(description)
-		setShowSuggestions(false)
+		const get = (type: string) =>
+			place.address_components.find((c: any) => c.types.includes(type))?.long_name ?? ""
+		const getShort = (type: string) =>
+			place.address_components.find((c: any) => c.types.includes(type))?.short_name ?? ""
 
-		if (!placesService) return
-
-		placesService.getDetails(
-			{ placeId, fields: ["address_components"] },
-			(place: any) => {
-				if (!place?.address_components) return
-
-				const get = (type: string) =>
-					place.address_components.find((c: any) => c.types.includes(type))?.long_name ?? ""
-				const getShort = (type: string) =>
-					place.address_components.find((c: any) => c.types.includes(type))?.short_name ?? ""
-
-				setAddress({
-					street1: `${get("street_number")} ${get("route")}`.trim(),
-					city: get("locality"),
-					state: getShort("administrative_area_level_1"),
-					zip: get("postal_code"),
-					country: getShort("country"),
-				})
-			}
-		)
+		const parsed = {
+			street1: `${get("street_number")} ${get("route")}`.trim(),
+			city: get("locality"),
+			state: getShort("administrative_area_level_1"),
+			zip: get("postal_code"),
+			country: getShort("country"),
+		}
+		console.log("raw address_components:", place.address_components)
+		console.log("parsed address:", parsed)
+		setAddress(parsed)
 	}
 
 	const handleCheckout = async function(formData: FormData) {
@@ -116,36 +96,16 @@ export function CheckoutForm({
 							</Field>
 							<Field>
 								<FieldLabel htmlFor="address">Shipping Address</FieldLabel>
-								<div className="relative">
-									<Input
-										id="address"
-										name="address"
-										type="text"
-										placeholder="Start typing your address..."
-										value={addressInput}
-										onChange={(e) => {
-											setAddressInput(e.target.value)
-											setAddress(null)
-											getPlacePredictions({ input: e.target.value })
-											setShowSuggestions(true)
-										}}
-										onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-										required
-									/>
-									{showSuggestions && placePredictions.length > 0 && (
-										<ul className="border-border bg-popover text-popover-foreground absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md">
-											{placePredictions.map((prediction) => (
-												<li
-													key={prediction.place_id}
-													className="hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-sm px-3 py-2 text-sm"
-													onMouseDown={() => handleSelect(prediction.place_id, prediction.description)}
-												>
-													{prediction.description}
-												</li>
-											))}
-										</ul>
-									)}
-								</div>
+								<Autocomplete
+									apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+									onPlaceSelected={handlePlaceSelected}
+									options={{
+										types: ["address"],
+										componentRestrictions: { country: ["ca", "us"] },
+									}}
+									placeholder="Start typing your address..."
+									className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+								/>
 							</Field>
 							<Field>
 								<Button type="submit" disabled={loading}>
