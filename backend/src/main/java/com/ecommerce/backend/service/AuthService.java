@@ -70,6 +70,7 @@ public class AuthService {
 		if (user.getPassword() == null || !user.getPassword().equals(request.getPassword()))
 			throw new InvalidCredentials("Invalid Email Or Password");
 		// TODO: requires email authentication layer ie copy past password
+		// TODO: NEEDS PASSWORD HASHING PROPERLY!!!
 
 		Sessions session = sessionCreate(user, request);
 		return new AuthResponse(session.getToken(), user.getId());
