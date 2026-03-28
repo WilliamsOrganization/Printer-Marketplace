@@ -14,9 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import Autocomplete from "react-google-autocomplete";
 import api from "@/lib/api";
 import { toast } from "sonner";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { AddressInput } from "./address-input";
 
 const MotionCard = motion(Card);
 
@@ -29,12 +31,12 @@ interface AddressComponents {
 }
 
 interface ShippingRate {
-	object_id: string;
+	objectId: string;
 	provider: string;
 	servicelevel: { name: string };
 	amount: string;
 	currency: string;
-	estimated_days: number;
+	estimatedDays: number;
 }
 
 export function CheckoutForm({
@@ -46,26 +48,7 @@ export function CheckoutForm({
 	const [address, setAddress] = useState<AddressComponents | null>(null)
 	const [rates, setRates] = useState<ShippingRate[]>([])
 	const [selectedRate, setSelectedRate] = useState<string | null>(null)
-
-	const handlePlaceSelected = (place: any) => {
-		if (!place?.address_components) return
-
-		const get = (type: string) =>
-			place.address_components.find((c: any) => c.types.includes(type))?.long_name ?? ""
-		const getShort = (type: string) =>
-			place.address_components.find((c: any) => c.types.includes(type))?.short_name ?? ""
-
-		const parsed = {
-			street1: `${get("street_number")} ${get("route")}`.trim(),
-			city: get("locality"),
-			state: getShort("administrative_area_level_1"),
-			zip: get("postal_code"),
-			country: getShort("country"),
-		}
-		setAddress(parsed)
-		setRates([])
-		setSelectedRate(null)
-	}
+	const [phone, setPhone] = useState<string | undefined>()
 
 	const handleCheckout = async function(formData: FormData) {
 		setError(null)
@@ -80,11 +63,11 @@ export function CheckoutForm({
 		api
 			.post("/shipping/rates/test", {
 				name: "Customer",
-				phone: formData.get("phone"),
+				phone,
 				...address,
 			})
 			.then((res) => {
-				const results = res.data?.results ?? []
+				const results = Array.isArray(res.data) ? res.data : res.data?.results ?? []
 				setRates(results)
 				if (results.length === 0) {
 					toast.error("No shipping options available for this address")
@@ -127,26 +110,23 @@ export function CheckoutForm({
 							</Field>
 							<Field>
 								<FieldLabel htmlFor="phone">Phone</FieldLabel>
-								<Input
+								<PhoneInput
 									id="phone"
 									name="phone"
-									type="tel"
+									defaultCountry="CA"
 									placeholder="(555) 555-5555"
-									required
+									value={phone}
+									onChange={setPhone}
+									className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
 								/>
 							</Field>
 							<Field>
 								<FieldLabel htmlFor="address">Shipping Address</FieldLabel>
-								<Autocomplete
-									apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
-									onPlaceSelected={handlePlaceSelected}
-									options={{
-										types: ["address"],
-										componentRestrictions: { country: ["ca", "us"] },
-									}}
-									placeholder="Start typing your address..."
-									className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-								/>
+								<AddressInput onAddressSelect={(addr) => {
+									setAddress(addr)
+									setRates([])
+									setSelectedRate(null)
+								}} />
 							</Field>
 							<Field>
 								<Button type="submit" disabled={loading}>
@@ -171,45 +151,45 @@ export function CheckoutForm({
 						</CardHeader>
 						<CardContent>
 							<div className="flex flex-col gap-3">
-									{rates.map((rate) => (
-										<label
-											key={rate.object_id}
-											className={cn(
-												"flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm transition-colors",
-												selectedRate === rate.object_id
-													? "border-primary bg-primary/5"
-													: "border-border hover:bg-accent/50"
-											)}
-										>
-											<div className="flex items-center gap-3">
-												<input
-													type="radio"
-													name="shippingRate"
-													value={rate.object_id}
-													checked={selectedRate === rate.object_id}
-													onChange={() => setSelectedRate(rate.object_id)}
-													className="accent-primary"
-												/>
-												<div>
-													<p className="font-medium">{rate.servicelevel?.name}</p>
-													<p className="text-muted-foreground text-xs">{rate.provider}{rate.estimated_days ? ` · ${rate.estimated_days} days` : ""}</p>
-												</div>
+								{rates.map((rate) => (
+									<label
+										key={rate.objectId}
+										className={cn(
+											"flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm transition-colors",
+											selectedRate === rate.objectId
+												? "border-primary bg-primary/5"
+												: "border-border hover:bg-accent/50"
+										)}
+									>
+										<div className="flex items-center gap-3">
+											<input
+												type="radio"
+												name="shippingRate"
+												value={rate.objectId}
+												checked={selectedRate === rate.objectId}
+												onChange={() => setSelectedRate(rate.objectId)}
+												className="accent-primary"
+											/>
+											<div>
+												<p className="font-medium">{rate.servicelevel?.name}</p>
+												<p className="text-muted-foreground text-xs">{rate.provider}{rate.estimatedDays ? ` · ${rate.estimatedDays} days` : ""}</p>
 											</div>
-											<p className="font-medium">${rate.amount} {rate.currency}</p>
-										</label>
-									))}
-								</div>
-								<Button
-									className="mt-4 w-full"
-									disabled={!selectedRate}
-									onClick={() => {
-										// TODO: proceed to Stripe checkout with selected rate
-										console.log("selected rate:", selectedRate)
-									}}
-								>
-									Continue to Payment
-								</Button>
-							</CardContent>
+										</div>
+										<p className="font-medium">${rate.amount} {rate.currency}</p>
+									</label>
+								))}
+							</div>
+							<Button
+								className="mt-4 w-full"
+								disabled={!selectedRate}
+								onClick={() => {
+									// TODO: proceed to Stripe checkout with selected rate
+									console.log("selected rate:", selectedRate)
+								}}
+							>
+								Continue to Payment
+							</Button>
+						</CardContent>
 					</MotionCard>
 				)}
 			</AnimatePresence>

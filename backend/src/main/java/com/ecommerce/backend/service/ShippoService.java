@@ -23,8 +23,7 @@ import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequestCustomsDec
 import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
 import com.goshippo.shippo_sdk.models.operations.CreateLiveRateResponse;
 import com.goshippo.shippo_sdk.models.operations.CreateShipmentResponse;
-import com.goshippo.shippo_sdk.models.operations.ListShipmentRatesResponse;
-
+import com.goshippo.shippo_sdk.models.components.Rate;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * ShippoService
+ * ShippoService this whole class is fucking cursed. Shipping sucks ass dont know what is registered as "test" vs "live" vs "Shippo native" on their dashboard
+ * I fucking hate out of date documentation. the fedex links were old as shit
  */
 
 @Slf4j
@@ -42,7 +42,6 @@ public class ShippoService {
 
 	private final Shippo shippo;
 
-	// TODO: DELETE ME FOR LATER
 	public void testShippoLabel(String toEmail, String body) {
 	}
 
@@ -82,75 +81,82 @@ public class ShippoService {
 								.build())
 				.call();
 		return shipmentResponse;
-
 	}
 
-	public ListShipmentRatesResponse getShipmentRates(ShipmentFromValues from, ShipmentToValues to) throws Exception {
-		CreateShipmentResponse shipment = shippo.shipments().create()
+	public List<Rate> getShipmentRates(ShipmentFromValues from,
+			ShipmentToValues to)
+			throws Exception {
+		// TODO:  low priority Maybe document previous shipping rates. 
+		CreateShipmentResponse shipment = shippo.shipments()
+				.create()
 				.shippoApiVersion("2018-02-08")
-				.shipmentCreateRequest(ShipmentCreateRequest.builder()
-						.addressFrom(AddressFrom.of(AddressCreateRequest.builder()
-								.name(from.getStore())
-								.street1(from.getStreet1())
-								.city(from.getCity())
-								.state(from.getState())
-								.zip(from.getZip())
-								.country(from.getCountry())
-								.phone(from.getPhone())
-								.build()))
-						.addressTo(AddressTo.of(AddressCreateRequest.builder()
-								.name(to.getName())
-								.street1(to.getStreet1())
-								.city(to.getCity())
-								.state(to.getState())
-								.zip(to.getZip())
-								.country(to.getCountry())
-								.phone(to.getPhone())
-								.build()))
-						.parcels(List.of(
-								Parcels.of(ParcelCreateRequest.builder()
-										.weight("1")
-										.massUnit(WeightUnitEnum.LB)
-										.length("10")
-										.width("8")
-										.height("4")
-										.distanceUnit(DistanceUnitEnum.IN)
-										.build())))
-						.customsDeclaration(ShipmentCreateRequestCustomsDeclaration.of(
-								CustomsDeclarationCreateRequest.builder()
-										.contentsType(CustomsDeclarationContentsTypeEnum.MERCHANDISE)
-										.nonDeliveryOption(CustomsDeclarationNonDeliveryOptionEnum.RETURN)
-										.certify(true)
-										.certifySigner("William Ewanchuk")
-										.items(List.of(
-												CustomsItemCreateRequest.builder()
-														.description("Art Print")
-														.quantity(1L)
-														.netWeight("1")
-														.massUnit(WeightUnitEnum.LB)
-														.valueAmount("12.00")
-														.valueCurrency("CAD")
-														.originCountry("CA")
-														.build()))
+				.shipmentCreateRequest(
+						ShipmentCreateRequest.builder()
+								.addressFrom(
+										AddressFrom.of(AddressCreateRequest.builder()
+												.name(from.getStore())
+												.street1(from.getStreet1())
+												.city(from.getCity())
+												.state(from.getState())
+												.zip(from.getZip())
+												.country(from.getCountry())
+												.phone(from.getPhone())
+												.build()))
+								.addressTo(AddressTo.of(AddressCreateRequest.builder()
+										.name(to.getName())
+										.street1(to.getStreet1())
+										.city(to.getCity())
+										.state(to.getState())
+										.zip(to.getZip())
+										.country(to.getCountry())
+										.phone(to.getPhone())
 										.build()))
-						.build())
+								.parcels(List.of(
+										Parcels.of(ParcelCreateRequest.builder()
+												.weight("1")
+												.massUnit(WeightUnitEnum.LB)
+												.length("10")
+												.width("8")
+												.height("4")
+												.distanceUnit(DistanceUnitEnum.IN)
+												.build())))
+								.customsDeclaration(
+										ShipmentCreateRequestCustomsDeclaration.of(
+												CustomsDeclarationCreateRequest.builder()
+														.contentsType(
+																CustomsDeclarationContentsTypeEnum.MERCHANDISE)
+														.nonDeliveryOption(
+																CustomsDeclarationNonDeliveryOptionEnum.RETURN)
+														.certify(true)
+														.certifySigner("William Ewanchuk")
+														.items(List.of(
+																CustomsItemCreateRequest.builder()
+																		.description("Art Print")
+																		.quantity(1L)
+																		.netWeight("1")
+																		.massUnit(WeightUnitEnum.LB)
+																		.valueAmount("12.00")
+																		.valueCurrency("CAD")
+																		.originCountry("CA")
+																		.build()))
+														.build()))
+								.async(false)
+								.build())
 				.call();
 
 		var shipmentObj = shipment.shipment().get();
 		String shipmentId = shipmentObj.objectId();
 		log.info("Shipment created: {}", shipmentId);
 		log.info("Shipment status: {}", shipmentObj.status());
-		log.info("Shipment messages: {}", shipmentObj.messages());
 
-		ListShipmentRatesResponse ratesResponse = shippo.rates().listShipmentRates()
-				.shipmentId(shipmentId)
-				.page(1L)
-				.results(25L)
-				.shippoApiVersion("2018-02-08")
-				.call();
+		//  TODO: THIS IS SOME UGLY ASS AI SHIT I DONT LIKE AND WANT TO FIX
+		for (int i = 0; i < 10 && shipmentObj.rates().isEmpty(); i++) {
+			log.info("Waiting for rates (attempt {})...", i + 1);
+			Thread.sleep(1000);
+			shipmentObj = shippo.shipments().get(shipmentId).shipment().get();
+		}
 
-		log.info("Rates response: {}", ratesResponse.ratePaginatedList().orElse(null));
-		return ratesResponse;
+		log.info("Shipment rates count: {}", shipmentObj.rates().size());
+		return shipmentObj.rates();
 	}
 }
-

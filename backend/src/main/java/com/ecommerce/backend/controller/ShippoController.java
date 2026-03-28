@@ -4,7 +4,6 @@ import com.ecommerce.backend.dto.ShipmentFromValues;
 import com.ecommerce.backend.dto.ShipmentToValues;
 import com.ecommerce.backend.service.ShippoService;
 import com.goshippo.shippo_sdk.models.operations.CreateLiveRateResponse;
-import com.goshippo.shippo_sdk.models.operations.ListShipmentRatesResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,8 +41,8 @@ public class ShippoController {
 	public ResponseEntity<?> getShipmentRates(@RequestBody ShipmentToValues shipmentToValues) {
 		try {
 			ShipmentFromValues shipmentFromValues = new ShipmentFromValues();
-			ListShipmentRatesResponse response = shippoService.getShipmentRates(shipmentFromValues, shipmentToValues);
-			return ResponseEntity.ok(response.ratePaginatedList().orElse(null));
+			var rates = shippoService.getShipmentRates(shipmentFromValues, shipmentToValues);
+			return ResponseEntity.ok(rates);
 		} catch (Exception e) {
 			log.error("failed to get shipment rates: ", e);
 			return ResponseEntity.internalServerError().build();
