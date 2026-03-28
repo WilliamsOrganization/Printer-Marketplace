@@ -95,6 +95,11 @@
             <artifactId>resend-java</artifactId>
             <version>4.11.0</version>
         </dependency>
+		<dependency>
+			<groupId>com.goshippo</groupId>
+			<artifactId>shippo-sdk</artifactId>
+			<version>1.0.0-beta</version>
+		</dependency>
 	</dependencies>
 
 	<build>

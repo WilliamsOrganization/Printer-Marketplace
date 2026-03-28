@@ -14,6 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import Autocomplete from "react-google-autocomplete";
+import api from "@/lib/api";
+import { toast } from "sonner";
 
 interface AddressComponents {
 	street1: string;
@@ -32,7 +34,6 @@ export function CheckoutForm({
 	const [address, setAddress] = useState<AddressComponents | null>(null)
 
 	const handlePlaceSelected = (place: any) => {
-		console.log("place object:", place)
 		if (!place?.address_components) return
 
 		const get = (type: string) =>
@@ -47,8 +48,6 @@ export function CheckoutForm({
 			zip: get("postal_code"),
 			country: getShort("country"),
 		}
-		console.log("raw address_components:", place.address_components)
-		console.log("parsed address:", parsed)
 		setAddress(parsed)
 	}
 
@@ -62,14 +61,21 @@ export function CheckoutForm({
 
 		setLoading(true)
 
-		const payload = {
-			email: formData.get("email"),
-			...address,
-		}
-
-		// TODO: submit to backend checkout endpoint
-		console.log("checkout payload", payload)
-		setLoading(false)
+		api
+			.post("/shipping/rates/test", {
+				name: "Customer",
+				...address,
+			})
+			.then((res) => {
+				console.log("shipping rates:", res.data)
+				toast.success("Shipping rates received")
+			})
+			.catch(() => {
+				toast.error("Failed to get shipping rates")
+			})
+			.finally(() => {
+				setLoading(false)
+			})
 	}
 
 	return (
