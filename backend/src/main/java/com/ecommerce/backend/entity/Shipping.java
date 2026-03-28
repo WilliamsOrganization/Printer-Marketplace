@@ -26,7 +26,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * Shipping label and tracking info for an order, mirroring EasyPost.
+ * Shipping
+ * TODO: this needs to be refactored to match the Shippo API documentation 
+ * https://docs.goshippo.com/docs/guides_general/generate_shipping_label
+ * we need an Address/Shipment/Parcels/Transaction set of objects not one single "shipping" table
+ * read the documentation you pussy. write down constraints. 
  */
 @Data
 @Entity

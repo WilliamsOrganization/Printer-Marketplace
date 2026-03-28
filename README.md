@@ -111,13 +111,35 @@ TODOS:
 - auto generate longterm disc drive backups cron jobs onto the HD drives
 - configure secondary Nginx route (routes based on destination url) requires the fancy firewall protections you configured.
 - add in Product pages (dream todo add STL support for the different colors)
-# Easy Post 
-- this is used to calculate shipping on the checkout page. 
-- the checkout page is needed before a registered state for the user
-[EasyPost documentation link for the java module]( https://github.com/EasyPost/easypost-java )
+
+# Stripe Refactor (Priority)
+- Move Stripe checkout session creation from frontend (checkout_sessions/route.ts) to Spring backend
+- Spring already owns cart, inventory, and shipping — it should own Stripe session creation too
+- Frontend sends only `{ rateId }` (Shippo rate object_id) to backend, backend builds line items from DB cart, creates Stripe session, returns URL
+- Success page (success/page.jsx) can stay on frontend for now — it's read-only (stripe.checkout.sessions.retrieve)
+- Long term: move success page retrieval to Spring endpoint (GET /orders/confirm?session_id=xxx) and remove frontend Stripe SDK entirely
+- See route.ts TODO comment for full architectural notes
+
+# Shipping (Shippo)
+- Shippo rates are ephemeral — don't persist to DB, use Shippo as source of truth
+- Store addresses, shipments, and transactions in DB (immutable once created, needed for order history/fulfillment)
+- Refactor Shipping.java entity to match Shippo API documentation
+- Known bug: Shippo intermittently returns empty rates on first request for new addresses (see ShippoService.java)
+- Wire up "Continue to Payment" button to pass selected rate through to Stripe checkout
+
+# Frontend Cleanup
+- Product pages need server component wrapper for SEO indexing (product-card.tsx, product/page.tsx)
+- Success page needs product image URLs instead of generic quantity badge
+- Price filter toggles not working on shop page
+- Support multiple pricing tiers for products (create-inventory-item-form.tsx, InventoryItem.java)
+
+# Auth/Security
+- Password hashing (AuthService.java, DataInitializer.java)
+- Email authentication layer for account verification
+- Proper account creation process for order updates (UserService.java)
 
 # Resend
-- this is for email configurations. this is relatively simple to work with. 
+- this is for email configurations. this is relatively simple to work with.
 - not much to mess around with easy java docs
 
 MIT
