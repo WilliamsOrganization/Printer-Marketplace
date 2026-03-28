@@ -7,6 +7,10 @@ import com.goshippo.shippo_sdk.models.components.AddressCompleteCreateRequest;
 import com.goshippo.shippo_sdk.models.components.AddressCreateRequest;
 import com.goshippo.shippo_sdk.models.components.AddressFrom;
 import com.goshippo.shippo_sdk.models.components.AddressTo;
+import com.goshippo.shippo_sdk.models.components.CustomsDeclarationContentsTypeEnum;
+import com.goshippo.shippo_sdk.models.components.CustomsDeclarationCreateRequest;
+import com.goshippo.shippo_sdk.models.components.CustomsDeclarationNonDeliveryOptionEnum;
+import com.goshippo.shippo_sdk.models.components.CustomsItemCreateRequest;
 import com.goshippo.shippo_sdk.models.components.DistanceUnitEnum;
 import com.goshippo.shippo_sdk.models.components.LineItem;
 import com.goshippo.shippo_sdk.models.components.LiveRateCreateRequest;
@@ -15,6 +19,7 @@ import com.goshippo.shippo_sdk.models.components.LiveRateCreateRequestAddressTo;
 import com.goshippo.shippo_sdk.models.components.ParcelCreateRequest;
 import com.goshippo.shippo_sdk.models.components.Parcels;
 import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequest;
+import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequestCustomsDeclaration;
 import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
 import com.goshippo.shippo_sdk.models.operations.CreateLiveRateResponse;
 import com.goshippo.shippo_sdk.models.operations.CreateShipmentResponse;
@@ -91,6 +96,7 @@ public class ShippoService {
 								.state(from.getState())
 								.zip(from.getZip())
 								.country(from.getCountry())
+								.phone(from.getPhone())
 								.build()))
 						.addressTo(AddressTo.of(AddressCreateRequest.builder()
 								.name(to.getName())
@@ -99,6 +105,7 @@ public class ShippoService {
 								.state(to.getState())
 								.zip(to.getZip())
 								.country(to.getCountry())
+								.phone(to.getPhone())
 								.build()))
 						.parcels(List.of(
 								Parcels.of(ParcelCreateRequest.builder()
@@ -109,6 +116,23 @@ public class ShippoService {
 										.height("4")
 										.distanceUnit(DistanceUnitEnum.IN)
 										.build())))
+						.customsDeclaration(ShipmentCreateRequestCustomsDeclaration.of(
+								CustomsDeclarationCreateRequest.builder()
+										.contentsType(CustomsDeclarationContentsTypeEnum.MERCHANDISE)
+										.nonDeliveryOption(CustomsDeclarationNonDeliveryOptionEnum.RETURN_)
+										.certify(true)
+										.certifySigner("William Ewanchuk")
+										.items(List.of(
+												CustomsItemCreateRequest.builder()
+														.description("Art Print")
+														.quantity(1L)
+														.netWeight("1")
+														.massUnit(WeightUnitEnum.LB)
+														.valueAmount("12.00")
+														.valueCurrency("CAD")
+														.originCountry("CA")
+														.build()))
+										.build()))
 						.build())
 				.call();
 

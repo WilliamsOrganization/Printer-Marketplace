@@ -11,4 +11,5 @@ public class ShipmentToValues {
 	private String zip;
 	private String state;
 	private String country;
+	private String phone;
 }

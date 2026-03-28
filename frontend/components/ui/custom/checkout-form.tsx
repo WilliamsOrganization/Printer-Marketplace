@@ -25,6 +25,15 @@ interface AddressComponents {
 	country: string;
 }
 
+interface ShippingRate {
+	object_id: string;
+	provider: string;
+	servicelevel: { name: string };
+	amount: string;
+	currency: string;
+	estimated_days: number;
+}
+
 export function CheckoutForm({
 	className,
 	...props
@@ -32,6 +41,8 @@ export function CheckoutForm({
 	const [error, setError] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [address, setAddress] = useState<AddressComponents | null>(null)
+	const [rates, setRates] = useState<ShippingRate[]>([])
+	const [selectedRate, setSelectedRate] = useState<string | null>(null)
 
 	const handlePlaceSelected = (place: any) => {
 		if (!place?.address_components) return
@@ -49,6 +60,8 @@ export function CheckoutForm({
 			country: getShort("country"),
 		}
 		setAddress(parsed)
+		setRates([])
+		setSelectedRate(null)
 	}
 
 	const handleCheckout = async function(formData: FormData) {
@@ -64,11 +77,15 @@ export function CheckoutForm({
 		api
 			.post("/shipping/rates/test", {
 				name: "Customer",
+				phone: formData.get("phone"),
 				...address,
 			})
 			.then((res) => {
-				console.log("shipping rates:", res.data)
-				toast.success("Shipping rates received")
+				const results = res.data?.results ?? []
+				setRates(results)
+				if (results.length === 0) {
+					toast.error("No shipping options available for this address")
+				}
 			})
 			.catch(() => {
 				toast.error("Failed to get shipping rates")
@@ -101,6 +118,16 @@ export function CheckoutForm({
 								/>
 							</Field>
 							<Field>
+								<FieldLabel htmlFor="phone">Phone</FieldLabel>
+								<Input
+									id="phone"
+									name="phone"
+									type="tel"
+									placeholder="(555) 555-5555"
+									required
+								/>
+							</Field>
+							<Field>
 								<FieldLabel htmlFor="address">Shipping Address</FieldLabel>
 								<Autocomplete
 									apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
@@ -115,11 +142,54 @@ export function CheckoutForm({
 							</Field>
 							<Field>
 								<Button type="submit" disabled={loading}>
-									{loading ? "Processing..." : "Continue to Payment"}
+									{loading ? "Getting rates..." : "Get Shipping Rates"}
 								</Button>
 							</Field>
 						</FieldGroup>
 					</form>
+
+					{rates.length > 0 && (
+						<div className="mt-6 space-y-2">
+							<p className="text-sm font-medium">Shipping Options</p>
+							{rates.map((rate) => (
+								<label
+									key={rate.object_id}
+									className={cn(
+										"flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm transition-colors",
+										selectedRate === rate.object_id
+											? "border-primary bg-primary/5"
+											: "border-border hover:bg-accent/50"
+									)}
+								>
+									<div className="flex items-center gap-3">
+										<input
+											type="radio"
+											name="shippingRate"
+											value={rate.object_id}
+											checked={selectedRate === rate.object_id}
+											onChange={() => setSelectedRate(rate.object_id)}
+											className="accent-primary"
+										/>
+										<div>
+											<p className="font-medium">{rate.servicelevel?.name}</p>
+											<p className="text-muted-foreground text-xs">{rate.provider}{rate.estimated_days ? ` · ${rate.estimated_days} days` : ""}</p>
+										</div>
+									</div>
+									<p className="font-medium">${rate.amount} {rate.currency}</p>
+								</label>
+							))}
+							<Button
+								className="mt-4 w-full"
+								disabled={!selectedRate}
+								onClick={() => {
+									// TODO: proceed to Stripe checkout with selected rate
+									console.log("selected rate:", selectedRate)
+								}}
+							>
+								Continue to Payment
+							</Button>
+						</div>
+					)}
 				</CardContent>
 			</Card>
 		</div>
