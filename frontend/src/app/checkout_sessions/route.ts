@@ -3,6 +3,29 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 
+/**
+ * TODO: Refactor Stripe out of the frontend entirely.
+ *
+ * Currently Stripe checkout session creation lives here on the Next.js server,
+ * while cart, inventory, and shipping logic live on the Spring backend. This split
+ * means this route has to reach back to Spring to verify prices, shipping rates,
+ * and cart contents before creating a session — duplicating trust boundaries.
+ *
+ * Target architecture:
+ *   Client → Spring backend (POST /checkout) → creates Stripe session with verified
+ *   cart line items + shipping rate → returns Stripe checkout URL → client redirects.
+ *   Stripe webhook → Spring backend → order fulfillment.
+ *
+ * Spring already owns the cart, inventory, and Shippo shipping rates. It should also
+ * own Stripe session creation so there's a single source of truth for pricing.
+ * This route and the frontend Stripe dependency can then be removed entirely.
+ *
+ * Note: THIS NOTE IS SUS The success page (src/app/(shop)/success/page.jsx) uses the Stripe SDK in a
+ * server component to retrieve the completed session via stripe.checkout.sessions.retrieve().
+ * This is read-only and works fine as-is after the refactor — it only needs the session_id
+ * query param. However, for full consolidation, this could also move to a Spring endpoint
+ * (e.g. GET /orders/confirm?session_id=xxx) and the frontend Stripe SDK removed entirely.
+ */
 export async function POST(req: NextRequest): Promise<NextResponse> {
 	try {
 		const headersList = await headers();
