@@ -31,12 +31,12 @@ interface AddressComponents {
 }
 
 interface ShippingRate {
-	objectId: string;
+	object_id: string;
 	provider: string;
 	servicelevel: { name: string };
 	amount: string;
 	currency: string;
-	estimatedDays: number;
+	estimated_days: number;
 }
 
 export function CheckoutForm({
@@ -60,6 +60,9 @@ export function CheckoutForm({
 
 		setLoading(true)
 
+		// KNOWN BUG: Backend may return empty rates on first request for a new address.
+		// See ShippoService.getShipmentRates() - a retry is attempted server-side but may still fail.
+		// If "No shipping options available" appears, the user can retry manually.
 		api
 			.post("/shipping/rates/test", {
 				name: "Customer",
@@ -153,10 +156,10 @@ export function CheckoutForm({
 							<div className="flex flex-col gap-3">
 								{rates.map((rate) => (
 									<label
-										key={rate.objectId}
+										key={rate.object_id}
 										className={cn(
 											"flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm transition-colors",
-											selectedRate === rate.objectId
+											selectedRate === rate.object_id
 												? "border-primary bg-primary/5"
 												: "border-border hover:bg-accent/50"
 										)}
@@ -165,14 +168,14 @@ export function CheckoutForm({
 											<input
 												type="radio"
 												name="shippingRate"
-												value={rate.objectId}
-												checked={selectedRate === rate.objectId}
-												onChange={() => setSelectedRate(rate.objectId)}
+												value={rate.object_id}
+												checked={selectedRate === rate.object_id}
+												onChange={() => setSelectedRate(rate.object_id)}
 												className="accent-primary"
 											/>
 											<div>
 												<p className="font-medium">{rate.servicelevel?.name}</p>
-												<p className="text-muted-foreground text-xs">{rate.provider}{rate.estimatedDays ? ` · ${rate.estimatedDays} days` : ""}</p>
+												<p className="text-muted-foreground text-xs">{rate.provider}{rate.estimated_days ? ` · ${rate.estimated_days} days` : ""}</p>
 											</div>
 										</div>
 										<p className="font-medium">${rate.amount} {rate.currency}</p>
