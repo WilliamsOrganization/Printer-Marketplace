@@ -13,9 +13,12 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Autocomplete from "react-google-autocomplete";
 import api from "@/lib/api";
 import { toast } from "sonner";
+
+const MotionCard = motion(Card);
 
 interface AddressComponents {
 	street1: string;
@@ -96,8 +99,13 @@ export function CheckoutForm({
 	}
 
 	return (
-		<div className={cn("flex flex-col gap-6", className)} {...props}>
-			<Card>
+		<div className={cn("flex flex-row gap-6", className)} {...props}>
+			<MotionCard
+				className="min-w-sm"
+				initial={{ opacity: 0, y: 16 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5 }}
+			>
 				<CardHeader>
 					<CardTitle className="text-xl">Checkout</CardTitle>
 				</CardHeader>
@@ -147,50 +155,64 @@ export function CheckoutForm({
 							</Field>
 						</FieldGroup>
 					</form>
-					{rates.length > 0 && (
-						<div className="mt-6 space-y-2">
-							<p className="text-sm font-medium">Shipping Options</p>
-							{rates.map((rate) => (
-								<label
-									key={rate.object_id}
-									className={cn(
-										"flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm transition-colors",
-										selectedRate === rate.object_id
-											? "border-primary bg-primary/5"
-											: "border-border hover:bg-accent/50"
-									)}
-								>
-									<div className="flex items-center gap-3">
-										<input
-											type="radio"
-											name="shippingRate"
-											value={rate.object_id}
-											checked={selectedRate === rate.object_id}
-											onChange={() => setSelectedRate(rate.object_id)}
-											className="accent-primary"
-										/>
-										<div>
-											<p className="font-medium">{rate.servicelevel?.name}</p>
-											<p className="text-muted-foreground text-xs">{rate.provider}{rate.estimated_days ? ` · ${rate.estimated_days} days` : ""}</p>
-										</div>
-									</div>
-									<p className="font-medium">${rate.amount} {rate.currency}</p>
-								</label>
-							))}
-							<Button
-								className="mt-4 w-full"
-								disabled={!selectedRate}
-								onClick={() => {
-									// TODO: proceed to Stripe checkout with selected rate
-									console.log("selected rate:", selectedRate)
-								}}
-							>
-								Continue to Payment
-							</Button>
-						</div>
-					)}
 				</CardContent>
-			</Card>
+			</MotionCard>
+			<AnimatePresence>
+				{rates.length > 0 && (
+					<MotionCard
+						className="min-w-sm"
+						initial={{ opacity: 0, x: 20 }}
+						animate={{ opacity: 1, x: 0 }}
+						exit={{ opacity: 0, x: 20 }}
+						transition={{ duration: 0.3 }}
+					>
+						<CardHeader>
+							<CardTitle className="text-xl">Shipping Options</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<div className="flex flex-col gap-3">
+									{rates.map((rate) => (
+										<label
+											key={rate.object_id}
+											className={cn(
+												"flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm transition-colors",
+												selectedRate === rate.object_id
+													? "border-primary bg-primary/5"
+													: "border-border hover:bg-accent/50"
+											)}
+										>
+											<div className="flex items-center gap-3">
+												<input
+													type="radio"
+													name="shippingRate"
+													value={rate.object_id}
+													checked={selectedRate === rate.object_id}
+													onChange={() => setSelectedRate(rate.object_id)}
+													className="accent-primary"
+												/>
+												<div>
+													<p className="font-medium">{rate.servicelevel?.name}</p>
+													<p className="text-muted-foreground text-xs">{rate.provider}{rate.estimated_days ? ` · ${rate.estimated_days} days` : ""}</p>
+												</div>
+											</div>
+											<p className="font-medium">${rate.amount} {rate.currency}</p>
+										</label>
+									))}
+								</div>
+								<Button
+									className="mt-4 w-full"
+									disabled={!selectedRate}
+									onClick={() => {
+										// TODO: proceed to Stripe checkout with selected rate
+										console.log("selected rate:", selectedRate)
+									}}
+								>
+									Continue to Payment
+								</Button>
+							</CardContent>
+					</MotionCard>
+				)}
+			</AnimatePresence>
 		</div>
 	);
 }

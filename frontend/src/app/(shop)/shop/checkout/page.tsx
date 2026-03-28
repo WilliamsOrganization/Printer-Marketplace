@@ -10,7 +10,7 @@ import { CheckoutForm } from "@/components/ui/custom/checkout-form";
 export default function LoginPage() {
 	return (
 		<div className="bg-muted flex min-h-[70vh] flex-col items-center justify-center gap-6 p-6 md:p-10">
-			<div className="flex w-full max-w-sm flex-col gap-6">
+			<div className="flex min-w-auto   flex-col gap-6">
 				<a href="#" className="flex items-center gap-2 self-center font-medium">
 					<Image src="/logo-icon.svg" width={30} height={30} />
 					PrintMarket Inc.
