@@ -119,7 +119,7 @@ public class ShippoService {
 						.customsDeclaration(ShipmentCreateRequestCustomsDeclaration.of(
 								CustomsDeclarationCreateRequest.builder()
 										.contentsType(CustomsDeclarationContentsTypeEnum.MERCHANDISE)
-										.nonDeliveryOption(CustomsDeclarationNonDeliveryOptionEnum.RETURN_)
+										.nonDeliveryOption(CustomsDeclarationNonDeliveryOptionEnum.RETURN)
 										.certify(true)
 										.certifySigner("William Ewanchuk")
 										.items(List.of(
@@ -139,13 +139,18 @@ public class ShippoService {
 		var shipmentObj = shipment.shipment().get();
 		String shipmentId = shipmentObj.objectId();
 		log.info("Shipment created: {}", shipmentId);
+		log.info("Shipment status: {}", shipmentObj.status());
+		log.info("Shipment messages: {}", shipmentObj.messages());
 
-		return shippo.rates().listShipmentRates()
+		ListShipmentRatesResponse ratesResponse = shippo.rates().listShipmentRates()
 				.shipmentId(shipmentId)
 				.page(1L)
 				.results(25L)
 				.shippoApiVersion("2018-02-08")
 				.call();
+
+		log.info("Rates response: {}", ratesResponse.ratePaginatedList().orElse(null));
+		return ratesResponse;
 	}
 }
 

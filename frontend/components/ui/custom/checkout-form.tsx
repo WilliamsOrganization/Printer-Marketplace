@@ -147,7 +147,6 @@ export function CheckoutForm({
 							</Field>
 						</FieldGroup>
 					</form>
-
 					{rates.length > 0 && (
 						<div className="mt-6 space-y-2">
 							<p className="text-sm font-medium">Shipping Options</p>
