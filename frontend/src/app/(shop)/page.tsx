@@ -1,140 +1,141 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Layers, ArrowRight, Package, Paintbrush, Timer } from "lucide-react";
+import { FilterSidebar } from "@/components/ui/custom/filter-sidebar";
+import { SortSelect } from "@/components/ui/custom/sort-select";
 import apiServer from "@/lib/api-server";
-import { InventoryItem, ItemBadge } from "@/lib/types";
+import { CategoryLabel, InventoryItem } from "@/lib/types";
 import ProductGrid from "@/components/ui/custom/product-card";
 
-const features = [
-	{
-		icon: Layers,
-		title: "Layer by Layer",
-		description:
-			"Every product is printed to order with precision FDM and resin technology.",
-	},
-	{
-		icon: Paintbrush,
-		title: "Fully Custom",
-		description:
-			"Don't see what you want? Send us your design and we'll bring it to life.",
-	},
-	{
-		icon: Timer,
-		title: "Fast Turnaround",
-		description:
-			"Most orders ship within 3–5 business days straight to your door.",
-	},
-	{
-		icon: Package,
-		title: "Built to Last",
-		description: "We use only high-quality PETG, PLA+, and resin materials.",
-	},
+// TODO: these button toggles for prices arent working
+const priceRanges = [
+	{ id: "under50", label: "Under $50", min: 0, max: 50 },
+	{ id: "50to75", label: "$50 - $75", min: 50, max: 75 },
+	{ id: "over75", label: "Over $75", min: 75, max: Infinity },
 ];
 
-const galleryImages = [
-	"/stock-1.jpg",
-	"/stock-2.jpg",
-	"/stock-3.jpg",
-	"/stock-4.jpg",
-	"/stock-5.jpg",
-	"/stock-6.jpg",
-];
+type SearchParams = {
+	category?: string | string[];
+	itemCost?: string | string[];
+	sort?: string;
+};
 
-export default async function Home() {
+const categoryOptions = Object.entries(CategoryLabel).map(([id, label]) => ({
+	id,
+	label,
+}));
+
+export default async function ShopPage({
+	searchParams,
+}: {
+	searchParams: Promise<SearchParams>;
+}) {
+	const params = await searchParams;
+
 	const products: InventoryItem[] = await apiServer
 		.get("/inventoryitem")
-		.then((res) => res.data)
-		.catch(() => []);
+		.then((res) => {
+			console.log("Successfully fetched product items: ");
+			return res.data;
+		})
+		.catch((err) => {
+			console.log("Error happened: " + err.message);
+			return [];
+		});
 
-	const featured = products
-		.filter((p) => p.badge === ItemBadge.BESTSELLER)
-		.slice(0, 4);
+	// Parse params - handle both single values and arrays
+	const selectedCategories = params.category
+		? Array.isArray(params.category)
+			? params.category
+			: [params.category]
+		: [];
+	const selectedPriceRanges = params.itemCost
+		? Array.isArray(params.itemCost)
+			? params.itemCost
+			: [params.itemCost]
+		: [];
+	const sortBy = params.sort || "featured";
+
+	// Filter products on server
+	const filteredProducts = products
+		.filter((product) => {
+			const categoryMatch =
+				selectedCategories.length === 0 ||
+				selectedCategories.includes(product.category);
+			const priceMatch =
+				selectedPriceRanges.length === 0 ||
+				selectedPriceRanges.some((rangeId) => {
+					const range = priceRanges.find((r) => r.id === rangeId);
+					return (
+						range &&
+						product.itemCost >= range.min &&
+						product.itemCost < range.max
+					);
+				});
+			return categoryMatch && priceMatch;
+		})
+		.sort((a, b) => {
+			switch (sortBy) {
+				case "featured":
+					if (a.badge && !b.badge) return -1;
+					if (!a.badge && b.badge) return 1;
+					return a.id - b.id;
+				case "price-asc":
+					return a.itemCost - b.itemCost;
+				case "price-desc":
+					return b.itemCost - a.itemCost;
+				case "name":
+					return a.itemTitle.localeCompare(b.itemTitle);
+				default:
+					return 0;
+			}
+		});
 
 	return (
-		<div className="flex flex-col">
-			{/* Hero */}
-			<section className="min-h-[50vh] relative flex items-center overflow-hidden">
-				<div className="absolute right-0 top-0 bottom-0 w-1/2 grid grid-cols-2 grid-rows-3">
-					{galleryImages.map((src, i) => (
-						<div key={i} className="relative overflow-hidden">
-							<Image src={src} alt="" fill className="object-cover" />
-						</div>
-					))}
-				</div>
-				<div className="absolute inset-0 bg-gradient-to-r from-background from-40% via-background/80 via-60% to-transparent" />
-				<div className="relative z-10 w-1/2 flex items-center justify-center py-16">
-					<div className="flex flex-col gap-6 max-w-xl px-12">
-						<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground">
-							Made to order · Ships in 3–5 days
-						</p>
-						<h1 className="text-5xl font-serif leading-[1.15]">
-							Built,{" "}
-							<span className="italic">layer by layer.</span>
-						</h1>
-						<p className="text-base text-muted-foreground leading-relaxed">
-							Custom 3D printed goods crafted with care. Browse our catalogue
-							or send us your own design.
-						</p>
-						<div className="flex items-center gap-5">
-							<Button asChild>
-								<Link href="/shop">
-									Shop
-									<ArrowRight className="ml-2 size-4" />
-								</Link>
-							</Button>
-							<Link
-								href="/shop"
-								className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
-							>
-								Send us a design
-							</Link>
-						</div>
-					</div>
-				</div>
-			</section>
+		<div className="mx-auto max-w-7xl px-4 py-4">
+			{/* Page header */}
+			<div className="border-b mb-4">
+				<h1 className="text-3xl font-serif">
+					The <span className="italic">catalogue</span>
+				</h1>
+				<p className="text-sm text-muted-foreground my-2 leading-relaxed">
+					Everything is printed to order. Browse, filter, and find your piece.
+				</p>
+			</div>
 
-			<Separator />
-
-			{/* Featured products */}
-			<section className="max-w-7xl mx-auto px-6 py-12 w-full">
-				<div className="flex items-end justify-between mb-10">
-					<div>
-						<h2 className="text-3xl font-serif capitalize">bestsellers</h2>
-					</div>
-					<Button variant="ghost" asChild className="text-muted-foreground">
-						<Link href="/shop">
-							View all <ArrowRight className="ml-2 size-4" />
-						</Link>
-					</Button>
+			{/* Filter + sort bar */}
+			<div className="flex items-center justify-between gap-4 mb-4">
+				<FilterSidebar
+					categories={categoryOptions}
+					priceRanges={priceRanges}
+					selectedCategories={selectedCategories}
+					selectedPriceRanges={selectedPriceRanges}
+				/>
+				<div className="flex items-center gap-3 ml-auto">
+					<p className="text-xs tracking-wide text-muted-foreground whitespace-nowrap">
+						{filteredProducts.length} {filteredProducts.length === 1 ? "piece" : "pieces"}
+					</p>
+					<SortSelect currentSort={sortBy} />
 				</div>
-				<ProductGrid products={featured} />
-			</section>
+			</div>
 
-			{/* CTA */}
-			<section className="max-w-7xl mx-auto px-6 py-12 w-full">
-				<div className="rounded-2xl border bg-muted/30 px-12 py-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
-					<div className="flex flex-col gap-3">
-						<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground">
-							Custom orders
+			{/* Product Grid */}
+			<main>
+				<ProductGrid products={filteredProducts} />
+
+				{filteredProducts.length === 0 && (
+					<div className="text-center py-20 flex flex-col items-center gap-3">
+						<p className="font-serif text-xl italic text-muted-foreground">
+							Nothing here yet.
 						</p>
-						<h2 className="text-3xl font-serif">
-							Have a design{" "}
-							<span className="italic">in mind?</span>
-						</h2>
-						<p className="text-muted-foreground max-w-sm leading-relaxed">
-							Send us your file and we'll handle the rest — material selection,
-							settings, and delivery.
+						<p className="text-sm text-muted-foreground">
+							Try adjusting your filters.
 						</p>
+						<Button variant="link" asChild>
+							<Link href="/shop">Clear filters</Link>
+						</Button>
 					</div>
-					<Button size="lg" asChild className="shrink-0">
-						<Link href="/shop">
-							Get a Quote <ArrowRight className="ml-2 size-4" />
-						</Link>
-					</Button>
-				</div>
-			</section>
+				)}
+			</main>
 		</div>
 	);
 }
