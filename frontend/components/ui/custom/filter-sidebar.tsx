@@ -42,7 +42,7 @@ export function FilterSidebar({
         params.delete(key)
         current.filter(v => v !== value).forEach(v => params.append(key, v))
       }
-      router.push(`/shop?${params.toString()}`, { scroll: false })
+      router.push(`/?${params.toString()}`, { scroll: false })
     },
     [router, searchParams]
   )
@@ -51,7 +51,7 @@ export function FilterSidebar({
     const params = new URLSearchParams(searchParams.toString())
     params.delete("category")
     params.delete("itemCost")
-    router.push(`/shop?${params.toString()}`, { scroll: false })
+    router.push(`/?${params.toString()}`, { scroll: false })
   }
 
   const hasFilters = selectedCategories.length > 0 || selectedPriceRanges.length > 0

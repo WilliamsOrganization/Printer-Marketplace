@@ -106,7 +106,7 @@ export default async function Success({ searchParams }) {
 
 						<div className="flex flex-col sm:flex-row items-center gap-4">
 							<Button asChild>
-								<Link href="/shop">
+								<Link href="/">
 									Continue Shopping
 									<ArrowRight className="ml-2 size-4" />
 								</Link>

@@ -10,7 +10,7 @@ export function Header() {
 		<div className="sticky top-0 w-full z-30 border-b bg-background/95 backdrop-blur-sm">
 			<div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-3 border-b bg-background/95 backdrop-blur-sm">
 				{/* Logo */}
-				<Link href="/shop" className="flex items-center">
+				<Link href="/" className="flex items-center">
 					<span className="font-serif italic text-xl leading-none">
 						<TypeIt
 							options={{
@@ -42,7 +42,7 @@ export function Header() {
 				{/* Nav + cart */}
 				<div className="flex items-center gap-1">
 					<Button variant="ghost" size="sm" asChild>
-						<Link href="/shop" className="text-sm text-muted-foreground hover:text-foreground">
+						<Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
 							Shop
 						</Link>
 					</Button>

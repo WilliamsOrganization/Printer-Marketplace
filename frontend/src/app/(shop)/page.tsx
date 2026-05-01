@@ -131,7 +131,7 @@ export default async function ShopPage({
 							Try adjusting your filters.
 						</p>
 						<Button variant="link" asChild>
-							<Link href="/shop">Clear filters</Link>
+							<Link href="/">Clear filters</Link>
 						</Button>
 					</div>
 				)}

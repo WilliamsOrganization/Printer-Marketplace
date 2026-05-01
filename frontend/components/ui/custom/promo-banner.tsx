@@ -10,7 +10,7 @@ export function PromoBanner() {
           <span className="italic font-serif text-sm">made to order, every time.</span>
         </p>
         <Link
-          href="/shop"
+          href="/"
           className="flex items-center gap-1 underline underline-offset-2 hover:opacity-80 transition-opacity whitespace-nowrap"
         >
           Shop now <ArrowRight className="size-3" />

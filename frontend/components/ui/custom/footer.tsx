@@ -7,7 +7,7 @@ import { Twitter, Instagram, Mail } from "lucide-react";
 
 const footerLinks = {
 	shop: [
-		{ label: "All Products", href: "/shop" },
+		{ label: "All Products", href: "/" },
 		// { label: "New Arrivals", href: "/shop?sort=new" },
 		// { label: "Sale", href: "/shop?badge=SALE" },
 	],
