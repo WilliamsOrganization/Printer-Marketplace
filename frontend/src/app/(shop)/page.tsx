@@ -95,10 +95,10 @@ export default async function ShopPage({
 			{/* Page header */}
 			<div className="border-b mb-4">
 				<h1 className="text-3xl font-serif">
-					The <span className="italic">catalogue</span>
+					The <span className="italic">Shop</span>
 				</h1>
 				<p className="text-sm text-muted-foreground my-2 leading-relaxed">
-					Everything is printed to order. Browse, filter, and find your piece.
+					Browse, filter, and find what your looking for.
 				</p>
 			</div>
 
