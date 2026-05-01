@@ -12,8 +12,13 @@ import com.stripe.param.PriceCreateParams;
 import com.stripe.param.PriceUpdateParams;
 import com.stripe.param.ProductCreateParams;
 import com.stripe.param.ProductUpdateParams;
+import com.stripe.param.checkout.SessionCreateParams;
+import com.stripe.service.checkout.SessionService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,6 +29,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StripeCatalogService {
 	private final InventoryItemRepository inventoryItemRepository;
+	@Value("{${environment.url}}")
+	private String rootUrl;
 
 	public CreateCatalogResponse createProductAndPrice(CreateCatalogRequest req)
 			throws StripeException {
@@ -97,4 +104,19 @@ public class StripeCatalogService {
 
 		return resource.update(updateBuilder.build());
 	}
+
+	// TODO: checkout form return type takes in lineItems returns stripe checkout url
+	// public String checkout() {
+	// 	String url = rootUrl + "/success?session_id={CHECKOUT_SESSION_ID}";
+	// 	SessionCreateParams params = SessionCreateParams.builder().setMode(SessionCreateParams.Mode.PAYMENT)
+	// 	.setSuccessUrl(url)
+	// 		.addLineItem(SessionCreateParams.LineItem.builder()
+	// 	.setPrice(price)
+	// 	)
+	//
+	//
+	//
+	//
+	// }
+	
 }
