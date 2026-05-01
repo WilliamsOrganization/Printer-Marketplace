@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 /**
  * AuthService handles all of the business logic for logging in
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -38,8 +40,12 @@ public class AuthService {
 			return Optional.empty();
 		Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
 
-		if (sessionOpt.isEmpty() ||
-				sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+		if (sessionOpt.isEmpty()) {
+			log.warn("authenticateFromToken: no session found for token");
+			return Optional.empty();
+		}
+		if (sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+			log.warn("authenticateFromToken: session expired for user {}", sessionOpt.get().getUser().getEmail());
 			return Optional.empty();
 		}
 		Users user = sessionOpt.get().getUser();
@@ -88,10 +94,10 @@ public class AuthService {
 		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
 			Sessions sessionNew = new Sessions();
 			sessionNew.setUser(user);
-			sessionNew.setExpiresAt(LocalDateTime.now().plusDays(30));
-			sessionNew.setProviderAccountID(request.getProviderAccountID());
 			return sessionNew;
 		});
+		session.setExpiresAt(LocalDateTime.now().plusDays(30));
+		session.setProviderAccountID(request.getProviderAccountID());
 		return sessionRepository.save(session);
 	}
 }
