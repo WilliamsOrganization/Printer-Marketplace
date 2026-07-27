@@ -1,6 +1,15 @@
 package com.ecommerce.backend.entity;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,41 +18,52 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.annotations.UpdateTimestamp;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.ToString;
 /**
  * Line item in a shopping cart linking a cart to an inventory item with
  * quantity.
  */
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "cartItem", uniqueConstraints = @UniqueConstraint(columnNames = { "cart_id", "item_id" }))
+@Table(name = "cartItem", uniqueConstraints = @UniqueConstraint(
+                              columnNames = {"cart_id", "item_id"}))
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class CartItem {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    private Long id;
 
-	@CreationTimestamp
-	private LocalDateTime createdAt;
-	@UpdateTimestamp
-	private LocalDateTime updatedAt;
+    @CreationTimestamp private LocalDateTime createdAt;
 
-	@NotNull
-	@ManyToOne
-	@JoinColumn(name = "cart_id", nullable = false)
-	@JsonBackReference
-	private Cart cart;
+    @UpdateTimestamp private LocalDateTime updatedAt;
 
-	@ManyToOne
-	@JoinColumn(name = "item_id")
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	private InventoryItem item;
+    @NonNull
+    @ManyToOne
+    @JoinColumn(name = "cart_id", nullable = false)
+    @JsonBackReference
+	// This breaks the circular reference errors 
+    @ToString.Exclude
+    private Cart cart;
 
-	private Integer quantity;
+    @NonNull
+    @ManyToOne
+    @JoinColumn(name = "item_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private InventoryItem item;
+
+    // TODO: consider @Positive (jakarta.validation) - can't add zero/negative
+    // quantity to a cart
+    @NonNull @Column(nullable = false) private Integer quantity;
 }

@@ -1,7 +1,13 @@
 package com.ecommerce.backend.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.ecommerce.backend.dto.ShipmentFromValues;
 import com.ecommerce.backend.dto.ShipmentToValues;
+import com.ecommerce.backend.repository.InventoryItemParcelInfoRepository;
+import com.goshippo.shippo_sdk.Shipments;
 import com.goshippo.shippo_sdk.Shippo;
 import com.goshippo.shippo_sdk.models.components.AddressCompleteCreateRequest;
 import com.goshippo.shippo_sdk.models.components.AddressCreateRequest;
@@ -18,17 +24,18 @@ import com.goshippo.shippo_sdk.models.components.LiveRateCreateRequestAddressFro
 import com.goshippo.shippo_sdk.models.components.LiveRateCreateRequestAddressTo;
 import com.goshippo.shippo_sdk.models.components.ParcelCreateRequest;
 import com.goshippo.shippo_sdk.models.components.Parcels;
+import com.goshippo.shippo_sdk.models.components.Rate;
+import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequest;
 import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequestCustomsDeclaration;
 import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
 import com.goshippo.shippo_sdk.models.operations.CreateLiveRateResponse;
 import com.goshippo.shippo_sdk.models.operations.CreateShipmentResponse;
-import com.goshippo.shippo_sdk.models.components.Rate;
-import java.util.List;
-import java.util.Map;
+import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
+import com.goshippo.shippo_sdk.models.operations.GetShipmentResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 /**
  * ShippoService this whole class is fucking cursed. Shipping sucks ass dont know what is registered as "test" vs "live" vs "Shippo native" on their dashboard
@@ -48,10 +55,23 @@ import org.springframework.stereotype.Service;
 public class ShippoService {
 
 	private final Shippo shippo;
+	private final InventoryItemParcelInfoRepository inventoryItemParcelInfoRepository;
 
+	/**
+	 * Unimplemented stub for emailing a shipping label.
+	 */
 	public void testShippoLabel(String toEmail, String body) {
 	}
 
+	/**
+	 * Gets a live shipping rate quote from Shippo's rates-at-checkout
+	 * endpoint for a single hardcoded line item, without creating a
+	 * persistent Shipment object.
+	 *
+	 * @param shipmentFromValues the origin address
+	 * @param shipmentToValues   the destination address
+	 * @return the live rate response from Shippo
+	 */
 	public CreateLiveRateResponse createShipmentResponse(ShipmentFromValues shipmentFromValues,
 			ShipmentToValues shipmentToValues) throws Exception {
 		CreateLiveRateResponse shipmentResponse = shippo.ratesAtCheckout()
@@ -90,6 +110,15 @@ public class ShippoService {
 		return shipmentResponse;
 	}
 
+	/**
+	 * Builds the Shippo shipment creation request: origin/destination
+	 * addresses, a hardcoded single-parcel package, and a hardcoded customs
+	 * declaration.
+	 *
+	 * @param from the origin address
+	 * @param to   the destination address
+	 * @return the assembled shipment creation request
+	 */
 	private ShipmentCreateRequest buildShipmentRequest(ShipmentFromValues from, ShipmentToValues to) {
 		return ShipmentCreateRequest.builder()
 				.addressFrom(
@@ -142,29 +171,56 @@ public class ShippoService {
 				.build();
 	}
 
+
+	/**
+	 * Creates a Shippo shipment for the given addresses and returns its
+	 * carrier rates.
+	 *
+	 * @param from the origin address
+	 * @param to   the destination address
+	 * @return the rates attached to the newly created shipment
+	 */
 	private List<Rate> createShipmentAndGetRates(ShipmentFromValues from, ShipmentToValues to) throws Exception {
-		var shipment = shippo.shipments()
+		CreateShipmentResponse shipment = shippo.shipments()
 				.create()
 				.shippoApiVersion("2018-02-08")
 				.shipmentCreateRequest(buildShipmentRequest(from, to))
 				.call();
 
-		var shipmentObj = shipment.shipment().get();
+		Shipment shipmentObj = shipment.shipment().get();
 		log.info("Shipment created: {}", shipmentObj.objectId());
 		log.info("Shipment status: {}", shipmentObj.status());
 		log.info("Shipment rates count: {}", shipmentObj.rates().size());
 		return shipmentObj.rates();
 	}
 
+	/**
+	 * Creates a shipment and returns its rates, retrying once if the first
+	 * attempt comes back empty (see KNOWN BUG above).
+	 *
+	 * @param from the origin address
+	 * @param to   the destination address
+	 * @return the shipment's carrier rates
+	 */
 	public List<Rate> getShipmentRates(ShipmentFromValues from, ShipmentToValues to) throws Exception {
 		List<Rate> rates = createShipmentAndGetRates(from, to);
-
-		// Shippo sometimes returns empty rates on first request for a new address
+		// TODO: this is fucking cursed.
 		if (rates.isEmpty()) {
 			log.info("Retrying shipment creation for rates...");
 			rates = createShipmentAndGetRates(from, to);
 		}
-
 		return rates;
+	}
+
+	/**
+	 * Fetches a single previously-quoted Shippo rate by its id, so its price
+	 * can be re-read at checkout time.
+	 *
+	 * @param selectedRateId the Shippo rate object id the user selected
+	 * @return the rate response
+	 * @author William Ewanchuk https://www.github.com/ewanchukwilliam
+	 */
+	public GetRateResponse getShipmentRateById(String selectedRateId) throws Exception {
+			return shippo.rates().get(selectedRateId);
 	}
 }

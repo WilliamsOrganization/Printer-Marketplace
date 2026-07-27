@@ -1,6 +1,15 @@
 package com.ecommerce.backend.service;
 
-import com.ecommerce.backend.config.SessionAuthFilter;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.ecommerce.backend.dto.AddCartItemRequest;
 import com.ecommerce.backend.dto.AddCartItemResponse;
 import com.ecommerce.backend.entity.Cart;
@@ -13,16 +22,8 @@ import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * CartService
@@ -30,25 +31,36 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @RequiredArgsConstructor
 public class CartService {
+	private static final long DAYS = 30;
 	private final UserRepository userRepository;
 	private final SessionRepository sessionRepository;
 	private final CartRepository cartRepository;
 	private final CartItemRepository cartItemRepository;
 	private final InventoryItemRepository inventoryItemRepository;
 
+	/**
+	 * createCartItem creates a new cart item
+	 * 
+	 * @param cartItemRequest
+	 * @return
+	 */
 	public AddCartItemResponse createCartItem(AddCartItemRequest cartItemRequest) {
+		// TODO: FIXME: This whole method is cursed
 		InventoryItem inventoryItem = inventoryItemRepository.findById(cartItemRequest.getItemId())
 				.orElseThrow();
 
-		CartItem cartItem = new CartItem();
-		cartItem.setItem(inventoryItem);
-		cartItem.setQuantity(cartItemRequest.getQuantity());
+		CartItem cartItem = CartItem.builder()
+				.item(inventoryItem)
+				.quantity(cartItemRequest.getQuantity())
+				// .cart()// TODO: this is properly throwing an error now this is intentional for me to fix
+				.build();
+
+			// TODO: extract this into the the authentication service this doesnt belong here.
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth != null && auth.isAuthenticated() &&
 				auth.getPrincipal() instanceof Users user) {
 			Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
-				Cart newCart = new Cart();
-				newCart.setUser(user);
+				Cart newCart = Cart.builder().user(user).build();
 				return cartRepository.save(newCart);
 			});
 
@@ -56,7 +68,7 @@ public class CartService {
 			if (existing.isPresent()) {
 				throw new ResponseStatusException(HttpStatus.CONFLICT);
 			} else {
-				cartItem.setCart(cart);
+				cartItem.setCart(cart);// Should be getting built all at once at the same time not piece meal as its a required argument parameter. simplifies things
 				cartItem = cartItemRepository.save(cartItem);
 			}
 			AddCartItemResponse response = new AddCartItemResponse(
@@ -65,15 +77,15 @@ public class CartService {
 			return response;
 		} else if (auth instanceof AnonymousAuthenticationToken) {
 			// create user/cart/cartItem
-			Users user = new Users();
-			user.setUserRole(Users.Role.CUSTOMER);
+			// TODO: extract this into the user service this doesnt belong here.
+			Users user = Users.builder().userRole(Users.Role.CUSTOMER).build();
 			user = userRepository.save(user);
-			Cart cart = new Cart();
-			cart.setUser(user);
+			Cart cart = Cart.builder().user(user).build();
 			cart = cartRepository.save(cart);
-			Sessions session = new Sessions();
+			// TODO: extract this into the Session service this doesnt belong here.
+			Sessions session =  Sessions.builder().user(user).build();
 			session.setUser(user);
-			session.setExpiresAt(LocalDateTime.now().plusDays(30));
+			session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 			sessionRepository.save(session);
 			cartItem.setCart(cart);
 			cartItem = cartItemRepository.save(cartItem);
@@ -84,6 +96,11 @@ public class CartService {
 		}
 	}
 
+	/**
+	 * getCartItems returns the cart items for the current user
+	 * 
+	 * @return
+	 */
 	public Cart getCartItems() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth != null && auth.isAuthenticated() &&
@@ -93,6 +110,11 @@ public class CartService {
 		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 	}
 
+	/**
+	 * deleteCartItem deletes a cart item
+	 * 
+	 * @param id
+	 */
 	public void deleteCartItem(Long id) {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth != null && auth.isAuthenticated() &&

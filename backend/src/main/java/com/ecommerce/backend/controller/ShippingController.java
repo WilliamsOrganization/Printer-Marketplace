@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/server/shipping")
 @RequiredArgsConstructor
-public class ShippoController {
+public class ShippingController {
 
 	private final ShippoService shippoService;
 
@@ -37,6 +37,7 @@ public class ShippoController {
 		}
 	}
 
+	// TODO: make this fetch real data. the frontend will handle breaking apart the shipping information into chunks then we ingest them from the backend
 	@PostMapping("/rates/test")
 	public ResponseEntity<?> getShipmentRates(@RequestBody ShipmentToValues shipmentToValues) {
 		try {

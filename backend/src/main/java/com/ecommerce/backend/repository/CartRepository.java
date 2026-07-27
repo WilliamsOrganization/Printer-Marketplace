@@ -11,5 +11,10 @@ import com.ecommerce.backend.entity.Users;
  * Data access layer for Cart entities.
  */
 public interface CartRepository extends JpaRepository<Cart, Long> {
+	/**
+	 * Finds a cart by its user.
+	 * @param user the user
+	 * @return the cart
+	 */
 	Optional<Cart> findByUser(Users user);
 }

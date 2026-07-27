@@ -19,14 +19,15 @@ import { toast } from "sonner";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { AddressInput } from "./address-input";
+import { redirect, useSelectedLayoutSegment } from "next/navigation";
 
 const MotionCard = motion(Card);
 
 interface AddressComponents {
 	street1: string;
 	city: string;
-	state: string;
 	zip: string;
+	state: string;
 	country: string;
 }
 
@@ -39,6 +40,11 @@ interface ShippingRate {
 	estimated_days: number;
 }
 
+/**
+ * Two-step checkout: collects contact info and a shipping address, fetches
+ * shipping rate quotes for that address, then creates a Stripe checkout
+ * session for the selected rate and redirects the browser to it.
+ */
 export function CheckoutForm({
 	className,
 	...props
@@ -50,6 +56,9 @@ export function CheckoutForm({
 	const [selectedRate, setSelectedRate] = useState<string | null>(null)
 	const [phone, setPhone] = useState<string | undefined>()
 
+	/**
+	 * Fetches shipping rate quotes for the currently selected address.
+	 */
 	const handleCheckout = async function(formData: FormData) {
 		setError(null)
 
@@ -57,12 +66,12 @@ export function CheckoutForm({
 			setError("Please select an address from the suggestions.")
 			return
 		}
-
 		setLoading(true)
 
-		// KNOWN BUG: Backend may return empty rates on first request for a new address.
+		// BUG: Backend may return empty rates on first request for a new address.
 		// See ShippoService.getShipmentRates() - a retry is attempted server-side but may still fail.
 		// If "No shipping options available" appears, the user can retry manually.
+		// TODO: migrate this and all other request over to tanstack query
 		api
 			.post("/shipping/rates/test", {
 				name: "Customer",
@@ -78,6 +87,32 @@ export function CheckoutForm({
 			})
 			.catch(() => {
 				toast.error("Failed to get shipping rates")
+			})
+			.finally(() => {
+				setLoading(false)
+			})
+	}
+	/**
+	 * Creates a Stripe checkout session for the selected shipping rate and
+	 * navigates the browser to Stripe's hosted checkout page.
+	 *
+	 * @param selectedRate the id of the chosen shipping rate
+	 */
+	const createCheckoutSession = async function(selectedRate: string) {
+		setError(null)
+		setLoading(true)
+		api
+			.post("cart/checkout/", {
+				selectedShippingID: selectedRate
+			})
+			.then((res) => {
+				const results = res?.data
+				console.log(results)
+				window.location.href = results
+			})
+			.catch((error) => {
+				toast.error("Failed to get checkoutsession ")
+				console.log("Failed to get checkoutsession ", error)
 			})
 			.finally(() => {
 				setLoading(false)
@@ -186,7 +221,7 @@ export function CheckoutForm({
 								className="mt-4 w-full"
 								disabled={!selectedRate}
 								onClick={() => {
-									// TODO: proceed to Stripe checkout with selected rate
+									createCheckoutSession(selectedRate)
 									console.log("selected rate:", selectedRate)
 								}}
 							>

@@ -14,7 +14,13 @@ import jakarta.persistence.UniqueConstraint;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 /**
@@ -23,6 +29,9 @@ import org.hibernate.annotations.CreationTimestamp;
 @Data
 @Entity
 @Table(name = "session", uniqueConstraints = @UniqueConstraint(columnNames="user_id"))
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Sessions {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +47,9 @@ public class Sessions {
 	@CreationTimestamp
 	private LocalDateTime createdAt;
 
+	// TODO: no simple built-in annotation checks cross-field ordering
+	// (expiresAt after createdAt) - would need a custom class-level
+	// validator if that guarantee matters here
 	private LocalDateTime expiresAt;
 	private String providerAccountID;
 

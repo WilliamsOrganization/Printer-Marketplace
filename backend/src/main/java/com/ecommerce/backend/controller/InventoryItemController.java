@@ -6,9 +6,13 @@ import com.ecommerce.backend.dto.EditCatalogRequest;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
+import com.goshippo.shippo_sdk.Shippo;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Product;
+import com.stripe.param.checkout.SessionCreateParams.ShippingOption;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

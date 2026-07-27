@@ -2,6 +2,10 @@ package com.ecommerce.backend.dto;
 
 import lombok.Data;
 
+/** 
+ * this is The default home address in which amy is shipping from. should probably be tied to seed data. 
+ * @author William Ewanchuk https://github.com/ewanchukwilliam
+ */
 @Data
 public class ShipmentFromValues {
 	private String store = "PrintMarket";

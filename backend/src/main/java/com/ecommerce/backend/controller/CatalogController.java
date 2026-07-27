@@ -22,6 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class CatalogController {
     private final StripeCatalogService stripeCatalogService;
 
+	/**
+     * Creates a new catalog item.
+     *
+     * @param request the request
+     * @return the response
+     */
     @PostMapping("/items")
 	@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?>

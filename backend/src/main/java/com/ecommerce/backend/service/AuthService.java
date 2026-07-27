@@ -1,28 +1,26 @@
 package com.ecommerce.backend.service;
 
-import com.ecommerce.backend.dto.AuthResponse;
-import com.ecommerce.backend.dto.LoginRequest;
-import com.ecommerce.backend.entity.Cart;
-import com.ecommerce.backend.entity.Sessions;
-import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.entity.Users.Role;
-import com.ecommerce.backend.exception.InvalidCredentials;
-import com.ecommerce.backend.exception.UserNotFoundException;
-import com.ecommerce.backend.repository.CartRepository;
-import com.ecommerce.backend.repository.SessionRepository;
-import com.ecommerce.backend.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
+
+import com.ecommerce.backend.dto.AuthResponse;
+import com.ecommerce.backend.dto.LoginRequest;
+import com.ecommerce.backend.entity.Sessions;
+import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.InvalidCredentials;
+import com.ecommerce.backend.exception.UserNotFoundException;
+import com.ecommerce.backend.repository.SessionRepository;
+import com.ecommerce.backend.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * AuthService handles all of the business logic for logging in
@@ -31,10 +29,16 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+	private static final long DAYS = 30;
 	private final UserRepository userRepository;
 	private final SessionRepository sessionRepository;
-	private final CartRepository cartRepository;
 
+	/**
+	 * authenticateFromToken checks if the token is valid and returns the user
+	 * 
+	 * @param token
+	 * @return
+	 */
 	public Optional<Authentication> authenticateFromToken(String token) {
 		if (token == null)
 			return Optional.empty();
@@ -45,7 +49,8 @@ public class AuthService {
 			return Optional.empty();
 		}
 		if (sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
-			log.warn("authenticateFromToken: session expired for user {}", sessionOpt.get().getUser().getEmail());
+			log.warn("authenticateFromToken: session expired for user {}",
+					sessionOpt.get().getUser().getEmail());
 			return Optional.empty();
 		}
 		Users user = sessionOpt.get().getUser();
@@ -59,6 +64,12 @@ public class AuthService {
 				new UsernamePasswordAuthenticationToken(user, null, authorities));
 	}
 
+	/**
+	 * handleLogin handles the login request and returns the session token
+	 * 
+	 * @param request
+	 * @return 
+	 */
 	public AuthResponse handleLogin(LoginRequest request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(
@@ -67,13 +78,21 @@ public class AuthService {
 		return new AuthResponse(session.getToken(), user.getId());
 	}
 
+	/**
+	 * handlePasswordLogin handles the login request and returns the session
+	 * token
+	 * 
+	 * @param request
+	 * @return
+	 */
 	public AuthResponse handlePasswordLogin(LoginRequest request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(
 						() -> new UserNotFoundException("User does not exist"));
 		// this exists if the user logged in previously through oauth and hasn't
 		// set a password
-		if (user.getPassword() == null || !user.getPassword().equals(request.getPassword()))
+		if (user.getPassword() == null ||
+				!user.getPassword().equals(request.getPassword()))
 			throw new InvalidCredentials("Invalid Email Or Password");
 		// TODO: requires email authentication layer ie copy past password
 		// TODO: NEEDS PASSWORD HASHING PROPERLY!!!
@@ -82,21 +101,18 @@ public class AuthService {
 		return new AuthResponse(session.getToken(), user.getId());
 	}
 
-	private Users createUser(LoginRequest request) {
-		Users user = new Users();
-		user.setEmail(request.getEmail());
-		user.setUserRole(Role.CUSTOMER);
-		user.setIsAdmin(false);
-		return userRepository.save(user);
-	}
-
+	/**
+	 * handleOAuthLogin handles the login request and returns the session token
+	 * 
+	 * @param request
+	 * @return
+	 */
 	private Sessions sessionCreate(Users user, LoginRequest request) {
 		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
-			Sessions sessionNew = new Sessions();
-			sessionNew.setUser(user);
-			return sessionNew;
+			Sessions newSession = Sessions.builder().user(user).build();
+			return newSession;
 		});
-		session.setExpiresAt(LocalDateTime.now().plusDays(30));
+		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		session.setProviderAccountID(request.getProviderAccountID());
 		return sessionRepository.save(session);
 	}

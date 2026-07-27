@@ -12,5 +12,10 @@ import com.ecommerce.backend.entity.InventoryItem;
  * Data access layer for InventoryItem entities.
  */
 public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
+
+	/**
+	 * Finds all inventory items that are not archived.
+	 * @return the list of inventory items
+	 */
 	List<InventoryItem> findByIsArchivedFalse(Sort sort);
 }
