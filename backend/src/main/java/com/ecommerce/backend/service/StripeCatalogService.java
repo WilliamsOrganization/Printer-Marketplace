@@ -231,4 +231,16 @@ public class StripeCatalogService {
 		ProductListParams productListParams = ProductListParams.builder().setLimit(100L).build();
 		return Product.list(productListParams);
 	}
+	
+	/**
+	 * This is the webhook endpoint for stripe checkout events. 
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void handleSuccessfulCheckoutEvent(String payload) {
+		// TODO: handle successful checkout event
+		// TODO: register ShippingRate with shippo maybe preallocate then link after with order
+		// TODO: Create and ORder Object with shipping id
+		// TODO: Get shipping Label from Shippo. 
+	}
 }
