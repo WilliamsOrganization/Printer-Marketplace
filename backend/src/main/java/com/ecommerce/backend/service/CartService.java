@@ -1,6 +1,9 @@
 package com.ecommerce.backend.service;
 
-import com.ecommerce.backend.config.SessionAuthFilter;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.ecommerce.backend.dto.AddCartItemRequest;
 import com.ecommerce.backend.dto.AddCartItemResponse;
 import com.ecommerce.backend.entity.Cart;
@@ -12,17 +15,8 @@ import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.repository.SessionRepository;
-import com.ecommerce.backend.repository.UserRepository;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * CartService
@@ -30,77 +24,82 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @RequiredArgsConstructor
 public class CartService {
-	private final UserRepository userRepository;
+	private static final long DAYS = 30;
+	private final UserService userService;
 	private final SessionRepository sessionRepository;
 	private final CartRepository cartRepository;
 	private final CartItemRepository cartItemRepository;
 	private final InventoryItemRepository inventoryItemRepository;
 
-	public AddCartItemResponse createCartItem(AddCartItemRequest cartItemRequest) {
+	/**
+	 * createCartItem creates a new cart item
+	 * 
+	 * @param cartItemRequest
+	 * @return
+	 */
+	public AddCartItemResponse createCartItem(AddCartItemRequest cartItemRequest, Users user, Cart cart) {
 		InventoryItem inventoryItem = inventoryItemRepository.findById(cartItemRequest.getItemId())
 				.orElseThrow();
+		Sessions session = sessionRepository.findByUser(user).orElseThrow();
+		
+		Optional<CartItem> existing = cartItemRepository.findByCartAndItem(cart, inventoryItem);
+		if (existing.isPresent()) {
+			updateCartItemQuantity(existing.get().getId(), cartItemRequest.getQuantity());
+			return new AddCartItemResponse(existing.get(), session.getToken());
+		} 
 
-		CartItem cartItem = new CartItem();
-		cartItem.setItem(inventoryItem);
-		cartItem.setQuantity(cartItemRequest.getQuantity());
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth != null && auth.isAuthenticated() &&
-				auth.getPrincipal() instanceof Users user) {
-			Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
-				Cart newCart = new Cart();
-				newCart.setUser(user);
-				return cartRepository.save(newCart);
-			});
+		CartItem cartItem = CartItem.builder()
+				.item(inventoryItem)
+				.quantity(cartItemRequest.getQuantity())
+				.cart(cart)
+				.build();
 
-			Optional<CartItem> existing = cartItemRepository.findByCartAndItem(cart, inventoryItem);
-			if (existing.isPresent()) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT);
-			} else {
-				cartItem.setCart(cart);
-				cartItem = cartItemRepository.save(cartItem);
-			}
-			AddCartItemResponse response = new AddCartItemResponse(
-					cartItem,
-					sessionRepository.findByUser(user).orElseThrow().getToken());
-			return response;
-		} else if (auth instanceof AnonymousAuthenticationToken) {
-			// create user/cart/cartItem
-			Users user = new Users();
-			user.setUserRole(Users.Role.CUSTOMER);
-			user = userRepository.save(user);
-			Cart cart = new Cart();
-			cart.setUser(user);
-			cart = cartRepository.save(cart);
-			Sessions session = new Sessions();
-			session.setUser(user);
-			session.setExpiresAt(LocalDateTime.now().plusDays(30));
-			sessionRepository.save(session);
-			cartItem.setCart(cart);
-			cartItem = cartItemRepository.save(cartItem);
-			AddCartItemResponse response = new AddCartItemResponse(cartItem, session.getToken());
-			return response;
-		} else {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-		}
+		cartItem = cartItemRepository.save(cartItem);
+		AddCartItemResponse response = new AddCartItemResponse(cartItem, session.getToken());
+		return response;
 	}
 
+	/**
+	 * getCartItems returns the cart items for the current user
+	 * 
+	 * @return
+	 */
 	public Cart getCartItems() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth != null && auth.isAuthenticated() &&
-				auth.getPrincipal() instanceof Users user) {
-			return cartRepository.findByUser(user).orElseThrow();
-		}
-		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		return cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
 	}
 
+	/**
+	 * deleteCartItem deletes a cart item
+	 * 
+	 * @param id
+	 */
 	public void deleteCartItem(Long id) {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth != null && auth.isAuthenticated() &&
-				auth.getPrincipal() instanceof Users user) {
-			Cart cart = cartRepository.findByUser(user).orElseThrow();
-			cartItemRepository.deleteByIdAndCart(id, cart);
-			return;
-		}
-		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		Cart cart = cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
+		cartItemRepository.deleteByIdAndCart(id, cart);
+	}
+
+	/**
+	 * finds a cart for a given user if exists 
+	 * @Cart
+	 *
+	 */
+	public Cart getCart(Users user){
+		return cartRepository.findByUser(user).orElseGet(() -> {
+			Cart newCart = Cart.builder().user(user).build();
+			return cartRepository.save(newCart);
+		});
+	}
+
+	/**
+	 * if cart item exists, update quantity
+	 * 
+	 * @param id
+	 * @param quantity
+	 * @return
+	 */
+	public CartItem updateCartItemQuantity(Long id, Integer quantity) {
+		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
+		cartItem.setQuantity(quantity);
+		return cartItemRepository.save(cartItem);
 	}
 }

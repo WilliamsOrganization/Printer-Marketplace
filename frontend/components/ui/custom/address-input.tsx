@@ -16,6 +16,11 @@ interface AddressInputProps {
 	onAddressSelect: (address: AddressComponents) => void;
 }
 
+/**
+ * Address text input backed by Google Places Autocomplete. Shows live
+ * suggestions as the user types, and on selection resolves the full place
+ * (via geocoding) into structured address components.
+ */
 export function AddressInput({ onAddressSelect }: AddressInputProps) {
 	const { isLoaded } = useJsApiLoader({
 		googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
@@ -36,6 +41,13 @@ export function AddressInput({ onAddressSelect }: AddressInputProps) {
 		initOnMount: isLoaded,
 	})
 
+	/**
+	 * Resolves a selected Places suggestion into structured address
+	 * components and reports them via onAddressSelect.
+	 *
+	 * @param placeId     the selected Google Place id
+	 * @param description the suggestion's display text, used to fill the input
+	 */
 	const handleSelect = async (placeId: string, description: string) => {
 		setValue(description, false)
 		clearSuggestions()

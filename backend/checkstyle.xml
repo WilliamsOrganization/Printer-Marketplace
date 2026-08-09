@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<module name="Checker">
+  	<module name="TreeWalker">
+  		<module name="MissingJavadocType">
+  			<property name="scope" value="public"/>
+  		</module>
+		<module name="MissingJavadocMethod">
+			<property name="scope" value="public"/>
+		</module>
+  		<module name="DeclarationOrder"/>
+  		<module name="ModifierOrder"/>
+
+  		<!-- size / complexity -->
+  		<module name="MethodLength">
+  			<property name="max" value="60"/>
+  		</module>
+  		<module name="ParameterNumber">
+  			<property name="max" value="7"/>
+  		</module>
+
+  		<!-- use-this-instead-of-that -->
+  		<module name="UnusedImports"/>
+  		<module name="IllegalCatch"/>
+
+  		<!-- warning / silent-failure hygiene -->
+  		<module name="EmptyCatchBlock"/>
+
+  		<!-- misc hygiene -->
+  		<module name="MagicNumber"/>
+  		<module name="ImportOrder">
+  			<property name="groups" value="java,jakarta,org,com,lombok"/>
+  			<property name="separated" value="true"/>
+  			<property name="ordered" value="true"/>
+  			<property name="option" value="top"/>
+  		</module>
+  	</module>
+</module>

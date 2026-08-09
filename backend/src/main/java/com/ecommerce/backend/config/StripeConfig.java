@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * StripeConfig
+ * Configures the Stripe SDK's global API key on startup.
  */
 @Configuration
 public class StripeConfig {
@@ -15,6 +15,10 @@ public class StripeConfig {
 	@Value("${stripe.secret.key}")
 	private String stripeSecreteKey;
 
+	/**
+	 * Sets the static Stripe.apiKey used by all Stripe SDK calls
+	 * (Product.create, Price.create, Session.create, etc.) in this app.
+	 */
 	@PostConstruct
 	public void init() {
 		Stripe.apiKey = stripeSecreteKey;
