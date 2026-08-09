@@ -2,11 +2,7 @@ package com.ecommerce.backend.service;
 
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerce.backend.dto.AddCartItemRequest;
 import com.ecommerce.backend.dto.AddCartItemResponse;
@@ -78,14 +74,8 @@ public class CartService {
 	 * @param id
 	 */
 	public void deleteCartItem(Long id) {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth != null && auth.isAuthenticated() &&
-				auth.getPrincipal() instanceof Users user) {
-			Cart cart = cartRepository.findByUser(user).orElseThrow();
-			cartItemRepository.deleteByIdAndCart(id, cart);
-			return;
-		}
-		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		Cart cart = cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
+		cartItemRepository.deleteByIdAndCart(id, cart);
 	}
 
 	/**
