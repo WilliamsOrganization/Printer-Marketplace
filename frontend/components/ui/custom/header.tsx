@@ -42,6 +42,9 @@ export function Header() {
 				{/* Nav + cart */}
 				<div className="flex items-center gap-1">
 					<Button variant="ghost" size="sm" asChild>
+						<Link href="/orders" className="text-sm text-muted-foreground hover:text-foreground">Orders</Link>
+					</Button>
+					<Button variant="ghost" size="sm" asChild>
 						<Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
 							Shop
 						</Link>

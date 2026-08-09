@@ -76,6 +76,46 @@ export interface User {
 	userRole: UserRole;
 }
 
+export enum OrderStatus {
+	PENDING = "PENDING",
+	COMPLETED = "COMPLETED",
+	CANCELLED = "CANCELLED",
+}
+
+export interface OrderItem {
+	id: number;
+	item: InventoryItem;
+	quantity: number;
+	itemTitle: string;
+	unitPrice: number;
+}
+
+export interface Orders {
+	id: number;
+	date: string;
+	user: User;
+	items: OrderItem[];
+	stripeSessionId: string;
+	email: string;
+	subtotal: number;
+	shippingCost: number;
+	total: number;
+	currency: string;
+	status: OrderStatus;
+}
+
+export interface CheckoutSummary {
+	status: string;
+	customerEmail: string;
+	amountTotal: number;
+	currency: string;
+}
+
+export interface OrderResponse {
+	order: Orders;
+	session: CheckoutSummary;
+}
+
 export interface ImageDropFieldProps {
 	name: string;
 	required?: boolean;

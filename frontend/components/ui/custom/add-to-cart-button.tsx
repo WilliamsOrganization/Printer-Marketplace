@@ -16,7 +16,7 @@ export function AddToCartButton({
 	quantity: number;
 }) {
 	const { cart, setCart, setCartDrawer } = useCart();
-	const {data: session} = useSession();
+	const { status } = useSession();
 	const addCartItem = function(id: number, quantity: number) {
 		api
 			.post("/cartitem", {
@@ -25,7 +25,7 @@ export function AddToCartButton({
 			})
 			.then((res) => {
 				toast.success("Item successfuly added to cart");
-				if (res.data.sessionToken && !session) {
+				if (res.data.sessionToken && status === "unauthenticated") {
 					signIn("guest", { sessionToken: res.data.sessionToken, redirect: false });
 				}
 				setCart((previous) => {

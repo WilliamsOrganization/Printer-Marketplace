@@ -5,7 +5,12 @@ import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -49,6 +54,7 @@ public class Shipping {
 	@JoinColumn(name = "orders_id", nullable = false)
 	@NotNull
 	@NonNull
+	@JsonBackReference
 	private Orders orders;
 
 	// TODO: consider @PositiveOrZero
@@ -58,15 +64,30 @@ public class Shipping {
 	private String trackingNumber;
 	private String trackingUrl;
 	private String labelPdfUrl;
-	// address info
-	private String name;
-	private String addressLine1;
-	private String addressLine2;
-	private String city;
-	private String province;
-	// TODO: consider @Pattern for postal/zip code format
-	private String postalCode;
-	private String country;
+
+	@Embedded
+	@AttributeOverrides({
+			@AttributeOverride(name = "name", column = @Column(name = "from_name")),
+			@AttributeOverride(name = "street1", column = @Column(name = "from_street1")),
+			@AttributeOverride(name = "street2", column = @Column(name = "from_street2")),
+			@AttributeOverride(name = "city", column = @Column(name = "from_city")),
+			@AttributeOverride(name = "state", column = @Column(name = "from_state")),
+			@AttributeOverride(name = "zip", column = @Column(name = "from_zip")),
+			@AttributeOverride(name = "country", column = @Column(name = "from_country")),
+	})
+	private ShippingAddress addressFrom;
+
+	@Embedded
+	@AttributeOverrides({
+			@AttributeOverride(name = "name", column = @Column(name = "to_name")),
+			@AttributeOverride(name = "street1", column = @Column(name = "to_street1")),
+			@AttributeOverride(name = "street2", column = @Column(name = "to_street2")),
+			@AttributeOverride(name = "city", column = @Column(name = "to_city")),
+			@AttributeOverride(name = "state", column = @Column(name = "to_state")),
+			@AttributeOverride(name = "zip", column = @Column(name = "to_zip")),
+			@AttributeOverride(name = "country", column = @Column(name = "to_country")),
+	})
+	private ShippingAddress addressTo;
 
 	@NotNull
 	@NonNull

@@ -14,6 +14,8 @@ import com.ecommerce.backend.dto.ShippingQuote;
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.InventoryItem;
+import com.ecommerce.backend.entity.Orders;
+import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Price;
@@ -48,6 +50,7 @@ public class StripeCatalogService {
 
 	private final ShippoService shippoService;
 	private final CartService cartService;
+	private final OrderService orderService;
 
 	/**
 	 * This method is used to map the cart items to line items.
@@ -203,6 +206,7 @@ public class StripeCatalogService {
 		List<LineItem> lineItems = mapCartItemstoLineItems(cart);
 		// get quoted price from shippo service.
 		GetRateResponse rate = shippoService.getShipmentRateById(selectedShippingID);
+		Shipment shipment = shippoService.getShipmentForRate(rate.rate().get());
 		ShippingQuote quote = toShippingQuote(rate);
 
 		SessionCreateParams params = SessionCreateParams.builder()
@@ -222,6 +226,7 @@ public class StripeCatalogService {
 				.setMode(SessionCreateParams.Mode.PAYMENT)
 				.build();
 		Session session = Session.create(params, null);
+		Orders order = orderService.createPendingOrder(session, shipment, quote, cart);
 		return session.getUrl();
 	}
 	
@@ -234,6 +239,10 @@ public class StripeCatalogService {
 	public ProductCollection getAllProducts() throws StripeException {
 		ProductListParams productListParams = ProductListParams.builder().setLimit(PAGE_SIZE).build();
 		return Product.list(productListParams);
+	}
+	
+	public Session getCheckoutSession(String sessionId) throws StripeException {
+		return Session.retrieve(sessionId);
 	}
 	
 	/**

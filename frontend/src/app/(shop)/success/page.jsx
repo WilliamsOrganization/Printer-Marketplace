@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { stripe } from "@/lib/stripe";
+import apiServer from "@/lib/api-server";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowRight, PackageCheck } from "lucide-react";
@@ -11,17 +12,17 @@ export default async function Success({ searchParams }) {
 	if (!session_id)
 		throw new Error("Please provide a valid session_id (`cs_test_...`)");
 
-	const session = await stripe.checkout.sessions.retrieve(session_id, {
-		expand: ["line_items", "payment_intent"],
-	});
+	const { order, session } = await apiServer
+		.get(`/orders/${session_id}`)
+		.then((res) => res.data);
 
 	if (session.status === "open") {
 		return redirect("/");
 	}
 
 	if (session.status === "complete") {
-		const lineItems = session.line_items?.data ?? [];
-		const customerEmail = session.customer_details?.email;
+		const items = order?.items ?? [];
+		const customerEmail = session.customerEmail;
 
 		return (
 			<div className="flex flex-col">
@@ -47,8 +48,7 @@ export default async function Success({ searchParams }) {
 							</p>
 						</div>
 
-						{lineItems.length > 0 && (
-					// TODO: This component needs to access the Image url that we configured rather than a generic count
+						{items.length > 0 && (
 							<>
 								<Separator />
 								<div className="w-full flex flex-col gap-3">
@@ -56,43 +56,55 @@ export default async function Success({ searchParams }) {
 										Your items
 									</p>
 									<ul className="flex flex-col gap-3">
-										{lineItems.map((item) => (
-											<li
-												key={item.id}
-												className="flex items-center gap-3 rounded-xl border bg-card p-3"
-											>
-												{/* Quantity badge */}
-												<div className="size-16 rounded-lg bg-muted shrink-0 flex items-center justify-center">
-													<span className="text-2xl font-serif text-muted-foreground">
-														×{item.quantity}
-													</span>
-												</div>
-
-												{/* Info */}
-												<div className="flex flex-col flex-1 min-w-0 gap-1">
-													<p className="font-serif leading-snug line-clamp-1 text-sm text-left">
-														{item.description}
-													</p>
-													<p className="text-xs text-muted-foreground text-left">
-														${(item.price.unit_amount / 100).toFixed(2)} each
-													</p>
-													<div className="flex items-center justify-between mt-auto pt-1">
-														<p className="text-xs text-muted-foreground">
-															Qty {item.quantity}
-														</p>
-														<p className="text-sm font-semibold">
-															${(item.amount_total / 100).toFixed(2)}
-														</p>
+										{items.map((orderItem) => {
+											const imageSrc =
+												orderItem.item?.imageUrls?.[0] ??
+												`/stock-${(orderItem.item?.id % 18) + 1}.jpg`;
+											return (
+												<li
+													key={orderItem.id}
+													className="flex items-center gap-3 rounded-xl border bg-card p-3"
+												>
+													{/* Thumbnail */}
+													<div className="relative size-16 rounded-lg overflow-hidden shrink-0 bg-muted">
+														<Image
+															src={imageSrc}
+															alt={orderItem.itemTitle}
+															fill
+															className="object-cover"
+														/>
 													</div>
-												</div>
-											</li>
-										))}
+
+													{/* Info */}
+													<div className="flex flex-col flex-1 min-w-0 gap-1">
+														<p className="font-serif leading-snug line-clamp-1 text-sm text-left">
+															{orderItem.itemTitle}
+														</p>
+														<p className="text-xs text-muted-foreground text-left">
+															${(orderItem.unitPrice / 100).toFixed(2)} each
+														</p>
+														<div className="flex items-center justify-between mt-auto pt-1">
+															<p className="text-xs text-muted-foreground">
+																Qty {orderItem.quantity}
+															</p>
+															<p className="text-sm font-semibold">
+																$
+																{(
+																	(orderItem.unitPrice * orderItem.quantity) /
+																	100
+																).toFixed(2)}
+															</p>
+														</div>
+													</div>
+												</li>
+											);
+										})}
 									</ul>
 
 									<div className="flex justify-between font-semibold text-sm pt-1 border-t">
 										<span>Total</span>
 										<span>
-											${(session.amount_total / 100).toFixed(2)}{" "}
+											${(session.amountTotal / 100).toFixed(2)}{" "}
 											<span className="text-xs font-normal text-muted-foreground uppercase">
 												{session.currency}
 											</span>
