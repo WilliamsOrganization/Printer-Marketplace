@@ -42,6 +42,13 @@ import lombok.extern.slf4j.Slf4j;
 public class StripeCatalogService {
 	private static final String SUCCESS_URL = "http://www.localhost:3000/success?session_id={CHECKOUT_SESSION_ID}";
 	private static final String CANCEL_URL = "http://www.localhost:3000/";
+
+	private static final Long DOLLAR = 100L;
+	private static final Long PAGE_SIZE = 100L;
+
+	private final ShippoService shippoService;
+	private final CartService cartService;
+
 	/**
 	 * This method is used to map the cart items to line items.
 	 * 
@@ -77,12 +84,9 @@ public class StripeCatalogService {
 		return new ShippingQuote(name, amountInCents, currency);
 	}
 
-	private final CartService cartService;
-
-	private final ShippoService shippoService;
-
 	/**
-	 * Creates a new Product item with a single Price.
+	 * Creates a new Product item with a single Price. 
+	 * TODO: return price info for call site to be aware of
 	 *
 	 * @param request the request
 	 * @return the response
@@ -101,7 +105,7 @@ public class StripeCatalogService {
 
 		PriceCreateParams priceCreateParams = PriceCreateParams.builder()
 				.setProduct(product.getId())
-				.setUnitAmount(req.getUnitAmount() * 100)
+				.setUnitAmount(req.getUnitAmount() * DOLLAR)
 				.setCurrency(req.getCurrency().toLowerCase())
 				.build();
 
@@ -172,7 +176,7 @@ public class StripeCatalogService {
 					: "cad";
 			Price newPrice = Price.create(PriceCreateParams.builder()
 					.setProduct(id)
-					.setUnitAmount(req.getUnitAmount() * 100)
+					.setUnitAmount(req.getUnitAmount() * DOLLAR)
 					.setCurrency(currency)
 					.build());
 			updateBuilder.setDefaultPrice(newPrice.getId());
@@ -228,7 +232,7 @@ public class StripeCatalogService {
 	 * @return a list of ids that can be used to populate seed data.
 	 */
 	public ProductCollection getAllProducts() throws StripeException {
-		ProductListParams productListParams = ProductListParams.builder().setLimit(100L).build();
+		ProductListParams productListParams = ProductListParams.builder().setLimit(PAGE_SIZE).build();
 		return Product.list(productListParams);
 	}
 	

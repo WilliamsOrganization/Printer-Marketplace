@@ -1,10 +1,8 @@
 package com.ecommerce.backend.service;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,7 +19,6 @@ import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.repository.SessionRepository;
-import com.ecommerce.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CartService {
 	private static final long DAYS = 30;
-	private final UserRepository userRepository;
+	private final UserService userService;
 	private final SessionRepository sessionRepository;
 	private final CartRepository cartRepository;
 	private final CartItemRepository cartItemRepository;
@@ -44,56 +41,26 @@ public class CartService {
 	 * @param cartItemRequest
 	 * @return
 	 */
-	public AddCartItemResponse createCartItem(AddCartItemRequest cartItemRequest) {
-		// TODO: FIXME: This whole method is cursed
+	public AddCartItemResponse createCartItem(AddCartItemRequest cartItemRequest, Users user, Cart cart) {
 		InventoryItem inventoryItem = inventoryItemRepository.findById(cartItemRequest.getItemId())
 				.orElseThrow();
+		Sessions session = sessionRepository.findByUser(user).orElseThrow();
+		
+		Optional<CartItem> existing = cartItemRepository.findByCartAndItem(cart, inventoryItem);
+		if (existing.isPresent()) {
+			updateCartItemQuantity(existing.get().getId(), cartItemRequest.getQuantity());
+			return new AddCartItemResponse(existing.get(), session.getToken());
+		} 
 
 		CartItem cartItem = CartItem.builder()
 				.item(inventoryItem)
 				.quantity(cartItemRequest.getQuantity())
-				// .cart()// TODO: this is properly throwing an error now this is intentional for me to fix
+				.cart(cart)
 				.build();
 
-			// TODO: extract this into the the authentication service this doesnt belong here.
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth != null && auth.isAuthenticated() &&
-				auth.getPrincipal() instanceof Users user) {
-			Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
-				Cart newCart = Cart.builder().user(user).build();
-				return cartRepository.save(newCart);
-			});
-
-			Optional<CartItem> existing = cartItemRepository.findByCartAndItem(cart, inventoryItem);
-			if (existing.isPresent()) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT);
-			} else {
-				cartItem.setCart(cart);// Should be getting built all at once at the same time not piece meal as its a required argument parameter. simplifies things
-				cartItem = cartItemRepository.save(cartItem);
-			}
-			AddCartItemResponse response = new AddCartItemResponse(
-					cartItem,
-					sessionRepository.findByUser(user).orElseThrow().getToken());
-			return response;
-		} else if (auth instanceof AnonymousAuthenticationToken) {
-			// create user/cart/cartItem
-			// TODO: extract this into the user service this doesnt belong here.
-			Users user = Users.builder().userRole(Users.Role.CUSTOMER).build();
-			user = userRepository.save(user);
-			Cart cart = Cart.builder().user(user).build();
-			cart = cartRepository.save(cart);
-			// TODO: extract this into the Session service this doesnt belong here.
-			Sessions session =  Sessions.builder().user(user).build();
-			session.setUser(user);
-			session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
-			sessionRepository.save(session);
-			cartItem.setCart(cart);
-			cartItem = cartItemRepository.save(cartItem);
-			AddCartItemResponse response = new AddCartItemResponse(cartItem, session.getToken());
-			return response;
-		} else {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-		}
+		cartItem = cartItemRepository.save(cartItem);
+		AddCartItemResponse response = new AddCartItemResponse(cartItem, session.getToken());
+		return response;
 	}
 
 	/**
@@ -102,12 +69,7 @@ public class CartService {
 	 * @return
 	 */
 	public Cart getCartItems() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth != null && auth.isAuthenticated() &&
-				auth.getPrincipal() instanceof Users user) {
-			return cartRepository.findByUser(user).orElseThrow();
-		}
-		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+		return cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
 	}
 
 	/**
@@ -124,5 +86,30 @@ public class CartService {
 			return;
 		}
 		throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+	}
+
+	/**
+	 * finds a cart for a given user if exists 
+	 * @Cart
+	 *
+	 */
+	public Cart getCart(Users user){
+		return cartRepository.findByUser(user).orElseGet(() -> {
+			Cart newCart = Cart.builder().user(user).build();
+			return cartRepository.save(newCart);
+		});
+	}
+
+	/**
+	 * if cart item exists, update quantity
+	 * 
+	 * @param id
+	 * @param quantity
+	 * @return
+	 */
+	public CartItem updateCartItemQuantity(Long id, Integer quantity) {
+		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
+		cartItem.setQuantity(quantity);
+		return cartItemRepository.save(cartItem);
 	}
 }

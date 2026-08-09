@@ -74,7 +74,7 @@ public class AuthService {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(
 						() -> new UserNotFoundException("User does not exist"));
-		Sessions session = sessionCreate(user, request);
+		Sessions session = sessionCreateWithProvider(user, request);
 		return new AuthResponse(session.getToken(), user.getId());
 	}
 
@@ -97,7 +97,7 @@ public class AuthService {
 		// TODO: requires email authentication layer ie copy past password
 		// TODO: NEEDS PASSWORD HASHING PROPERLY!!!
 
-		Sessions session = sessionCreate(user, request);
+		Sessions session = sessionCreateWithProvider(user, request);
 		return new AuthResponse(session.getToken(), user.getId());
 	}
 
@@ -107,13 +107,28 @@ public class AuthService {
 	 * @param request
 	 * @return
 	 */
-	private Sessions sessionCreate(Users user, LoginRequest request) {
+	private Sessions sessionCreateWithProvider(Users user, LoginRequest request) {
 		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
 			Sessions newSession = Sessions.builder().user(user).build();
 			return newSession;
 		});
 		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		session.setProviderAccountID(request.getProviderAccountID());
+		return sessionRepository.save(session);
+	}
+
+	/**
+	 * handles account session creation for users who have not yet logged in or have an account
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public Sessions sessionCreateWithUserOnly(Users user) {
+		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
+			Sessions newSession = Sessions.builder().user(user).build();
+			return newSession;
+		});
+		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		return sessionRepository.save(session);
 	}
 }

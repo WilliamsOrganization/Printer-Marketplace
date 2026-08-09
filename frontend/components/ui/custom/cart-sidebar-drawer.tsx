@@ -24,7 +24,7 @@ import { CartItem } from "@/lib/types";
 import { useCart } from "@/src/context/cart-context";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import axios from "axios";
+import Link from "next/link";
 
 export function CartSidebarDrawer() {
 	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
@@ -57,21 +57,6 @@ export function CartSidebarDrawer() {
 				}));
 			})
 			.catch(() => toast.error("Failed to remove item"));
-	};
-
-	const handleCheckout = async () => {
-		// TODO: Add a checkout email gate to verify existing accounts page before the stripe redirect
-		const lineItems = cart!.items.map((cartItem) => ({
-			price: cartItem.item.stripePriceId,
-			quantity: cartItem.quantity,
-		}));
-		axios.post('/checkout_sessions', { lineItems }).then((res)=>{
-			if (res?.data?.url) window.location.href= res.data.url
-		
-		}).catch((err)=>{
-			console.log("Error: " + err.message)
-			toast.error("Error has occurred")
-		})
 	};
 
 	return (
@@ -160,13 +145,16 @@ export function CartSidebarDrawer() {
 				<DrawerFooter>
 
 				<Button
-					type="submit"
 					className="w-full"
 					disabled={!cart?.items?.length}
-					onClick={handleCheckout }
+					asChild
 				>
-					<ShoppingCart className="size-4" />
-					Checkout · ${subtotal.toFixed(2)}
+					<Link href="/checkout"
+							onClick={() => { setCartDrawer(false) }}
+						>
+						<ShoppingCart className="size-4" />
+						Checkout · ${subtotal.toFixed(2)}
+					</Link>
 				</Button>
 
 					<DrawerClose asChild>

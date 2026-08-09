@@ -27,7 +27,6 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 		String token = getTokenFromRequest(request);
 		authService.authenticateFromToken(token).ifPresent(
-			// I don't like how this optional is arrowed into a lambda. obfuscating and bleh
 				auth -> SecurityContextHolder.getContext().setAuthentication(auth));
 		filterChain.doFilter(request, response);
 	}
