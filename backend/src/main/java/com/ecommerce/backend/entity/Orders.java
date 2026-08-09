@@ -4,7 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,7 +21,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -56,9 +56,11 @@ public class Orders {
 	// guarantee items are fetched in creation order rather than undefined order
 	// TODO: consider @Singular if this collection moves under a @Builder
 	@OneToMany(mappedBy = "orders", cascade = CascadeType.ALL)
+	@JsonManagedReference
 	private List<OrderItem> items;
 
 	@OneToOne(mappedBy = "orders")
+	@JsonManagedReference
 	private Shipping shipping;
 
 	private String stripeSessionId;
@@ -78,9 +80,10 @@ public class Orders {
 	@Enumerated(EnumType.STRING)
 	private Status status;
 
+	/**
+	 * Order status.
+	 */
 	public enum Status {
-		PENDING, PAID, SHIPPED, DELIVERED, CANCELLED
+		PENDING, COMPLETED, CANCELLED
 	}
-
-
 }

@@ -223,4 +223,20 @@ public class ShippoService {
 	public GetRateResponse getShipmentRateById(String selectedRateId) throws Exception {
 			return shippo.rates().get(selectedRateId);
 	}
+
+	/**
+	 * Fetches the parent shipment for a previously-selected rate, by
+	 * following the rate's shipment id. Exposes both addressFrom() and
+	 * addressTo(), letting the backend read the shipping addresses Shippo
+	 * already has on file instead of trusting whatever the client sends at
+	 * checkout time.
+	 *
+	 * @param rate the rate the customer selected
+	 * @return the rate's parent shipment
+	 */
+	public Shipment getShipmentForRate(Rate rate) throws Exception {
+		GetShipmentResponse response = shippo.shipments().get(rate.shipment());
+		return response.shipment().get();
+	}
+
 }
