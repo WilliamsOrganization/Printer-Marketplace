@@ -19,6 +19,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * OrderController handles all requests related to placing orders.
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/server/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 	private final UserService userService;
 	private final StripeCatalogService stripeCatalogService;
@@ -51,6 +53,7 @@ public class OrderController {
 	@GetMapping("/")
 	public ArrayList<OrderResponse> getAllUserOrders() throws StripeException {
 		Users user = userService.getUserFromSession();
+		log.info("USER ID HERE FOR THE ORDERS userid: {}", user.getId());
 		List<Orders> order = orderRepository.findByUser(user).orElseThrow();
 		ArrayList<OrderResponse> OrderResponse = new ArrayList<>();
 		for (Orders Orders : order) {
