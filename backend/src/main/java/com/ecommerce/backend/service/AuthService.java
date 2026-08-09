@@ -34,34 +34,63 @@ public class AuthService {
 	private final SessionRepository sessionRepository;
 
 	/**
-	 * authenticateFromToken checks if the token is valid and returns the user
-	 * 
-	 * @param token
-	 * @return
+	 * Resolves the session for a request's bearer token, creating a brand
+	 * new session (with no user attached yet) if the token is missing,
+	 * unknown, or expired. Sessions are cheap and created for any request;
+	 * a user is only attached lazily, once something actually needs one
+	 * (see attachNewUserToSession).
+	 *
+	 * @param token the bearer token from the request, or null
+	 * @return the resolved (existing or newly-created) session
 	 */
-	public Optional<Authentication> authenticateFromToken(String token) {
-		if (token == null)
-			return Optional.empty();
-		Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
+	public Sessions resolveOrCreateSession(String token) {
+		if (token != null) {
+			Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
+			if (sessionOpt.isPresent()
+					&& sessionOpt.get().getExpiresAt().isAfter(LocalDateTime.now())) {
+				return sessionOpt.get();
+			}
+			log.warn("resolveOrCreateSession: token missing/unknown/expired, creating a new session");
+		}
+		Sessions session = Sessions.builder().build();
+		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
+		return sessionRepository.save(session);
+	}
 
-		if (sessionOpt.isEmpty()) {
-			log.warn("authenticateFromToken: no session found for token");
-			return Optional.empty();
-		}
-		if (sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
-			log.warn("authenticateFromToken: session expired for user {}",
-					sessionOpt.get().getUser().getEmail());
-			return Optional.empty();
-		}
-		Users user = sessionOpt.get().getUser();
+	/**
+	 * Lazily creates a guest user and attaches it to a session that doesn't
+	 * have one yet - called only by code paths that actually need a user
+	 * (e.g. adding to a cart), not on every request.
+	 *
+	 * @param session the current, userless session
+	 * @return the newly-created user
+	 */
+	public Users attachNewUserToSession(Sessions session) {
+		Users user = userRepository.save(Users.builder().userRole(Users.Role.CUSTOMER).build());
+		session.setUser(user);
+		sessionRepository.save(session);
+		return user;
+	}
+
+	/**
+	 * Builds the Spring Security Authentication for a resolved session. If
+	 * the session has no user attached yet, the resulting Authentication
+	 * carries no authorities (equivalent to anonymous) until one is.
+	 *
+	 * @param session the current session
+	 * @return the Authentication to set on the SecurityContext
+	 */
+	public Authentication buildAuthentication(Sessions session) {
 		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-		authorities.add(
-				new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name()));
-		if (Boolean.TRUE.equals(user.getIsAdmin())) {
-			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+		Users user = session.getUser();
+		if (user != null) {
+			authorities.add(
+					new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name()));
+			if (Boolean.TRUE.equals(user.getIsAdmin())) {
+				authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+			}
 		}
-		return Optional.of(
-				new UsernamePasswordAuthenticationToken(user, null, authorities));
+		return new UsernamePasswordAuthenticationToken(session, null, authorities);
 	}
 
 	/**
@@ -114,21 +143,6 @@ public class AuthService {
 		});
 		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		session.setProviderAccountID(request.getProviderAccountID());
-		return sessionRepository.save(session);
-	}
-
-	/**
-	 * handles account session creation for users who have not yet logged in or have an account
-	 * 
-	 * @param request
-	 * @return
-	 */
-	public Sessions sessionCreateWithUserOnly(Users user) {
-		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
-			Sessions newSession = Sessions.builder().user(user).build();
-			return newSession;
-		});
-		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		return sessionRepository.save(session);
 	}
 }

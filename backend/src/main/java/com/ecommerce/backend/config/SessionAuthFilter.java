@@ -1,5 +1,6 @@
 package com.ecommerce.backend.config;
 
+import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.service.AuthService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -12,7 +13,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * SessionAuthFilter
+ * SessionAuthFilter resolves every request's session up front - creating a
+ * new (userless) session if the request carried no valid token - so
+ * downstream code always has a session to work with, and the client always
+ * learns which token to use via the X-Session-Token response header
+ * (whether it's the one it sent, or a freshly-issued one). A user is only
+ * attached to a session lazily, by whatever code path first needs one - see
+ * UserService.getUserFromSession / AuthService.attachNewUserToSession.
  */
 @Component
 @RequiredArgsConstructor
@@ -26,8 +33,10 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 			FilterChain filterChain)
 			throws ServletException, IOException {
 		String token = getTokenFromRequest(request);
-		authService.authenticateFromToken(token).ifPresent(
-				auth -> SecurityContextHolder.getContext().setAuthentication(auth));
+		Sessions session = authService.resolveOrCreateSession(token);
+		SecurityContextHolder.getContext()
+				.setAuthentication(authService.buildAuthentication(session));
+		response.setHeader("X-Session-Token", session.getToken());
 		filterChain.doFilter(request, response);
 	}
 

@@ -1,11 +1,10 @@
 package com.ecommerce.backend.service;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,29 +14,21 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserRepository userRepository;
-	private final AuthService authService;
-    // TODO: FIX ME needs real account creation process for order updates
+    private final AuthService authService;
 
     /**
-     * This check the headers of the request to see if the user is logged in or
-     * not
+     * Returns the current request's user, lazily creating and attaching one
+     * to the current session if it doesn't have one yet. SessionAuthFilter
+     * guarantees a session is always present; it does not guarantee that
+     * session already has a user (see Sessions.user's nullability).
      *
      * @return
      */
     public Users getUserFromSession() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() &&
-            auth.getPrincipal() instanceof Users user) {
-            return user;
+        Sessions session = (Sessions) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (session.getUser() != null) {
+            return session.getUser();
         }
-        return createUserAndSession();
-    }
-
-    private Users createUserAndSession() {
-        Users user = Users.builder().userRole(Users.Role.CUSTOMER).build();
-        user = userRepository.save(user);
-        authService.sessionCreateWithUserOnly(user);
-        return user;
+        return authService.attachNewUserToSession(session);
     }
 }

@@ -37,8 +37,12 @@ public class Sessions {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	// Nullable: a session can exist before any user is attached to it (see
+	// AuthService.resolveOrCreateSession / attachNewUserToSession) - sessions
+	// are cheap and created for any request, users are only created lazily
+	// once something actually needs one.
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
+	@JoinColumn(name = "user_id")
 	private Users user;
 
 	@Column(unique = true, nullable = false)

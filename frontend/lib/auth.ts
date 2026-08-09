@@ -107,10 +107,10 @@ export const authOptions: NextAuthOptions = {
 			return token;
 		},
 		async session({ session, token }) {
+			session.backendToken = token.backendToken as string;
 			if (session.user) {
-				session.backendToken = token.backendToken as string
-				session.user.id = token.userId as string
-			};
+				session.user.id = token.userId as string;
+			}
 			return session;
 		},
 	},

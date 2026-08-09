@@ -1,6 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import apiServer from "@/lib/api-server";
+
+// This page's data depends on the caller's session (via apiServer's
+// Authorization header). Without forcing dynamic rendering, Next.js can
+// treat this route as static (no top-level dynamic API usage) and keep
+// serving one cached render to every visitor/refresh regardless of session.
+export const dynamic = "force-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
