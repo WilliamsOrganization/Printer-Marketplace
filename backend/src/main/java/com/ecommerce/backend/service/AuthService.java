@@ -43,18 +43,30 @@ public class AuthService {
 	 * @param token the bearer token from the request, or null
 	 * @return the resolved (existing or newly-created) session
 	 */
-	public Sessions resolveOrCreateSession(String token) {
+	public Sessions resolveOrCreateSession(String token, boolean allowCreate) {
 		if (token != null) {
 			Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
 			if (sessionOpt.isPresent()
 					&& sessionOpt.get().getExpiresAt().isAfter(LocalDateTime.now())) {
-				return sessionOpt.get();
+				Sessions existing = sessionOpt.get();
+				log.info("resolveOrCreateSession: token {} -> session {} (userId={})",
+						token, existing.getId(),
+						existing.getUser() != null ? existing.getUser().getId() : null);
+				return existing;
 			}
-			log.warn("resolveOrCreateSession: token missing/unknown/expired, creating a new session");
+			log.warn("resolveOrCreateSession: token {} missing/unknown/expired (found={}, expired={})",
+					token, sessionOpt.isPresent(),
+					sessionOpt.map(s -> s.getExpiresAt().isBefore(LocalDateTime.now())).orElse(null));
+		}
+		if (!allowCreate) {
+			log.info("resolveOrCreateSession: no valid token and creation not allowed on this route, proceeding anonymously");
+			return null;
 		}
 		Sessions session = Sessions.builder().build();
 		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
-		return sessionRepository.save(session);
+		session = sessionRepository.save(session);
+		log.info("resolveOrCreateSession: created new session {} (token={})", session.getId(), session.getToken());
+		return session;
 	}
 
 	/**
@@ -67,6 +79,8 @@ public class AuthService {
 	 */
 	public Users attachNewUserToSession(Sessions session) {
 		Users user = userRepository.save(Users.builder().userRole(Users.Role.CUSTOMER).build());
+		log.info("attachNewUserToSession: created user {} for session {} (token={})",
+				user.getId(), session.getId(), session.getToken());
 		session.setUser(user);
 		sessionRepository.save(session);
 		return user;

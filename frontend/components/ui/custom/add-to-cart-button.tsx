@@ -7,6 +7,7 @@ import { useCart } from "@/src/context/cart-context";
 import { InventoryItem } from "@/lib/types";
 import { ShoppingCart, ShoppingBasket } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function AddToCartButton({
 	item,
@@ -15,8 +16,9 @@ export function AddToCartButton({
 	item: InventoryItem;
 	quantity: number;
 }) {
-	const { cart, setCart, setCartDrawer } = useCart();
+	const { cart, setCartDrawer } = useCart();
 	const { status } = useSession();
+	const queryClient = useQueryClient();
 	const addCartItem = function(id: number, quantity: number) {
 		api
 			.post("/cartitem", {
@@ -28,11 +30,7 @@ export function AddToCartButton({
 				if (res.data.sessionToken && status === "unauthenticated") {
 					signIn("guest", { sessionToken: res.data.sessionToken, redirect: false });
 				}
-				setCart((previous) => {
-					const updatedItems = (previous?.items ?? []).concat(res.data.cartItem);
-					const updatedCart = { ...previous!, items: updatedItems };
-					return updatedCart;
-				});
+				queryClient.invalidateQueries({ queryKey: ["cart"] });
 				setCartDrawer(true);
 			})
 			.catch((err) => {

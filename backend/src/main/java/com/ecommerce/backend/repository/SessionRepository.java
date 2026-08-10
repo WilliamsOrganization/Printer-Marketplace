@@ -23,7 +23,7 @@ public interface SessionRepository extends JpaRepository<Sessions, Long> {
 	@Query("SELECT COUNT(DISTINCT s.user.id) FROM Sessions s")
 	long countUniqueUsers();
 
-	@Query("SELECT s FROM Sessions s JOIN FETCH s.user WHERE s.token= :token")
+	@Query("SELECT s FROM Sessions s LEFT JOIN FETCH s.user WHERE s.token= :token")
 	Optional<Sessions> findbyTokenWithUser(@Param("token") String token);
 
 	Optional<Sessions> findByUser(Users user);

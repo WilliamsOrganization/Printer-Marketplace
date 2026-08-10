@@ -1,39 +1,31 @@
 "use client"
 import api from "@/lib/api";
+import { useAppQuery } from "@/lib/use-app-query";
 import { Cart } from "@/lib/types";
-import { useSession } from "next-auth/react";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 type CartContextType = {
 	cart: Cart | undefined;
-	setCart: React.Dispatch<React.SetStateAction<Cart | undefined>>;
+	isLoading: boolean;
 	cartDrawer: boolean;
 	setCartDrawer: React.Dispatch<React.SetStateAction<boolean>>;
-
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-	const [cart, setCart] = useState<Cart | undefined>();
 	const [cartDrawer, setCartDrawer] = useState<boolean>(false);
-	const { data: session } = useSession();
 
+	// Data lives in the query cache now, not local state - mutations
+	// (add/remove/update quantity) invalidate ["cart"] instead of calling a
+	// setter directly, so this always reflects the server's actual state.
+	const { data: cart, isLoading } = useAppQuery<Cart>({
+		queryKey: ["cart"],
+		queryFn: () => api.get("/cart").then((res) => res.data),
+	});
 
-	useEffect(() => {
-		if (!session?.backendToken) return;
-		api
-			.get("/cart")
-			.then((res) => {
-				console.log("successfully fetched cart items in context" + res.data);
-				setCart(res.data);
-			})
-			.catch((err) => {
-				console.log("failed to fetch cart with context");
-			});
-	}, [session]);
 	return (
-		<CartContext.Provider value={{ cart, setCart, cartDrawer, setCartDrawer }}>{children}</CartContext.Provider>
+		<CartContext.Provider value={{ cart, isLoading, cartDrawer, setCartDrawer }}>{children}</CartContext.Provider>
 	);
 }
 

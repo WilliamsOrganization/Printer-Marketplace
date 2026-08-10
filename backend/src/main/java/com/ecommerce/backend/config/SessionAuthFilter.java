@@ -13,17 +13,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * SessionAuthFilter resolves every request's session up front - creating a
- * new (userless) session if the request carried no valid token - so
- * downstream code always has a session to work with, and the client always
- * learns which token to use via the X-Session-Token response header
- * (whether it's the one it sent, or a freshly-issued one). A user is only
- * attached to a session lazily, by whatever code path first needs one - see
- * UserService.getUserFromSession / AuthService.attachNewUserToSession.
+ * SessionAuthFilter resolves every request's session up front. Only the
+ * bootstrap endpoint (/server/session/whoami) is allowed to create a brand
+ * new session when no valid token is present - every other route either
+ * resolves an existing token or proceeds with no Authentication set
+ * (anonymous), so a stray request never mints a throwaway session. A user is
+ * only attached to a session lazily, by whatever code path first needs one -
+ * see UserService.getUserFromSession / AuthService.attachNewUserToSession.
  */
 @Component
 @RequiredArgsConstructor
 public class SessionAuthFilter extends OncePerRequestFilter {
+
+	private static final String BOOTSTRAP_PATH = "/server/session/whoami";
 
 	private final AuthService authService;
 
@@ -33,10 +35,13 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 			FilterChain filterChain)
 			throws ServletException, IOException {
 		String token = getTokenFromRequest(request);
-		Sessions session = authService.resolveOrCreateSession(token);
-		SecurityContextHolder.getContext()
-				.setAuthentication(authService.buildAuthentication(session));
-		response.setHeader("X-Session-Token", session.getToken());
+		boolean isBootstrap = BOOTSTRAP_PATH.equals(request.getRequestURI());
+		Sessions session = authService.resolveOrCreateSession(token, isBootstrap);
+		if (session != null) {
+			SecurityContextHolder.getContext()
+					.setAuthentication(authService.buildAuthentication(session));
+			response.setHeader("X-Session-Token", session.getToken());
+		}
 		filterChain.doFilter(request, response);
 	}
 

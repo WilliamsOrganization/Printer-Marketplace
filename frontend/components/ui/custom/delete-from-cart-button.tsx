@@ -1,34 +1,26 @@
 import api from "@/lib/api";
 import { Button } from "../button";
-import { Cart, CartItem } from "@/lib/types";
+import { CartItem } from "@/lib/types";
 import { toast } from "sonner";
-import React, { useState } from "react";
-import { useCart } from "@/src/context/cart-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "../input";
 import { NumericFormat } from "react-number-format";
-import { CardAction, CardContent, CardTitle } from "../card";
+import { CardTitle } from "../card";
 
 export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
-	const { cart, setCart } = useCart();
+	const queryClient = useQueryClient();
 
 	const updateQuantityServer = (cartItem: CartItem, quantity: number) => {
-		//update locally on blur
-		//
 		if (quantity < 0) {
 			toast.error("Cannot be a negative number");
+			return;
 		}
 
-		setCart((previous) => {
-			const updatedItems = previous!.items.map((item) =>
-				item.id === cartItem.id ? { ...item, quantity: quantity } : item,
-			);
-			return { ...previous!, items: updatedItems };
-		});
-		//update on server
 		api
 			.put(`/cartitem/quantity/${cartItem.id}`, quantity)
-			.then((res) => {
+			.then(() => {
 				toast.success("Successfully updated Cart quantity");
+				queryClient.invalidateQueries({ queryKey: ["cart"] });
 			})
 			.catch(() => {
 				toast.error("failed to update cart quantity");
@@ -38,15 +30,9 @@ export function DeleteFromCartButton({ cartItem }: { cartItem: CartItem }) {
 	const removeCartItem = function(cartId: number) {
 		api
 			.delete(`/cartitem/${cartId}`)
-			.then((res) => {
+			.then(() => {
 				toast.success("Successfuly deleted cart item");
-				setCart((previous) => {
-					const updatedItems = previous!.items.filter(
-						(item) => item.id !== cartId,
-					);
-					const updatedCart = { ...previous!, items: updatedItems };
-					return updatedCart;
-				});
+				queryClient.invalidateQueries({ queryKey: ["cart"] });
 			})
 			.catch((err) => {
 				toast.error("Error deleting cart item");

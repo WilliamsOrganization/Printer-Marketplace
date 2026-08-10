@@ -2,7 +2,6 @@ package com.ecommerce.backend.controller;
 
 import java.util.List;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -79,7 +78,6 @@ public class CartItemController {
 	 * @return
 	 */
 	@PutMapping("/quantity/{id}")
-	@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
 	public CartItem updateCartItemQuantity(@PathVariable Long id,
 			@RequestBody Integer quantity) {
 		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
@@ -93,7 +91,6 @@ public class CartItemController {
 	 * @param id
 	 */
 	@DeleteMapping("/{id}")
-	@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
 	public void deleteCartItem(@PathVariable Long id) {
 		cartService.deleteCartItem(id);
 	}

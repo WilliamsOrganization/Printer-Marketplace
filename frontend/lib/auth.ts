@@ -70,7 +70,7 @@ export const authOptions: NextAuthOptions = {
 		strategy: "jwt", // or "database"
 	},
 	callbacks: {
-		async signIn({ user, account, profile }) {
+		async signIn({ user, account }) {
 			if (account?.provider === "google" || account?.provider === "apple") {
 				// TODO: finish auth login route
 				const res = await fetch(`${BACKEND_URL}/server/auth/login`, {
@@ -100,6 +100,7 @@ export const authOptions: NextAuthOptions = {
 		},
 		async jwt({ token, user }) {
 			if (user) {
+				console.log(`[auth] jwt callback: new sign-in, setting backendToken=${user.backendToken} userId=${user.id}`);
 				token.id = user.id
 				token.backendToken = user.backendToken;
 				token.userId = user.id;
@@ -107,6 +108,7 @@ export const authOptions: NextAuthOptions = {
 			return token;
 		},
 		async session({ session, token }) {
+			console.log(`[auth] session callback: token.backendToken=${token.backendToken} token.userId=${token.userId}`);
 			session.backendToken = token.backendToken as string;
 			if (session.user) {
 				session.user.id = token.userId as string;

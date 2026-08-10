@@ -5,6 +5,7 @@ import com.ecommerce.backend.repository.SessionRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +24,21 @@ public class SessionController {
 
 	public SessionController(SessionRepository repository) {
 		this.repository = repository;
+	}
+
+	/**
+	 * Returns the current request's session token in the response body,
+	 * exactly matching the pattern AddCartItemResponse already uses
+	 * successfully. Used to proactively establish a persisted guest
+	 * identity on first load, rather than only as a side effect of some
+	 * other action like adding to a cart.
+	 *
+	 * @return the current session's token
+	 */
+	@GetMapping("/whoami")
+	public Map<String, String> whoami() {
+		Sessions session = (Sessions) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		return Map.of("sessionToken", session.getToken());
 	}
 
 	@GetMapping("/stats")

@@ -7,10 +7,12 @@ import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * UserService
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -27,8 +29,12 @@ public class UserService {
     public Users getUserFromSession() {
         Sessions session = (Sessions) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (session.getUser() != null) {
+            log.info("getUserFromSession: session {} (token={}) already has user {}",
+                    session.getId(), session.getToken(), session.getUser().getId());
             return session.getUser();
         }
+        log.info("getUserFromSession: session {} (token={}) has no user yet, creating one",
+                session.getId(), session.getToken());
         return authService.attachNewUserToSession(session);
     }
 }

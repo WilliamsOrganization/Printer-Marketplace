@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
-import org.apache.catalina.User;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,7 +42,6 @@ public class CartController {
      * @return the current user's cart
      */
     @GetMapping
-	@PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
     public Cart getOne() {
 		return cartService.getCartItems();
     }

@@ -1,5 +1,3 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "./auth";
 import axios from "axios";
 import { getSession, signIn } from "next-auth/react";
 
@@ -11,35 +9,48 @@ const apiSession = axios.create({
 	},
 })
 
+const WHOAMI_PATH = "/session/whoami";
+
+// Shared, de-duplicated in-flight bootstrap. Every request in the app goes
+// through the request interceptor below and awaits this same promise when
+// there's no session yet - so if multiple components (CartProvider,
+// DashboardProvider, AnonymousProvider, etc.) all try to fire a request
+// before any identity exists, only the first one actually starts the
+// bootstrap; everyone else just waits on that same result instead of each
+// minting their own throwaway guest session.
+let ensureSessionPromise: Promise<void> | null = null;
+
+export async function ensureSession(): Promise<void> {
+	const session = await getSession();
+	if (session?.backendToken) return;
+	if (!ensureSessionPromise) {
+		ensureSessionPromise = (async () => {
+			const res = await apiSession.get(WHOAMI_PATH);
+			const newToken = res.data.sessionToken;
+			if (newToken) {
+				await signIn("guest", { sessionToken: newToken, redirect: false });
+			}
+		})().finally(() => {
+			ensureSessionPromise = null;
+		});
+	}
+	return ensureSessionPromise;
+}
+
 apiSession.interceptors.request.use(async (config) => {
+	// The whoami call itself must skip this, or it would wait forever on
+	// the very promise it's supposed to be fulfilling.
+	if (config.url !== WHOAMI_PATH) {
+		await ensureSession();
+	}
 	const session = await getSession();
 	if (session?.backendToken) {
 		config.headers.Authorization = `Bearer ${session.backendToken}`;
+		console.log(`[api] ${config.method?.toUpperCase()} ${config.url} -> session token ${session.backendToken}`);
 	} else {
-		const guestToken = localStorage.getItem("guestToken");
-		if (guestToken) {
-			config.headers.Authorization = `Bearer ${guestToken}`;
-		}
+		console.log(`[api] ${config.method?.toUpperCase()} ${config.url} -> no token available`);
 	}
 	return config;
-})
-
-// The backend may transparently create a new guest account/session on any
-// request that arrives with no recognizable token (see SessionAuthFilter /
-// UserService.getUserFromSession). When that happens it echoes the new
-// token back via this header - without persisting it here, that identity
-// would be unreachable and the very next request would trigger another new
-// account, indefinitely.
-apiSession.interceptors.response.use(async (response) => {
-	const newToken = response.headers["x-session-token"];
-	if (newToken) {
-		localStorage.setItem("guestToken", newToken);
-		const session = await getSession();
-		if (!session?.backendToken) {
-			await signIn("guest", { sessionToken: newToken, redirect: false });
-		}
-	}
-	return response;
 })
 
 export default apiSession;

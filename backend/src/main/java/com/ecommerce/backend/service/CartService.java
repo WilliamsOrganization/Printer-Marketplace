@@ -3,6 +3,7 @@ package com.ecommerce.backend.service;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.backend.dto.AddCartItemRequest;
 import com.ecommerce.backend.dto.AddCartItemResponse;
@@ -65,7 +66,7 @@ public class CartService {
 	 * @return
 	 */
 	public Cart getCartItems() {
-		return cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
+		return getCart(userService.getUserFromSession());
 	}
 
 	/**
@@ -73,6 +74,7 @@ public class CartService {
 	 * 
 	 * @param id
 	 */
+	@Transactional
 	public void deleteCartItem(Long id) {
 		Cart cart = cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
 		cartItemRepository.deleteByIdAndCart(id, cart);
