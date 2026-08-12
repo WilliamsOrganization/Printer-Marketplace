@@ -112,6 +112,7 @@ export function CheckoutForm({
 				// already created server-side, so the button should stay
 				// disabled rather than re-enable in the gap before the
 				// browser actually leaves this page.
+				// BUG: this causes a desync with the next.js server. when you are redirected back to the application the wrong cookie is restored for the user. fucking awful and obnoxious
 				window.location.href = results
 			})
 			.catch((error) => {

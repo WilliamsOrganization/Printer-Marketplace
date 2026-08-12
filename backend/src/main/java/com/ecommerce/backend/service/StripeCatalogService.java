@@ -42,8 +42,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class StripeCatalogService {
-	private static final String SUCCESS_URL = "http://www.localhost:3000/success?session_id={CHECKOUT_SESSION_ID}";
-	private static final String CANCEL_URL = "http://www.localhost:3000/";
+	private static final String SUCCESS_URL = "http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}";
+	private static final String CANCEL_URL = "http://localhost:3000/";
 
 	private static final Long DOLLAR = 100L;
 	private static final Long PAGE_SIZE = 100L;

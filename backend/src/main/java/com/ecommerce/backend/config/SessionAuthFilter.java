@@ -36,6 +36,8 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 		String token = getTokenFromRequest(request);
 		boolean isBootstrap = BOOTSTRAP_PATH.equals(request.getRequestURI());
+		// BUG: fix this garbage. something is creating duplicate sessions for the application. should only be allowed from a single location shouldnt be creating accounts at all.
+		// remove the ability to create sessions altogether from the doFilterInternal. this is bad. should just be altogether removed and only be set with a single tanstack query request.
 		Sessions session = authService.resolveOrCreateSession(token, isBootstrap);
 		if (session != null) {
 			SecurityContextHolder.getContext()
