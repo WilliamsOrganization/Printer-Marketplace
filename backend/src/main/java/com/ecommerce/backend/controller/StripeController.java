@@ -52,32 +52,40 @@ public class StripeController {
 			@RequestHeader("Stripe-Signature") String sigHeader)
 			throws SignatureVerificationException {
 		Event event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
-		Session session;
+		// Stripe forwards every event type for a transaction (payment_intent.*,
+		// charge.*, checkout.session.*, ...), not just the ones we act on - only
+		// checkout.session.* events actually carry a Session, so deserializing
+		// must happen inside those cases, not unconditionally up front.
 		try {
-			// getObject() can come back empty when the webhook's api_version
-			// doesn't match the one stripe-java is pinned to (e.g. a sandbox
-			// account on a newer API version) - deserializeUnsafe() ignores
-			// that mismatch and deserializes the payload regardless.
-			session = (Session) event.getDataObjectDeserializer().deserializeUnsafe();
+			switch (event.getType()) {
+			case "checkout.session.completed":
+				stripeCatalogService.handleCompletedCheckoutEvent(deserializeSession(event));
+				break;
+			case "checkout.session.expired":
+				stripeCatalogService.handleExpiredCheckoutEvent(deserializeSession(event));
+				break;
+			case "checkout.session.async_payment_failed":
+				stripeCatalogService.handleFailedCheckoutEvent(deserializeSession(event));
+				break;
+			default:
+				log.debug("Ignoring event type: {}", event.getType());
+				break;
+			}
 		} catch (EventDataObjectDeserializationException e) {
 			log.error("Failed to deserialize event {} ({}) data object: {}",
 				event.getId(), event.getType(), e.getMessage());
 			return ResponseEntity.badRequest().build();
 		}
-		switch (event.getType()) {
-		case "checkout.session.completed":
-			stripeCatalogService.handleCompletedCheckoutEvent(session);
-			break;
-		case "checkout.session.expired":
-			stripeCatalogService.handleExpiredCheckoutEvent(session);
-			break;
-		case "checkout.session.async_payment_failed":
-			stripeCatalogService.handleFailedCheckoutEvent(session);
-			break;
-		default:
-			log.error("Unhandled event type: {}", event.getType());
-			break;
-		}
 		return ResponseEntity.ok().build();
+	}
+
+	/**
+	 * getObject() can come back empty when the webhook's api_version doesn't
+	 * match the one stripe-java is pinned to (e.g. a sandbox account on a
+	 * newer API version) - deserializeUnsafe() ignores that mismatch and
+	 * deserializes the payload regardless.
+	 */
+	private Session deserializeSession(Event event) throws EventDataObjectDeserializationException {
+		return (Session) event.getDataObjectDeserializer().deserializeUnsafe();
 	}
 }
