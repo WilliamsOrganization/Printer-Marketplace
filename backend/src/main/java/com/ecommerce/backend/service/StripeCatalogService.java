@@ -260,17 +260,21 @@ public class StripeCatalogService {
 	}
 
 	/**
-	 * This is the handler for successful checkout events.
+	 * This is the handler for complted checkout events.
 	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleCompletedCheckoutEvent(Session session) {
-		Orders order = orderRepository.findOrderByStripeSessionId(session.getId()).orElseThrow();
-		if (order.getStatus() == Orders.Status.COMPLETED) {
+		Orders order = orderService.getOrderByStripeSessionId(session.getId());
+		if (order.getStatus() == Orders.Status.COMPLETED || order.getStatus() != Orders.Status.PENDING) {
 			log.info("Skipping completed order {}", order.getId());
 			return;
 		}
-		order.setStatus(Orders.Status.COMPLETED);
+		if ("paid".equals(session.getPaymentStatus())) {
+			order.setStatus(Orders.Status.PAID);
+		} else {
+			order.setStatus(Orders.Status.COMPLETED);
+		}
 		order.setStripeEmail(session.getCustomerEmail());
 		order.setCurrency(session.getCurrency());
 		order.setSubtotal(session.getAmountSubtotal());
@@ -280,9 +284,8 @@ public class StripeCatalogService {
 		}
 		orderRepository.save(order);
 		log.info("Order Status Updated to {}", order.getStatus());
-		Users user = order.getUser();
-		resendService.sendConfirmationEmail(user, order);
-		log.info("Email sent to this email: {}", user.getEmail());
+		resendService.sendConfirmationEmail(order.getUser(), order);
+		log.info("Email sent to this email: {}", order.getUser().getEmail());
 	}
 	
 	/**
@@ -292,6 +295,10 @@ public class StripeCatalogService {
 	 */
 	public void handleExpiredCheckoutEvent(Session session) {
 		Orders order = orderService.getOrderByStripeSessionId(session.getId());
+		if (order.getStatus() == Orders.Status.EXPIRED || order.getStatus() != Orders.Status.PENDING) {
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			return;
+		}
 		order.setStatus(Orders.Status.EXPIRED);
 		orderRepository.save(order);
 		log.info("Order Status Updated to {}", order.getStatus());
@@ -304,9 +311,32 @@ public class StripeCatalogService {
 	 */
 	public void handleFailedCheckoutEvent(Session session) {
 		Orders order = orderService.getOrderByStripeSessionId(session.getId());
+		if (order.getStatus() != Orders.Status.COMPLETED) {
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			return;
+		}
 		order.setStatus(Orders.Status.FAILED);
 		orderRepository.save(order);
 		log.info("Order Status Updated to {}", order.getStatus());
+	}
+
+	/**
+	 * This is the handler for successful checkout events. creates a shipping label and genereates the pdf and adds it to the shipping table url for the dashboard view
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void handleSuccessCheckoutEvent(Session deserializeSession) {
+		Orders order = orderService.getOrderByStripeSessionId(deserializeSession.getId());
+		if (order.getStatus() != Orders.Status.COMPLETED) {
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			return;
+		}
+		order.setStatus(Orders.Status.PAID);
+		orderRepository.save(order);
+		log.info("Order Status Updated to {}", order.getStatus());
+		// TODO: generate shipping label
+		// update the shipping table with metadata and url for the pdf. 
+		// FIX: Shitty blob storage implementation is shitty. fix it. 
 	}
 
 }

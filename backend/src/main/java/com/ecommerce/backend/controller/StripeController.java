@@ -67,6 +67,9 @@ public class StripeController {
 			case "checkout.session.async_payment_failed":
 				stripeCatalogService.handleFailedCheckoutEvent(deserializeSession(event));
 				break;
+			case "checkout.session.async_payment_succeeded":
+				stripeCatalogService.handleSuccessCheckoutEvent(deserializeSession(event));
+				break;
 			default:
 				log.debug("Ignoring event type: {}", event.getType());
 				break;

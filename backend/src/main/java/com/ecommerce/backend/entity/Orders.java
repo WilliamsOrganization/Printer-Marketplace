@@ -87,6 +87,6 @@ public class Orders {
 	 * Order status.
 	 */
 	public enum Status {
-		COMPLETED, EXPIRED, FAILED, PENDING
+		COMPLETED, EXPIRED, FAILED, PENDING, PAID, RETURNED
 	}
 }

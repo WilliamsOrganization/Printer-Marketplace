@@ -94,6 +94,6 @@ public class OrderService {
 	 * @return the order, or null if not found
 	 */	
 	public Orders getOrderByStripeSessionId(String id) {
-		return orderRepository.findOrderByStripeSessionId(id).orElse(null);
+		return orderRepository.findOrderByStripeSessionId(id).orElseThrow();
 	}
 }
