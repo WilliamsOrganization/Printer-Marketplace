@@ -70,6 +70,17 @@ public class OrderController {
 	}
 
 	/**
+	 * Get every order in the system, for the admin dashboard.
+	 *
+	 * @return all orders
+	 */
+	@GetMapping("/admin/all")
+	@PreAuthorize("hasRole('ADMIN')")
+	public List<Orders> getAllOrders() {
+		return orderRepository.findAll();
+	}
+
+	/**
 	 * Reduces a Stripe checkout Session down to the fields the frontend
 	 * needs, since the raw Session isn't Jackson-serializable (it carries
 	 * internal SDK types like LiveStripeResponseGetter).

@@ -91,9 +91,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NumericFormat } from "react-number-format";
 import EditInventory from "./custom/dialog-popup-edit";
+import { OrderUserDialog } from "./custom/order-user-dialog";
+import { OrderItemsDialog } from "./custom/order-items-dialog";
+import { OrderShippingDialog } from "./custom/order-shipping-dialog";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
-import { InventoryItem } from "@/lib/types";
+import { InventoryItem, Orders as Order, OrderStatus } from "@/lib/types";
 
 const CURRENCIES = Intl.supportedValuesOf("currency");
 
@@ -165,6 +168,7 @@ export function DataTable() {
 		[],
 	);
 	const [sorting, setSorting] = React.useState<SortingState>([]);
+	const [globalFilter, setGlobalFilter] = React.useState("");
 	const [pagination, setPagination] = React.useState({
 		pageIndex: 0,
 		pageSize: 10,
@@ -338,6 +342,7 @@ export function DataTable() {
 			rowSelection,
 			columnFilters,
 			pagination,
+			globalFilter,
 		},
 		getRowId: (row) => row.id.toString(),
 		enableRowSelection: true,
@@ -346,6 +351,7 @@ export function DataTable() {
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
 		onPaginationChange: setPagination,
+		onGlobalFilterChange: setGlobalFilter,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
@@ -367,14 +373,14 @@ export function DataTable() {
 
 	return (
 		<Tabs
-			defaultValue="outline"
+			defaultValue="inventory"
 			className="w-full flex-col justify-start gap-6"
 		>
 			<div className="flex items-center justify-between px-4 lg:px-6">
 				<Label htmlFor="view-selector" className="sr-only">
 					View
 				</Label>
-				<Select defaultValue="outline">
+				<Select defaultValue="inventory">
 					<SelectTrigger
 						className="flex w-fit @4xl/main:hidden"
 						size="sm"
@@ -383,23 +389,25 @@ export function DataTable() {
 						<SelectValue placeholder="Select a view" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="outline">Outline</SelectItem>
-						<SelectItem value="past-performance">Past Performance</SelectItem>
-						<SelectItem value="key-personnel">Key Personnel</SelectItem>
-						<SelectItem value="focus-documents">Focus Documents</SelectItem>
+						<SelectItem value="inventory">Inventory Items</SelectItem>
+						<SelectItem value="orders">Orders</SelectItem>
+						<SelectItem value="shipping">Shipping</SelectItem>
+						<SelectItem value="returns">Returns</SelectItem>
 					</SelectContent>
 				</Select>
 				<TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-					<TabsTrigger value="outline">Outline</TabsTrigger>
-					<TabsTrigger value="past-performance">
-						Past Performance <Badge variant="secondary">3</Badge>
-					</TabsTrigger>
-					<TabsTrigger value="key-personnel">
-						Key Personnel <Badge variant="secondary">2</Badge>
-					</TabsTrigger>
-					<TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
+					<TabsTrigger value="inventory">Inventory Items</TabsTrigger>
+					<TabsTrigger value="orders">Orders</TabsTrigger>
+					<TabsTrigger value="shipping">Shipping</TabsTrigger>
+					<TabsTrigger value="returns">Returns</TabsTrigger>
 				</TabsList>
 				<div className="flex items-center gap-2">
+					<Input
+						placeholder="Search…"
+						value={globalFilter}
+						onChange={(e) => setGlobalFilter(e.target.value)}
+						className="h-8 w-40 lg:w-56"
+					/>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button variant="outline" size="sm">
@@ -440,7 +448,7 @@ export function DataTable() {
 				</div>
 			</div>
 			<TabsContent
-				value="outline"
+				value="inventory"
 				className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
 			>
 				<div className="overflow-hidden rounded-lg border">
@@ -573,21 +581,223 @@ export function DataTable() {
 				</div>
 			</TabsContent>
 			<TabsContent
-				value="past-performance"
+				value="orders"
 				className="flex flex-col px-4 lg:px-6"
 			>
-				<div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+				<OrdersTable globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
 			</TabsContent>
-			<TabsContent value="key-personnel" className="flex flex-col px-4 lg:px-6">
+			<TabsContent value="shipping" className="flex flex-col px-4 lg:px-6">
 				<div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
 			</TabsContent>
 			<TabsContent
-				value="focus-documents"
+				value="returns"
 				className="flex flex-col px-4 lg:px-6"
 			>
 				<div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
 			</TabsContent>
 		</Tabs>
+	);
+}
+
+const STRIPE_ACCOUNT_ID = process.env.NEXT_PUBLIC_STRIPE_ACCOUNT_ID;
+
+const ORDER_STATUS_VARIANT: Record<OrderStatus, "default" | "secondary" | "destructive" | "outline"> = {
+	[OrderStatus.PENDING]: "outline",
+	[OrderStatus.COMPLETED]: "secondary",
+	[OrderStatus.PAID]: "default",
+	[OrderStatus.EXPIRED]: "destructive",
+	[OrderStatus.FAILED]: "destructive",
+};
+
+function OrdersTable({
+	globalFilter,
+	setGlobalFilter,
+}: {
+	globalFilter: string;
+	setGlobalFilter: React.Dispatch<React.SetStateAction<string>>;
+}) {
+	const { orders } = useDashboard();
+	const [sorting, setSorting] = React.useState<SortingState>([]);
+	const [pagination, setPagination] = React.useState({
+		pageIndex: 0,
+		pageSize: 10,
+	});
+
+	const columns: ColumnDef<Order>[] = [
+		{
+			accessorKey: "id",
+			header: "Order",
+			cell: ({ row }) => <div className="font-medium">#{row.original.id}</div>,
+		},
+		{
+			accessorKey: "date",
+			header: "Date",
+			cell: ({ row }) => (
+				<div className="text-muted-foreground">
+					{row.original.date ? new Date(row.original.date).toLocaleDateString() : "—"}
+				</div>
+			),
+		},
+		{
+			id: "email",
+			accessorFn: (row) => row.user?.email ?? row.email ?? "",
+			header: "Customer",
+			cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
+		},
+		{
+			id: "items",
+			accessorFn: (row) => row.items?.map((item) => item.itemTitle).join(" ") ?? "",
+			header: () => <div className="text-right">Items</div>,
+			cell: ({ row }) => (
+				<div className="text-right">
+					<OrderItemsDialog items={row.original.items} />
+				</div>
+			),
+		},
+		{
+			accessorKey: "subtotal",
+			header: () => <div className="text-right">Subtotal</div>,
+			cell: ({ row }) => (
+				<div className="text-right">
+					${(row.original.subtotal / 100).toFixed(2)}
+				</div>
+			),
+		},
+		{
+			accessorKey: "shippingCost",
+			header: () => <div className="text-right">Shipping</div>,
+			cell: ({ row }) => (
+				<div className="text-right">
+					${(row.original.shippingCost / 100).toFixed(2)}
+				</div>
+			),
+		},
+		{
+			accessorKey: "total",
+			header: () => <div className="text-right">Total</div>,
+			cell: ({ row }) => (
+				<div className="text-right font-medium">
+					${(row.original.total / 100).toFixed(2)}{" "}
+					<span className="text-muted-foreground text-xs uppercase">{row.original.currency}</span>
+				</div>
+			),
+		},
+		{
+			accessorKey: "status",
+			header: "Status",
+			cell: ({ row }) => (
+				<Badge variant={ORDER_STATUS_VARIANT[row.original.status]} className="px-1.5">
+					{row.original.status}
+				</Badge>
+			),
+		},
+		{
+			id: "shipping",
+			header: "Shipping",
+			cell: ({ row }) => <OrderShippingDialog shipping={row.original.shipping} />,
+		},
+		{
+			accessorKey: "stripeSessionId",
+			header: "Stripe",
+			cell: ({ row }) =>
+				row.original.stripeSessionId ? (
+					<a
+						href={`https://dashboard.stripe.com/${STRIPE_ACCOUNT_ID}/test/checkout/sessions/${row.original.stripeSessionId}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-muted-foreground hover:text-foreground underline underline-offset-2"
+					>
+						{row.original.stripeSessionId.slice(0, 14)}…
+					</a>
+				) : (
+					"—"
+				),
+		},
+	];
+
+	const table = useReactTable({
+		data: orders,
+		columns,
+		state: { sorting, pagination, globalFilter },
+		getRowId: (row) => row.id.toString(),
+		onSortingChange: setSorting,
+		onPaginationChange: setPagination,
+		onGlobalFilterChange: setGlobalFilter,
+		getCoreRowModel: getCoreRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+	});
+
+	return (
+		<div className="flex flex-col gap-4">
+			<div className="overflow-hidden rounded-lg border">
+				<Table>
+					<TableHeader className="bg-muted sticky top-0 z-10">
+						{table.getHeaderGroups().map((headerGroup) => (
+							<TableRow key={headerGroup.id}>
+								{headerGroup.headers.map((header) => (
+									<TableHead key={header.id}>
+										{header.isPlaceholder
+											? null
+											: flexRender(header.column.columnDef.header, header.getContext())}
+									</TableHead>
+								))}
+							</TableRow>
+						))}
+					</TableHeader>
+					<TableBody>
+						{table.getRowModel().rows?.length ? (
+							table.getRowModel().rows.map((row) => (
+								<TableRow key={row.id}>
+									{row.getVisibleCells().map((cell) => (
+										<TableCell key={cell.id}>
+											{flexRender(cell.column.columnDef.cell, cell.getContext())}
+										</TableCell>
+									))}
+								</TableRow>
+							))
+						) : (
+							<TableRow>
+								<TableCell colSpan={columns.length} className="h-24 text-center">
+									No orders yet.
+								</TableCell>
+							</TableRow>
+						)}
+					</TableBody>
+				</Table>
+			</div>
+			<div className="flex items-center justify-between px-1">
+				<div className="text-muted-foreground text-sm">
+					{table.getFilteredRowModel().rows.length} of {orders.length} order{orders.length === 1 ? "" : "s"}
+				</div>
+				<div className="flex items-center gap-2">
+					<Button
+						variant="outline"
+						size="icon"
+						className="size-8"
+						onClick={() => table.previousPage()}
+						disabled={!table.getCanPreviousPage()}
+					>
+						<span className="sr-only">Go to previous page</span>
+						<IconChevronLeft />
+					</Button>
+					<div className="text-sm font-medium">
+						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+					</div>
+					<Button
+						variant="outline"
+						size="icon"
+						className="size-8"
+						onClick={() => table.nextPage()}
+						disabled={!table.getCanNextPage()}
+					>
+						<span className="sr-only">Go to next page</span>
+						<IconChevronRight />
+					</Button>
+				</div>
+			</div>
+		</div>
 	);
 }
 

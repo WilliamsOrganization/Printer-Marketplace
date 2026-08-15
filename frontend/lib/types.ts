@@ -85,7 +85,9 @@ export interface User {
 export enum OrderStatus {
 	PENDING = "PENDING",
 	COMPLETED = "COMPLETED",
-	CANCELLED = "CANCELLED",
+	PAID = "PAID",
+	EXPIRED = "EXPIRED",
+	FAILED = "FAILED",
 }
 
 export interface OrderItem {
@@ -96,11 +98,43 @@ export interface OrderItem {
 	unitPrice: number;
 }
 
+export interface ShippingAddress {
+	name: string;
+	street1: string;
+	street2: string;
+	city: string;
+	state: string;
+	zip: string;
+	country: string;
+}
+
+export enum ShippingStatus {
+	PENDING = "PENDING",
+	PURCHASED = "PURCHASED",
+	IN_TRANSIT = "IN_TRANSIT",
+	DELIVERED = "DELIVERED",
+}
+
+export interface Shipping {
+	id: number;
+	createdAt: string;
+	shippingCost: number;
+	serviceType: string;
+	easyPostId: string;
+	trackingNumber: string;
+	trackingUrl: string;
+	labelPdfUrl: string;
+	addressFrom: ShippingAddress;
+	addressTo: ShippingAddress;
+	status: ShippingStatus;
+}
+
 export interface Orders {
 	id: number;
 	date: string;
 	user: User;
 	items: OrderItem[];
+	shipping: Shipping | null;
 	stripeSessionId: string;
 	email: string;
 	subtotal: number;

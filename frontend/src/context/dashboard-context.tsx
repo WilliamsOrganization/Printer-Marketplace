@@ -1,11 +1,13 @@
 "use client";
 import api from "@/lib/api";
-import { InventoryItem, User } from "@/lib/types";
+import { InventoryItem, Orders, User } from "@/lib/types";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type DashboardContextType = {
 	inventory: InventoryItem[];
 	setInventory: React.Dispatch<React.SetStateAction<InventoryItem[]>>;
+	orders: Orders[];
+	setOrders: React.Dispatch<React.SetStateAction<Orders[]>>;
 	users: User[];
 	setUsers: React.Dispatch<React.SetStateAction<User[]>>;
 	sessionCount: number;
@@ -19,6 +21,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
 	const [inventory, setInventory] = useState<InventoryItem[]>([]);
+	const [orders, setOrders] = useState<Orders[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
 	const [sessionCount, setSessionCount] = useState<number>(0);
 	const [activeSessionCount, setActiveSessionCount] = useState<number>(0);
@@ -30,6 +33,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 		api
 			.get("/inventoryitem/admin/all")
 			.then((res) => setInventory(res.data))
+			.catch((err) => console.log("Error: " + err.message));
+	}, []);
+
+	useEffect(() => {
+		api
+			.get("/orders/admin/all")
+			.then((res) => setOrders(res.data))
 			.catch((err) => console.log("Error: " + err.message));
 	}, []);
 
@@ -75,7 +85,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	return (
-		<DashboardContext.Provider value={{ inventory, setInventory, users, setUsers, sessionCount, activeSessionCount, uniqueUserCount, growthRate, sessionDates }}>
+		<DashboardContext.Provider value={{ inventory, setInventory, orders, setOrders, users, setUsers, sessionCount, activeSessionCount, uniqueUserCount, growthRate, sessionDates }}>
 			{children}
 		</DashboardContext.Provider>
 	);
