@@ -640,7 +640,7 @@ function OrdersTable({
 		},
 		{
 			id: "email",
-			accessorFn: (row) => row.user?.email ?? row.email ?? "",
+			accessorFn: (row) => [row.user?.email ?? row.email, row.user?.phoneNumber].filter(Boolean).join(" "),
 			header: "Customer",
 			cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
 		},
