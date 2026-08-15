@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SessionAuthFilter extends OncePerRequestFilter {
     private static final String SESSION_BOOTSTRAP_PATH = "/server/session";
     private static final String STRIPE_WEBHOOK_PATH = "/stripe/webhook";
+    private static final String AUTH_LOGIN_PATH = "/server/auth/login";
 
     // GET-only, unauthenticated-friendly routes - no @PreAuthorize guards
     // these on the controller side, so they must not be hard-rejected here
@@ -66,6 +67,9 @@ public class SessionAuthFilter extends OncePerRequestFilter {
         if (STRIPE_WEBHOOK_PATH.equals(request.getRequestURI())) {
             return true;
         }
+		if (AUTH_LOGIN_PATH.equals(request.getRequestURI())) {
+			return true;
+		}
         return HttpMethod.GET.matches(request.getMethod())
             && PUBLIC_GET_PATHS.contains(request.getRequestURI());
     }
