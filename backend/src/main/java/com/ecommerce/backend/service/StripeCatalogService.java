@@ -15,6 +15,7 @@ import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.entity.Orders;
+import com.ecommerce.backend.repository.OrderRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.stripe.exception.StripeException;
@@ -48,6 +49,7 @@ public class StripeCatalogService {
 	private static final Long DOLLAR = 100L;
 	private static final Long PAGE_SIZE = 100L;
 
+	private final OrderRepository orderRepository;
 	private final ShippoService shippoService;
 	private final CartService cartService;
 	private final OrderService orderService;
@@ -200,7 +202,7 @@ public class StripeCatalogService {
 	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	public String createCheckoutSession(String selectedShippingID)
+	public String createCheckoutSession(String email, String selectedShippingID)
 			throws Exception {
 		Cart cart = cartService.getCartItems();
 		List<LineItem> lineItems = mapCartItemstoLineItems(cart);
@@ -212,6 +214,7 @@ public class StripeCatalogService {
 		SessionCreateParams params = SessionCreateParams.builder()
 				.setSuccessUrl(SUCCESS_URL)
 				.setCancelUrl(CANCEL_URL)
+				.setCustomerEmail(email)
 				.addAllLineItem(lineItems)
 				.addShippingOption(SessionCreateParams.ShippingOption.builder()
 						.setShippingRateData(ShippingRateData.builder()
@@ -226,7 +229,7 @@ public class StripeCatalogService {
 				.setMode(SessionCreateParams.Mode.PAYMENT)
 				.build();
 		Session session = Session.create(params, null);
-		Orders order = orderService.createPendingOrder(session, shipment, quote, cart);
+		orderService.createPendingOrder(session, shipment, quote, cart);
 		return session.getUrl();
 	}
 	
@@ -241,19 +244,58 @@ public class StripeCatalogService {
 		return Product.list(productListParams);
 	}
 	
+	/**
+	 * This is intended for managing seed data.
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 * @return a list of ids that can be used to populate seed data.
+	 */
 	public Session getCheckoutSession(String sessionId) throws StripeException {
 		return Session.retrieve(sessionId);
 	}
-	
+
 	/**
-	 * This is the webhook endpoint for stripe checkout events. 
+	 * This is the handler for successful checkout events.
 	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	public void handleSuccessfulCheckoutEvent(String payload) {
-		// TODO: handle successful checkout event
-		// TODO: register ShippingRate with shippo maybe preallocate then link after with order
-		// TODO: Create and ORder Object with shipping id
-		// TODO: Get shipping Label from Shippo. 
+	public void handleCompletedCheckoutEvent(Session session) {
+		Orders order = orderRepository.findOrderByStripeSessionId(session.getId()).orElseThrow();
+		order.setStatus(Orders.Status.COMPLETED);
+		order.setStripeEmail(session.getCustomerEmail());
+		order.setCurrency(session.getCurrency());
+		order.setSubtotal(session.getAmountSubtotal());
+		order.setTotal(session.getAmountTotal());
+		if (session.getShippingCost() != null) {
+			order.setShippingCost(session.getShippingCost().getAmountTotal());
+		}
+		orderRepository.save(order);
+		log.info("Order Status Updated to {}", order.getStatus());
+		// TODO: validate user's email address and create an account
 	}
+	
+	/**
+	 * This is the handler for expired checkout events.
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void handleExpiredCheckoutEvent(Session session) {
+		Orders order = orderService.getOrderByStripeSessionId(session.getId());
+		order.setStatus(Orders.Status.EXPIRED);
+		orderRepository.save(order);
+		log.info("Order Status Updated to {}", order.getStatus());
+	}
+
+	/**
+	 * This is the handler for failed checkout events.
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void handleFailedCheckoutEvent(Session session) {
+		Orders order = orderService.getOrderByStripeSessionId(session.getId());
+		order.setStatus(Orders.Status.FAILED);
+		orderRepository.save(order);
+		log.info("Order Status Updated to {}", order.getStatus());
+	}
+
 }

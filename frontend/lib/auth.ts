@@ -98,13 +98,22 @@ export const authOptions: NextAuthOptions = {
 			if(account?.provider==="credentials")return true;
 			return false;
 		},
-		async jwt({ token, user }) {
+		async jwt({ token, user, trigger, session }) {
 			if (user) {
 				console.log(`[auth] jwt callback: new sign-in, setting backendToken=${user.backendToken} userId=${user.id}`);
 				token.id = user.id
 				token.backendToken = user.backendToken;
 				token.userId = user.id;
+				if (user.phoneNumber) token.phoneNumber = user.phoneNumber;
 			};
+			// Fires when a client component calls useSession().update(...) -
+			// `session` here is whatever was passed to update(), not the
+			// full session object. Merge only what's present so a partial
+			// update (e.g. just phoneNumber) doesn't clobber the other field.
+			if (trigger === "update" && session) {
+				if (session.email !== undefined) token.email = session.email;
+				if (session.phoneNumber !== undefined) token.phoneNumber = session.phoneNumber;
+			}
 			return token;
 		},
 		async session({ session, token }) {
@@ -112,6 +121,8 @@ export const authOptions: NextAuthOptions = {
 			session.backendToken = token.backendToken as string;
 			if (session.user) {
 				session.user.id = token.userId as string;
+				if (token.email) session.user.email = token.email as string;
+				if (token.phoneNumber) session.user.phoneNumber = token.phoneNumber as string;
 			}
 			return session;
 		},

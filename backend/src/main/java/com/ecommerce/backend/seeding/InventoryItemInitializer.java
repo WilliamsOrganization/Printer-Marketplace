@@ -16,7 +16,6 @@ import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Product;
 import com.stripe.model.ProductCollection;
 
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +56,8 @@ public class InventoryItemInitializer {
 				ProductCollection products = stripeCatalogService.getAllProducts();
 				// logger.info("[INIT]: ATTEMPTING TO DELETE: {}", products.getData().size());
 				// CleanUnusedProductsAndArchive(stripeCatalogService, products);
-				activateInventoryWithStripeProduct(inventoryItemRepository, stripeCatalogService, products);
+				// TODO: FIX THIS
+				// activateInventoryWithStripeProduct(inventoryItemRepository, stripeCatalogService, products);
 				
                 // ID, "Apple", "A delicious fruit",
                 // seedItem(inventoryItemRepository, stripeCatalogService, ID,

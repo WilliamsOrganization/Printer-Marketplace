@@ -42,12 +42,18 @@ export interface CartItem {
 	item: InventoryItem;
 	quantity: number;
 }
+
 export interface Cart {
 	id: number;
 	createdAt: string;
 	updatedAt: string;
 	user: User;
 	items: CartItem[];
+}
+
+export interface User {
+	email: string;
+	phoneNumber: string;
 }
 
 

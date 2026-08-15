@@ -9,7 +9,7 @@ const apiSession = axios.create({
 	},
 })
 
-const WHOAMI_PATH = "/session/whoami";
+const SESSION_PATH = "/session";
 
 // Shared, de-duplicated in-flight bootstrap. Every request in the app goes
 // through the request interceptor below and awaits this same promise when
@@ -21,26 +21,30 @@ const WHOAMI_PATH = "/session/whoami";
 let ensureSessionPromise: Promise<void> | null = null;
 
 export async function ensureSession(): Promise<void> {
-	const session = await getSession();
-	if (session?.backendToken) return;
-	if (!ensureSessionPromise) {
-		ensureSessionPromise = (async () => {
-			const res = await apiSession.get(WHOAMI_PATH);
-			const newToken = res.data.sessionToken;
-			if (newToken) {
-				await signIn("guest", { sessionToken: newToken, redirect: false });
-			}
-		})().finally(() => {
-			ensureSessionPromise = null;
-		});
-	}
+	// Claim ensureSessionPromise synchronously, before any await - otherwise
+	// two callers can both pass the "is one already in flight" check while
+	// each is still waiting on its own getSession() call, and both end up
+	// firing their own bootstrap request instead of the second one blocking
+	// on the first.
+	if (ensureSessionPromise) return ensureSessionPromise;
+	ensureSessionPromise = (async () => {
+		const session = await getSession();
+		if (session?.backendToken) return;
+		const res = await apiSession.get(SESSION_PATH);
+		const newToken = res.data;
+		if (newToken) {
+			await signIn("guest", { sessionToken: newToken, redirect: false });
+		}
+	})().finally(() => {
+		ensureSessionPromise = null;
+	});
 	return ensureSessionPromise;
 }
 
 apiSession.interceptors.request.use(async (config) => {
-	// The whoami call itself must skip this, or it would wait forever on
-	// the very promise it's supposed to be fulfilling.
-	if (config.url !== WHOAMI_PATH) {
+	// The session bootstrap call itself must skip this, or it would wait
+	// forever on the very promise it's supposed to be fulfilling.
+	if (config.url !== SESSION_PATH) {
 		await ensureSession();
 	}
 	const session = await getSession();

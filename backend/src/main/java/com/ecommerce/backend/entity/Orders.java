@@ -51,6 +51,7 @@ public class Orders {
 	@NotNull
 	@NonNull
 	private Users user;
+
 	
 	// TODO: consider @OrderBy("id ASC") (or createdAt, if OrderItem gets one) to
 	// guarantee items are fetched in creation order rather than undefined order
@@ -62,6 +63,8 @@ public class Orders {
 	@OneToOne(mappedBy = "orders")
 	@JsonManagedReference
 	private Shipping shipping;
+
+	private String stripeEmail;
 
 	private String stripeSessionId;
 	// TODO: consider @Email (jakarta.validation)
@@ -84,6 +87,6 @@ public class Orders {
 	 * Order status.
 	 */
 	public enum Status {
-		PENDING, COMPLETED, CANCELLED
+		COMPLETED, EXPIRED, FAILED, PENDING
 	}
 }

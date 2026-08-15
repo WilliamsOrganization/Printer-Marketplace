@@ -12,7 +12,8 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import apiSession from "@/lib/api";
 import { toast } from "sonner";
@@ -54,6 +55,23 @@ export function CheckoutForm({
 	const [rates, setRates] = useState<ShippingRate[]>([])
 	const [selectedRate, setSelectedRate] = useState<string | null>(null)
 	const [phone, setPhone] = useState<string | undefined>()
+	const [email, setEmail] = useState<string | undefined>()
+	const { data: session, update } = useSession()
+
+	// Prefill from the logged-in user's session once it loads. Guests won't
+	// have these on session.user, so this leaves the fields blank for them
+	// and doesn't clobber anything the user already typed.
+	useEffect(() => {
+		if (session?.user?.email && !email) {
+			setEmail(session.user.email)
+		}
+	}, [session?.user?.email])
+
+	useEffect(() => {
+		if (session?.user?.phoneNumber && !phone) {
+			setPhone(session.user.phoneNumber)
+		}
+	}, [session?.user?.phoneNumber])
 
 	/**
 	 * Fetches shipping rate quotes for the currently selected address.
@@ -101,8 +119,10 @@ export function CheckoutForm({
 	const createCheckoutSession = async function(selectedRate: string) {
 		setError(null)
 		setLoading(true)
+		await update({ email, phoneNumber: phone })
 		apiSession
 			.post("cart/checkout/", {
+				email,
 				selectedShippingID: selectedRate
 			})
 			.then((res) => {
@@ -146,6 +166,8 @@ export function CheckoutForm({
 									name="email"
 									type="email"
 									placeholder="you@example.com"
+									value={email ?? ""}
+									onChange={(e) => setEmail(e.target.value)}
 									required
 								/>
 							</Field>

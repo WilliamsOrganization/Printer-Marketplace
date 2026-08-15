@@ -13,10 +13,8 @@ import com.ecommerce.backend.entity.OrderItem;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.ShippingAddress;
-import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.ShippingRepository;
-import com.ecommerce.backend.repository.UserRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.stripe.model.checkout.Session;
 
@@ -30,8 +28,6 @@ import lombok.RequiredArgsConstructor;
 public class OrderService {
 	private static final Long DOLLAR = 100L;
 
-	private final UserRepository userRepository;
-	private final CartRepository cartRepository;
 	private final OrderRepository orderRepository;
 	private final ShippingRepository shippingRepository;
 
@@ -89,5 +85,9 @@ public class OrderService {
 		order.setShipping(shippingRepository.save(shipping));
 
 		return order;
+	}
+
+	public Orders getOrderByStripeSessionId(String id) {
+		return orderRepository.findOrderByStripeSessionId(id).orElse(null);
 	}
 }

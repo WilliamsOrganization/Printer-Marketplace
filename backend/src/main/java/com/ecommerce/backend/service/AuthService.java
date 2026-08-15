@@ -3,7 +3,6 @@ package com.ecommerce.backend.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -34,56 +33,16 @@ public class AuthService {
 	private final SessionRepository sessionRepository;
 
 	/**
-	 * Resolves the session for a request's bearer token, creating a brand
-	 * new session (with no user attached yet) if the token is missing,
-	 * unknown, or expired. Sessions are cheap and created for any request;
-	 * a user is only attached lazily, once something actually needs one
-	 * (see attachNewUserToSession).
-	 *
-	 * @param token the bearer token from the request, or null
-	 * @return the resolved (existing or newly-created) session
+	 * Create a new session for a user if one doesn't already exist.
+	 * 
+	 * @return the new session
 	 */
-	public Sessions resolveOrCreateSession(String token, boolean allowCreate) {
-		if (token != null) {
-			Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
-			if (sessionOpt.isPresent()
-					&& sessionOpt.get().getExpiresAt().isAfter(LocalDateTime.now())) {
-				Sessions existing = sessionOpt.get();
-				log.info("resolveOrCreateSession: token {} -> session {} (userId={})",
-						token, existing.getId(),
-						existing.getUser() != null ? existing.getUser().getId() : null);
-				return existing;
-			}
-			log.warn("resolveOrCreateSession: token {} missing/unknown/expired (found={}, expired={})",
-					token, sessionOpt.isPresent(),
-					sessionOpt.map(s -> s.getExpiresAt().isBefore(LocalDateTime.now())).orElse(null));
+	public Sessions resolveSession(String token) throws UserNotFoundException {
+		Sessions session = sessionRepository.findbyTokenWithUser(token).orElse(null);
+		if (session == null) {
+			throw new UserNotFoundException("User not found");
 		}
-		if (!allowCreate) {
-			log.info("resolveOrCreateSession: no valid token and creation not allowed on this route, proceeding anonymously");
-			return null;
-		}
-		Sessions session = Sessions.builder().build();
-		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
-		session = sessionRepository.save(session);
-		log.info("resolveOrCreateSession: created new session {} (token={})", session.getId(), session.getToken());
 		return session;
-	}
-
-	/**
-	 * Lazily creates a guest user and attaches it to a session that doesn't
-	 * have one yet - called only by code paths that actually need a user
-	 * (e.g. adding to a cart), not on every request.
-	 *
-	 * @param session the current, userless session
-	 * @return the newly-created user
-	 */
-	public Users attachNewUserToSession(Sessions session) {
-		Users user = userRepository.save(Users.builder().userRole(Users.Role.CUSTOMER).build());
-		log.info("attachNewUserToSession: created user {} for session {} (token={})",
-				user.getId(), session.getId(), session.getToken());
-		session.setUser(user);
-		sessionRepository.save(session);
-		return user;
 	}
 
 	/**

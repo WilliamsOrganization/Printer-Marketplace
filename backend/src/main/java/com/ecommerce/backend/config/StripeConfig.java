@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 public class StripeConfig {
 
 	@Value("${stripe.secret.key}")
-	private String stripeSecreteKey;
+	private String stripeSecretKey;
 
 	/**
 	 * Sets the static Stripe.apiKey used by all Stripe SDK calls
@@ -21,6 +21,6 @@ public class StripeConfig {
 	 */
 	@PostConstruct
 	public void init() {
-		Stripe.apiKey = stripeSecreteKey;
+		Stripe.apiKey = stripeSecretKey;
 	}
 }

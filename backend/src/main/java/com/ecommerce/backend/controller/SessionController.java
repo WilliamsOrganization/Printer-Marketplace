@@ -2,6 +2,10 @@ package com.ecommerce.backend.controller;
 
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.repository.SessionRepository;
+import com.ecommerce.backend.service.SessionService;
+
+import lombok.RequiredArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -19,26 +23,23 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/server/session")
+@RequiredArgsConstructor
 public class SessionController {
 	private final SessionRepository repository;
+	private final SessionService sessionService;
 
-	public SessionController(SessionRepository repository) {
-		this.repository = repository;
-	}
 
 	/**
-	 * Returns the current request's session token in the response body,
-	 * exactly matching the pattern AddCartItemResponse already uses
-	 * successfully. Used to proactively establish a persisted guest
-	 * identity on first load, rather than only as a side effect of some
-	 * other action like adding to a cart.
-	 *
+	 * Single entry point for the application. if a session exists, returns
+	 * its token. if not, creates a new session and returns its token.
 	 * @return the current session's token
 	 */
-	@GetMapping("/whoami")
-	public Map<String, String> whoami() {
-		Sessions session = (Sessions) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		return Map.of("sessionToken", session.getToken());
+	@GetMapping
+	public String getOrCreateSession() {
+		Sessions session = sessionService.getSessionFromContext();
+		if (session != null) return session.getToken();
+		Sessions newSession = sessionService.createSession();
+		return newSession.getToken();
 	}
 
 	@GetMapping("/stats")

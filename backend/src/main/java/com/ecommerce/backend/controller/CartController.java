@@ -7,8 +7,10 @@ import com.ecommerce.backend.repository.CartRepository;
 import com.ecommerce.backend.repository.UserRepository;
 import com.ecommerce.backend.service.CartService;
 import com.ecommerce.backend.service.StripeCatalogService;
+import com.ecommerce.backend.service.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -23,12 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST controller for shopping cart operations.
  */
+@Slf4j
 @RestController
 @RequestMapping("/server/cart")
 @RequiredArgsConstructor
 public class CartController {
     private final CartRepository cartRepository;
     private final CartService cartService;
+	private final UserService userService;
 	private final StripeCatalogService stripeCatalogService;
 
     // @GetMapping
@@ -76,6 +80,9 @@ public class CartController {
 	 */
 	@PostMapping("/checkout")
 	public String getCheckoutUrl(@RequestBody CheckoutRequest request) throws Exception {
-		return stripeCatalogService.createCheckoutSession(request.selectedShippingID());
+		Users user = userService.getUserFromSession();
+		userService.updateEmail(user, request.email());
+
+		return stripeCatalogService.createCheckoutSession(request.email(), request.selectedShippingID());
 	}
 }

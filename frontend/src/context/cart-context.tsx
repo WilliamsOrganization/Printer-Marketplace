@@ -2,7 +2,18 @@
 import api from "@/lib/api";
 import { useAppQuery } from "@/lib/use-app-query";
 import { Cart } from "@/lib/types";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+
+// Optional contact info for the person checking out. Lives on the cart
+// context (not the form) so it's populated once and available wherever
+// the cart is - guest sessions included, since this never requires a
+// full next-auth User.
+export type CartUser = {
+	email?: string;
+	phoneNumber?: string;
+	isRegistered?: boolean;
+};
 
 type CartContextType = {
 	cart: Cart | undefined;
@@ -25,7 +36,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 	});
 
 	return (
-		<CartContext.Provider value={{ cart, isLoading, cartDrawer, setCartDrawer }}>{children}</CartContext.Provider>
+		<CartContext.Provider value={{ cart, isLoading, cartDrawer, setCartDrawer}}>{children}</CartContext.Provider>
 	);
 }
 
