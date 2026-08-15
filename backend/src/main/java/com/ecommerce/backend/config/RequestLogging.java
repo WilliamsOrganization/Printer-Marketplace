@@ -13,7 +13,7 @@ public class RequestLogging {
 	public CommonsRequestLoggingFilter requestLoggingFilter(){
 		CommonsRequestLoggingFilter filter = new CommonsRequestLoggingFilter();
 		filter.setIncludeQueryString(true);
-		filter.setIncludePayload(true);
+		filter.setIncludePayload(false);
 		filter.setMaxPayloadLength(1000);
 		filter.setIncludeHeaders(false);
 		filter.setBeforeMessagePrefix("INCOMING REQUEST: ");
