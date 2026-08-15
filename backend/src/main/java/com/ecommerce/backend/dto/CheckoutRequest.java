@@ -5,5 +5,6 @@ package com.ecommerce.backend.dto;
  */
 public record CheckoutRequest (
 	String email,
+	String phoneNumber,
 	String selectedShippingID
 ){}

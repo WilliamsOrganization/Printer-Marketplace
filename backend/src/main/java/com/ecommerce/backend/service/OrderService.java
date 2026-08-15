@@ -87,6 +87,12 @@ public class OrderService {
 		return order;
 	}
 
+	/**
+	 * Gets an order by its Stripe session id.
+	 *
+	 * @param id the Stripe session id
+	 * @return the order, or null if not found
+	 */	
 	public Orders getOrderByStripeSessionId(String id) {
 		return orderRepository.findOrderByStripeSessionId(id).orElse(null);
 	}

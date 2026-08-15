@@ -42,17 +42,6 @@ public class UserService {
     }
 
 	/**
-	 * adds the email to the user
-	 * @param user
-	 * @param email
-	 */
-	public Users updateEmail(Users user, String email) {
-		user.setEmail(email);
-		userRepository.save(user);
-		return user;
-	}
-
-	/**
 	 * Updates the current session's user with optional contact info. Null
 	 * fields on the request are left unchanged, so a partial update (email
 	 * only, or phone only) doesn't wipe the other field.

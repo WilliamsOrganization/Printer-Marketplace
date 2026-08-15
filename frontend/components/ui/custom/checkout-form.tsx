@@ -90,7 +90,7 @@ export function CheckoutForm({
 		// If "No shipping options available" appears, the user can retry manually.
 		// TODO: migrate this and all other request over to tanstack query
 		apiSession
-			.post("/shipping/rates/test", {
+			.post("/shipping/rates", {
 				name: "Customer",
 				phone,
 				...address,

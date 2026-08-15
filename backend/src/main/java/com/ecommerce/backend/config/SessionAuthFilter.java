@@ -1,20 +1,23 @@
 package com.ecommerce.backend.config;
 
-import com.ecommerce.backend.entity.Sessions;
-import com.ecommerce.backend.exception.UserNotFoundException;
-import com.ecommerce.backend.service.AuthService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.ecommerce.backend.entity.Sessions;
+import com.ecommerce.backend.exception.UserNotFoundException;
+import com.ecommerce.backend.service.AuthService;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * SessionAuthFilter resolves every request's session up front, requiring a
@@ -28,6 +31,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *    catalog listing) - these can legitimately be hit with no session at
  *    all, such as a server-rendered page's first request on a cold visit,
  *    before the client has had a chance to bootstrap one.
+ * 3. The Stripe webhook (/stripe/webhook) - Stripe calls this directly, with
+ *    no session token at all. It authenticates via the Stripe-Signature
+ *    header instead (see StripeController), verified independently of this
+ *    filter.
  *
  * Every other route is expected to already carry a token from the bootstrap
  * call; a missing or invalid one there is treated as a hard failure, not
@@ -40,6 +47,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class SessionAuthFilter extends OncePerRequestFilter {
     private static final String SESSION_BOOTSTRAP_PATH = "/server/session";
+    private static final String STRIPE_WEBHOOK_PATH = "/stripe/webhook";
 
     // GET-only, unauthenticated-friendly routes - no @PreAuthorize guards
     // these on the controller side, so they must not be hard-rejected here
@@ -53,10 +61,11 @@ public class SessionAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if (SESSION_BOOTSTRAP_PATH.equals(request.getRequestURI())) {
-			// single path
             return true;
         }
-		// multiple paths
+        if (STRIPE_WEBHOOK_PATH.equals(request.getRequestURI())) {
+            return true;
+        }
         return HttpMethod.GET.matches(request.getMethod())
             && PUBLIC_GET_PATHS.contains(request.getRequestURI());
     }

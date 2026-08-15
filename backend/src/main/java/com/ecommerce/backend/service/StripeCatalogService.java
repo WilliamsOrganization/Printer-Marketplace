@@ -15,7 +15,9 @@ import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.entity.Orders;
+import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.repository.OrderRepository;
+import com.ecommerce.backend.repository.UserRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.stripe.exception.StripeException;
@@ -53,6 +55,8 @@ public class StripeCatalogService {
 	private final ShippoService shippoService;
 	private final CartService cartService;
 	private final OrderService orderService;
+	private final UserRepository userRepository;
+	private final ResendService resendService;
 
 	/**
 	 * This method is used to map the cart items to line items.
@@ -230,6 +234,7 @@ public class StripeCatalogService {
 				.build();
 		Session session = Session.create(params, null);
 		orderService.createPendingOrder(session, shipment, quote, cart);
+
 		return session.getUrl();
 	}
 	
@@ -261,6 +266,10 @@ public class StripeCatalogService {
 	 */
 	public void handleCompletedCheckoutEvent(Session session) {
 		Orders order = orderRepository.findOrderByStripeSessionId(session.getId()).orElseThrow();
+		if (order.getStatus() == Orders.Status.COMPLETED) {
+			log.info("Skipping completed order {}", order.getId());
+			return;
+		}
 		order.setStatus(Orders.Status.COMPLETED);
 		order.setStripeEmail(session.getCustomerEmail());
 		order.setCurrency(session.getCurrency());
@@ -271,7 +280,9 @@ public class StripeCatalogService {
 		}
 		orderRepository.save(order);
 		log.info("Order Status Updated to {}", order.getStatus());
-		// TODO: validate user's email address and create an account
+		Users user = order.getUser();
+		resendService.sendConfirmationEmail(user, order);
+		log.info("Email sent to this email: {}", user.getEmail());
 	}
 	
 	/**

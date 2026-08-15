@@ -20,25 +20,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShippingController {
 
 	private final ShippoService shippoService;
-
+	
+	/**
+	 * This a working endpoint now
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
 	@PostMapping("/rates")
-	public ResponseEntity<?> getRates(@RequestBody ShipmentToValues shipmentToValues) {
-		try {
-
-			ShipmentFromValues shipmentFromValues = new ShipmentFromValues();
-			CreateLiveRateResponse response = shippoService.createShipmentResponse(shipmentFromValues,
-					shipmentToValues);
-			return ResponseEntity.ok(
-					response.liveRatePaginatedList().orElse(null));
-		} catch (Exception e) {
-			// TODO: handle exception
-			log.error("failed to Create Shipping Live Rates return type: " , e);
-			return ResponseEntity.internalServerError().build();
-		}
-	}
-
-	// TODO: make this fetch real data. the frontend will handle breaking apart the shipping information into chunks then we ingest them from the backend
-	@PostMapping("/rates/test")
 	public ResponseEntity<?> getShipmentRates(@RequestBody ShipmentToValues shipmentToValues) {
 		try {
 			ShipmentFromValues shipmentFromValues = new ShipmentFromValues();

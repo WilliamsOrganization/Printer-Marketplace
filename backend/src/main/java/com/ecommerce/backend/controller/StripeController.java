@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.backend.service.StripeCatalogService;
+import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
@@ -51,7 +52,18 @@ public class StripeController {
 			@RequestHeader("Stripe-Signature") String sigHeader)
 			throws SignatureVerificationException {
 		Event event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
-		Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
+		Session session;
+		try {
+			// getObject() can come back empty when the webhook's api_version
+			// doesn't match the one stripe-java is pinned to (e.g. a sandbox
+			// account on a newer API version) - deserializeUnsafe() ignores
+			// that mismatch and deserializes the payload regardless.
+			session = (Session) event.getDataObjectDeserializer().deserializeUnsafe();
+		} catch (EventDataObjectDeserializationException e) {
+			log.error("Failed to deserialize event {} ({}) data object: {}",
+				event.getId(), event.getType(), e.getMessage());
+			return ResponseEntity.badRequest().build();
+		}
 		switch (event.getType()) {
 		case "checkout.session.completed":
 			stripeCatalogService.handleCompletedCheckoutEvent(session);

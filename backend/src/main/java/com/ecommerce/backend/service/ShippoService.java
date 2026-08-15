@@ -64,53 +64,6 @@ public class ShippoService {
 	}
 
 	/**
-	 * Gets a live shipping rate quote from Shippo's rates-at-checkout
-	 * endpoint for a single hardcoded line item, without creating a
-	 * persistent Shipment object.
-	 *
-	 * @param shipmentFromValues the origin address
-	 * @param shipmentToValues   the destination address
-	 * @return the live rate response from Shippo
-	 */
-	public CreateLiveRateResponse createShipmentResponse(ShipmentFromValues shipmentFromValues,
-			ShipmentToValues shipmentToValues) throws Exception {
-		CreateLiveRateResponse shipmentResponse = shippo.ratesAtCheckout()
-				.create()
-				.shippoApiVersion("2018-02-08")
-				.liveRateCreateRequest(
-						LiveRateCreateRequest.builder()
-								.addressFrom(LiveRateCreateRequestAddressFrom.of(
-										AddressCompleteCreateRequest.builder()
-												.name(shipmentFromValues.getStore())
-												.street1(shipmentFromValues.getStreet1())
-												.city(shipmentFromValues.getCity())
-												.state(shipmentFromValues.getState())
-												.zip(shipmentFromValues.getZip())
-												.country(shipmentFromValues.getCountry())
-												.build()))
-								.addressTo(LiveRateCreateRequestAddressTo.of(
-										AddressCompleteCreateRequest.builder()
-												.name(shipmentToValues.getName())
-												.street1(shipmentToValues.getStreet1())
-												.city(shipmentToValues.getCity())
-												.state(shipmentToValues.getState())
-												.zip(shipmentToValues.getZip())
-												.country(shipmentToValues.getCountry())
-												.build()))
-								.lineItems(List.of(LineItem.builder()
-										.currency("CAD")
-										.quantity(1L)
-										.title("Print")
-										.totalPrice("12.00")
-										.weight("0.5")
-										.weightUnit(WeightUnitEnum.LB)
-										.build()))
-								.build())
-				.call();
-		return shipmentResponse;
-	}
-
-	/**
 	 * Builds the Shippo shipment creation request: origin/destination
 	 * addresses, a hardcoded single-parcel package, and a hardcoded customs
 	 * declaration.
