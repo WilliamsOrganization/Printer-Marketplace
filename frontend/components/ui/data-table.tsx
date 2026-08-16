@@ -152,6 +152,60 @@ function DraggableRow({ row }: { row: Row<InventoryItem> }) {
 	);
 }
 
+// Renders the edit Dialog as a sibling of the DropdownMenu, controlled via
+// its own state, instead of nesting it inside a DropdownMenuItem - Radix
+// leaves `pointer-events: none` stuck on <body> after a Dialog opened from
+// inside a DropdownMenuItem closes its menu, which silently breaks
+// interactions (including drag-and-drop) inside that Dialog.
+function InventoryRowActions({
+	item,
+	onDelete,
+}: {
+	item: InventoryItem;
+	onDelete: (id: number) => void;
+}) {
+	const [editOpen, setEditOpen] = React.useState(false);
+
+	return (
+		<>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+						size="icon"
+					>
+						<IconDotsVertical />
+						<span className="sr-only">Open menu</span>
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" className="w-40">
+					<DropdownMenuItem onSelect={() => setEditOpen(true)}>
+						Edit
+					</DropdownMenuItem>
+					<DropdownMenuItem asChild>
+						<a
+							href={`https://dashboard.stripe.com/${process.env.NEXT_PUBLIC_STRIPE_ACCOUNT_ID}/test/products/${item.stripeProductId}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							View in Stripe
+						</a>
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						variant="destructive"
+						onSelect={() => onDelete(item.id)}
+					>
+						Delete
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<InventoryItemDialog item={item} open={editOpen} onOpenChange={setEditOpen} />
+		</>
+	);
+}
+
 function ColumnVisibilityDropdown({ table }: { table: TanstackTable<any> | null }) {
 	if (!table) return null;
 	return (
@@ -315,42 +369,7 @@ export function DataTable() {
 		{
 			id: "actions",
 			cell: ({ row }) => (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							variant="ghost"
-							className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-							size="icon"
-						>
-							<IconDotsVertical />
-							<span className="sr-only">Open menu</span>
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-40">
-						<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-							<InventoryItemDialog
-								item={row.original}
-								trigger={<span className="w-full cursor-default">Edit</span>}
-							/>
-						</DropdownMenuItem>
-						<DropdownMenuItem asChild>
-							<a
-								href={`https://dashboard.stripe.com/${process.env.NEXT_PUBLIC_STRIPE_ACCOUNT_ID}/test/products/${row.original.stripeProductId}`}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								View in Stripe
-							</a>
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							variant="destructive"
-							onSelect={() => deleteInventoryItem(row.original.id)}
-						>
-							Delete
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				<InventoryRowActions item={row.original} onDelete={deleteInventoryItem} />
 			),
 		},
 	];

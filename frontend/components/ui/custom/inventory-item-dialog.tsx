@@ -65,7 +65,13 @@ type FormValues = z.infer<typeof formSchema>;
 type InventoryItemDialogProps = {
 	/** Item to edit. Omit to create a new item instead. */
 	item?: InventoryItem;
-	trigger: React.ReactNode;
+	/** Omit when the open state is controlled externally (e.g. from a dropdown menu item). */
+	trigger?: React.ReactNode;
+	/** Controlled open state - lets a caller open this outside of its own DialogTrigger
+	 * (e.g. a DropdownMenuItem, where nesting the Dialog's trigger inside the menu item
+	 * breaks pointer events after the menu closes). Falls back to internal state if omitted. */
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 };
 
 /**
@@ -75,10 +81,12 @@ type InventoryItemDialogProps = {
  * submits to the same POST /inventoryitem upsert endpoint - the backend
  * decides create vs. update based on whether an id is present.
  */
-export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps) {
+export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpenChange }: InventoryItemDialogProps) {
 	const isEditing = item !== undefined;
 	const { setInventory } = useDashboard();
-	const [open, setOpen] = useState(false);
+	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+	const open = controlledOpen ?? uncontrolledOpen;
+	const setOpen = onOpenChange ?? setUncontrolledOpen;
 	const [existingImageUrls, setExistingImageUrls] = useState<string[]>(item?.imageUrls ?? []);
 
 	const form = useForm<FormValues>({
@@ -138,7 +146,7 @@ export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps)
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>{trigger}</DialogTrigger>
+			{trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 			<DialogContent className="sm:max-w-2xl" onKeyDown={(e) => e.stopPropagation()}>
 				<DialogHeader>
 					<DialogTitle>{isEditing ? "Edit Inventory Item" : "Create Inventory Item"}</DialogTitle>
@@ -151,67 +159,159 @@ export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps)
 					</DialogDescription>
 				</DialogHeader>
 				<form id="inventory-item-form" onSubmit={form.handleSubmit(onSubmit)}>
-					<div>
+					<div className="flex flex-col gap-6">
+						<div className="grid grid-cols-2 gap-6">
+							<FieldGroup>
+								<Controller
+									name="itemTitle"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="itemTitle">Item Title</FieldLabel>
+											<Input id="itemTitle" placeholder="Enter item title" {...field} />
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+								<Controller
+									name="itemDescription"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="itemDescription">Item Description</FieldLabel>
+											<Input id="itemDescription" placeholder="Enter item description" {...field} />
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+								<Controller
+									name="itemCost"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="itemCost">Item Cost</FieldLabel>
+											<NumericFormat
+												id="itemCost"
+												defaultValue={item?.itemCost ?? 0}
+												allowNegative={false}
+												decimalScale={2}
+												fixedDecimalScale
+												onValueChange={(values) => field.onChange(values.floatValue ?? 0)}
+												customInput={Input}
+											/>
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+								<Controller
+									name="quantity"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="quantity">Quantity</FieldLabel>
+											<NumericFormat
+												id="quantity"
+												defaultValue={item?.quantity ?? 1}
+												allowNegative={false}
+												decimalScale={0}
+												onValueChange={(values) => field.onChange(values.floatValue ?? 1)}
+												customInput={Input}
+											/>
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+							</FieldGroup>
+							<FieldGroup>
+								<Controller
+									name="currency"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="currency">Currency</FieldLabel>
+											<Select value={field.value} onValueChange={field.onChange}>
+												<SelectTrigger id="currency" className="w-full">
+													<SelectValue placeholder="Select currency" />
+												</SelectTrigger>
+												<SelectContent>
+													{CURRENCIES.map((code) => (
+														<SelectItem key={code} value={code}>
+															{code}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+								<Controller
+									name="sizeCategory"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="sizeCategory">Package Size</FieldLabel>
+											<Select value={field.value} onValueChange={field.onChange}>
+												<SelectTrigger id="sizeCategory" className="w-full">
+													<SelectValue placeholder="Select a size" />
+												</SelectTrigger>
+												<SelectContent>
+													{Object.values(SizeCategory).map((size) => (
+														<SelectItem key={size} value={size}>
+															{SizeCategoryLabel[size]}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											<FieldDescription>Used to estimate a combined shipping parcel at checkout.</FieldDescription>
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+								<Controller
+									name="weightCategory"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="weightCategory">Package Weight</FieldLabel>
+											<Select value={field.value} onValueChange={field.onChange}>
+												<SelectTrigger id="weightCategory" className="w-full">
+													<SelectValue placeholder="Select a weight" />
+												</SelectTrigger>
+												<SelectContent>
+													{Object.values(WeightCategory).map((weight) => (
+														<SelectItem key={weight} value={weight}>
+															{WeightCategoryLabel[weight]}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+								<Controller
+									name="sale"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field orientation="horizontal" data-invalid={fieldState.invalid}>
+											<FieldContent>
+												<FieldLabel htmlFor="sale">On Sale</FieldLabel>
+												<FieldDescription>Mark this item as currently on sale</FieldDescription>
+											</FieldContent>
+											<Switch
+												id="sale"
+												name={field.name}
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												aria-invalid={fieldState.invalid}
+											/>
+										</Field>
+									)}
+								/>
+							</FieldGroup>
+						</div>
 						<FieldGroup>
-							<Controller
-								name="itemTitle"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="itemTitle">Item Title</FieldLabel>
-										<Input id="itemTitle" placeholder="Enter item title" {...field} />
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="itemDescription"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="itemDescription">Item Description</FieldLabel>
-										<Input id="itemDescription" placeholder="Enter item description" {...field} />
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="itemCost"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="itemCost">Item Cost</FieldLabel>
-										<NumericFormat
-											id="itemCost"
-											defaultValue={item?.itemCost ?? 0}
-											allowNegative={false}
-											decimalScale={2}
-											fixedDecimalScale
-											onValueChange={(values) => field.onChange(values.floatValue ?? 0)}
-											customInput={Input}
-										/>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="quantity"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="quantity">Quantity</FieldLabel>
-										<NumericFormat
-											id="quantity"
-											defaultValue={item?.quantity ?? 1}
-											allowNegative={false}
-											decimalScale={0}
-											onValueChange={(values) => field.onChange(values.floatValue ?? 1)}
-											customInput={Input}
-										/>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
 							<Controller
 								name="image"
 								control={form.control}
@@ -249,94 +349,8 @@ export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps)
 												Click × to remove an image. Dropping new ones below replaces all of them.
 											</FieldDescription>
 										)}
-										<ImageDropField name={field.name} value={field.value} onChange={field.onChange} />
+										<ImageDropField name={field.name} value={field.value} onChange={field.onChange} maxFiles={5} />
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="currency"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="currency">Currency</FieldLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<SelectTrigger id="currency" className="w-full">
-												<SelectValue placeholder="Select currency" />
-											</SelectTrigger>
-											<SelectContent>
-												{CURRENCIES.map((code) => (
-													<SelectItem key={code} value={code}>
-														{code}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="sizeCategory"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="sizeCategory">Package Size</FieldLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<SelectTrigger id="sizeCategory" className="w-full">
-												<SelectValue placeholder="Select a size" />
-											</SelectTrigger>
-											<SelectContent>
-												{Object.values(SizeCategory).map((size) => (
-													<SelectItem key={size} value={size}>
-														{SizeCategoryLabel[size]}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										<FieldDescription>Used to estimate a combined shipping parcel at checkout.</FieldDescription>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="weightCategory"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="weightCategory">Package Weight</FieldLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<SelectTrigger id="weightCategory" className="w-full">
-												<SelectValue placeholder="Select a weight" />
-											</SelectTrigger>
-											<SelectContent>
-												{Object.values(WeightCategory).map((weight) => (
-													<SelectItem key={weight} value={weight}>
-														{WeightCategoryLabel[weight]}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="sale"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<Field orientation="horizontal" data-invalid={fieldState.invalid}>
-										<FieldContent>
-											<FieldLabel htmlFor="sale">On Sale</FieldLabel>
-											<FieldDescription>Mark this item as currently on sale</FieldDescription>
-										</FieldContent>
-										<Switch
-											id="sale"
-											name={field.name}
-											checked={field.value}
-											onCheckedChange={field.onChange}
-											aria-invalid={fieldState.invalid}
-										/>
 									</Field>
 								)}
 							/>

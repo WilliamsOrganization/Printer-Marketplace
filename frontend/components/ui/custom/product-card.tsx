@@ -37,10 +37,6 @@ function ProductCard({
 			<div className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4", gridClassName)}>
 				{products.map((product, i) => (
 					<MotionCard
-						initial={{ opacity: 0, y: 16 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						transition={{ duration: 1.2 }}
-						viewport={{ once: true }}
 						key={product.id}
 						layoutId={`card-${product.id}`}
 						className="group overflow-hidden flex flex-col p-0 py-0 gap-0 hover:shadow-lg transition-shadow duration-200"
@@ -50,7 +46,10 @@ function ProductCard({
 							className="p-0 cursor-pointer"
 							onClick={() => setSelected(product)}
 						>
-							<div className="relative aspect-square bg-muted overflow-hidden">
+							<motion.div
+								layoutId={`image-${product.id}`}
+								className="relative aspect-square bg-muted overflow-hidden"
+							>
 								<Image
 									src={product.imageUrls?.[0] || `/stock-${i + 1}.jpg`}
 									alt={product.itemTitle}
@@ -63,7 +62,7 @@ function ProductCard({
 										View details
 									</span>
 								</div>
-							</div>
+							</motion.div>
 						</CardContent>
 
 						<CardFooter className="flex flex-col items-start gap-3 p-4">
@@ -115,7 +114,7 @@ function ProductCard({
 
 							{/* Left — Carousel */}
 							<div className="w-1/2 shrink-0 bg-muted self-stretch flex items-center">
-								<ProductCarousel product={selected} />
+								<ProductCarousel product={selected} layoutId={`image-${selected.id}`} />
 							</div>
 
 							{/* Right — Product info */}
