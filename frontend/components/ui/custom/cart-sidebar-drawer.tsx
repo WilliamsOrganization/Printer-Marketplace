@@ -202,10 +202,6 @@ function CartItemCard({
 					</Button>
 				</div>
 
-				<p className="text-xs text-muted-foreground capitalize">
-					{item.category.toLowerCase()}
-				</p>
-
 				{/* Quantity + price row */}
 				<div className="flex items-center justify-between mt-auto pt-1">
 					<div className="flex items-center rounded-md border overflow-hidden">

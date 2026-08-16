@@ -1,11 +1,4 @@
-import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { FilterSidebar } from "@/components/ui/custom/filter-sidebar";
-import { SortSelect } from "@/components/ui/custom/sort-select";
-import apiServer from "@/lib/api-server";
-import { CategoryLabel, InventoryItem } from "@/lib/types";
-import ProductGrid from "@/components/ui/custom/product-card";
 
 // Finish Me! Product page
 export default async function ShopPage() {

@@ -10,8 +10,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.ecommerce.backend.dto.CreateCatalogRequest;
-import com.ecommerce.backend.dto.CreateCatalogResponse;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
@@ -58,71 +56,10 @@ public class InventoryItemInitializer {
 				// CleanUnusedProductsAndArchive(stripeCatalogService, products);
 				// TODO: FIX THIS
 				// activateInventoryWithStripeProduct(inventoryItemRepository, stripeCatalogService, products);
-				
-                // ID, "Apple", "A delicious fruit",
-                // seedItem(inventoryItemRepository, stripeCatalogService, ID,
-                //          "Apple", "A delicious fruit",
-                //          InventoryItem.Category.ELECTRONICS,
-                //          InventoryItem.Badge.BESTSELLER);
-                //
-                // seedItem(inventoryItemRepository, stripeCatalogService, 1 + ID,
-                //          "Banana", "A delicious fruit",
-                //          InventoryItem.Category.PRINTS,
-                //          InventoryItem.Badge.BESTSELLER);
-                // seedItem(inventoryItemRepository, stripeCatalogService, 2 + ID,
-                //          "Orange", "A delicious fruit",
-                //          InventoryItem.Category.CUSTOM,
-                //          InventoryItem.Badge.BESTSELLER);
             }else{
 				logger.info("[INIT]: Seed data populated skipping");
 			}
         };
-    }
-
-    /**
-     * Creates one seed InventoryItem (and its matching Stripe product/price)
-     * if it doesn't already exist by id.
-     *
-     * @param inventoryItemRepository repository to check for/save the item
-     * @param stripeCatalogService    used to create the Stripe product/price
-     * @param id                      the seed item's id
-     * @param title                   the item's title
-     * @param description             the item's description
-     * @param category                the item's category
-     * @param badge                   the item's badge
-     */
-    private void seedItem(InventoryItemRepository inventoryItemRepository,
-                          StripeCatalogService stripeCatalogService, Long id,
-                          String title, String description,
-                          InventoryItem.Category category,
-                          InventoryItem.Badge badge) {
-        if (inventoryItemRepository.findById(id).isPresent()) {
-            return;
-        }
-        try {
-            CreateCatalogResponse catalog =
-                stripeCatalogService.createProductAndPrice(
-                    new CreateCatalogRequest(title, description, IMAGE_URLS,
-                                             UNIT_AMOUNT, CURRENCY, QUANTITY));
-
-            InventoryItem item =
-                InventoryItem.builder()
-                    .itemTitle(title)
-                    .itemDescription(description)
-                    // unitAmount comes back from Stripe in cents
-                    .itemCost(catalog.unitAmount())
-                    .stripePriceId(catalog.stripePriceId())
-                    .stripeProductId(catalog.stripeProductId())
-                    .quantity(QUANTITY)
-                    .currency(CURRENCY)
-                    .badge(badge)
-                    .category(category)
-                    .build();
-            inventoryItemRepository.save(item);
-        } catch (StripeException e) {
-            log.error("Failed to seed inventory item '{}' via Stripe: {}",
-                      title, e.getMessage());
-        }
     }
 
     /**

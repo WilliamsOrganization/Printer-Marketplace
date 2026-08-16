@@ -178,8 +178,9 @@ public class StripeCatalogService {
 		if (req.getImageUrls() != null)
 			updateBuilder.addAllImage(req.getImageUrls());
 
+		String oldPriceId = null;
 		if (req.getUnitAmount() != null) {
-			String oldPriceId = resource.getDefaultPrice();
+			oldPriceId = resource.getDefaultPrice();
 			String currency = req.getCurrency() != null
 					? req.getCurrency().toLowerCase()
 					: "cad";
@@ -189,15 +190,19 @@ public class StripeCatalogService {
 					.setCurrency(currency)
 					.build());
 			updateBuilder.setDefaultPrice(newPrice.getId());
-
-			if (oldPriceId != null) {
-				Price.retrieve(oldPriceId)
-						.update(
-								PriceUpdateParams.builder().setActive(false).build());
-			}
 		}
 
-		return resource.update(updateBuilder.build());
+		// Apply the product update (which switches the default price over
+		// to the new one) before touching the old price - Stripe refuses to
+		// archive a price that's still the product's active default.
+		Product updated = resource.update(updateBuilder.build());
+
+		if (oldPriceId != null) {
+			Price.retrieve(oldPriceId)
+					.update(PriceUpdateParams.builder().setActive(false).build());
+		}
+
+		return updated;
 	}
 
 	/**

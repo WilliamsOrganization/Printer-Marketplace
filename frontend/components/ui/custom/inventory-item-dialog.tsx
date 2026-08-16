@@ -24,11 +24,7 @@ import {
 	FieldError,
 	FieldGroup,
 	FieldLabel,
-	FieldLegend,
-	FieldSet,
-	FieldTitle,
 } from "@/components/ui/field";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -39,7 +35,13 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { ImageDropField } from "@/components/ui/drag-drop";
-import { Category, InventoryItem, ItemBadge } from "@/lib/types";
+import {
+	InventoryItem,
+	SizeCategory,
+	SizeCategoryLabel,
+	WeightCategory,
+	WeightCategoryLabel,
+} from "@/lib/types";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { NumericFormat } from "react-number-format";
@@ -54,8 +56,8 @@ const formSchema = z.object({
 	image: z.array(z.instanceof(File)),
 	currency: z.string().length(3, "Currency must be a 3-letter code (e.g. CAD)"),
 	sale: z.boolean(),
-	category: z.nativeEnum(Category),
-	badge: z.nativeEnum(ItemBadge),
+	sizeCategory: z.nativeEnum(SizeCategory),
+	weightCategory: z.nativeEnum(WeightCategory),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -89,8 +91,8 @@ export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps)
 			image: [],
 			currency: item?.currency ?? "CAD",
 			sale: item?.sale ?? false,
-			category: item?.category ?? Category.ELECTRONICS,
-			badge: item?.badge ?? ItemBadge.NEW,
+			sizeCategory: item?.sizeCategory ?? SizeCategory.SIZE_4X5,
+			weightCategory: item?.weightCategory ?? WeightCategory.MEDIUM,
 		},
 	});
 
@@ -149,8 +151,7 @@ export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps)
 					</DialogDescription>
 				</DialogHeader>
 				<form id="inventory-item-form" onSubmit={form.handleSubmit(onSubmit)}>
-					<div className="grid grid-cols-2 gap-6">
-						{/* Left column - Input fields */}
+					<div>
 						<FieldGroup>
 							<Controller
 								name="itemTitle"
@@ -276,6 +277,51 @@ export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps)
 								)}
 							/>
 							<Controller
+								name="sizeCategory"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="sizeCategory">Package Size</FieldLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<SelectTrigger id="sizeCategory" className="w-full">
+												<SelectValue placeholder="Select a size" />
+											</SelectTrigger>
+											<SelectContent>
+												{Object.values(SizeCategory).map((size) => (
+													<SelectItem key={size} value={size}>
+														{SizeCategoryLabel[size]}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+										<FieldDescription>Used to estimate a combined shipping parcel at checkout.</FieldDescription>
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</Field>
+								)}
+							/>
+							<Controller
+								name="weightCategory"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="weightCategory">Package Weight</FieldLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<SelectTrigger id="weightCategory" className="w-full">
+												<SelectValue placeholder="Select a weight" />
+											</SelectTrigger>
+											<SelectContent>
+												{Object.values(WeightCategory).map((weight) => (
+													<SelectItem key={weight} value={weight}>
+														{WeightCategoryLabel[weight]}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</Field>
+								)}
+							/>
+							<Controller
 								name="sale"
 								control={form.control}
 								render={({ field, fieldState }) => (
@@ -292,90 +338,6 @@ export function InventoryItemDialog({ item, trigger }: InventoryItemDialogProps)
 											aria-invalid={fieldState.invalid}
 										/>
 									</Field>
-								)}
-							/>
-						</FieldGroup>
-
-						{/* Right column - Radio groups */}
-						<FieldGroup>
-							<Controller
-								name="category"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<FieldSet data-invalid={fieldState.invalid}>
-										<FieldLegend variant="label">Category</FieldLegend>
-										<FieldDescription>Select the item category.</FieldDescription>
-										<RadioGroup name={field.name} value={field.value} onValueChange={field.onChange}>
-											<FieldLabel htmlFor="category-electronics">
-												<Field orientation="horizontal">
-													<FieldContent>
-														<FieldTitle>Electronics</FieldTitle>
-														<FieldDescription>Electronic devices and accessories</FieldDescription>
-													</FieldContent>
-													<RadioGroupItem value={Category.ELECTRONICS} id="category-electronics" />
-												</Field>
-											</FieldLabel>
-											<FieldLabel htmlFor="category-prints">
-												<Field orientation="horizontal">
-													<FieldContent>
-														<FieldTitle>Prints</FieldTitle>
-														<FieldDescription>Printed materials and artwork</FieldDescription>
-													</FieldContent>
-													<RadioGroupItem value={Category.PRINTS} id="category-prints" />
-												</Field>
-											</FieldLabel>
-											<FieldLabel htmlFor="category-custom">
-												<Field orientation="horizontal">
-													<FieldContent>
-														<FieldTitle>Custom</FieldTitle>
-														<FieldDescription>Custom made items</FieldDescription>
-													</FieldContent>
-													<RadioGroupItem value={Category.CUSTOM} id="category-custom" />
-												</Field>
-											</FieldLabel>
-										</RadioGroup>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</FieldSet>
-								)}
-							/>
-							<Controller
-								name="badge"
-								control={form.control}
-								render={({ field, fieldState }) => (
-									<FieldSet data-invalid={fieldState.invalid}>
-										<FieldLegend variant="label">Badge</FieldLegend>
-										<FieldDescription>Select a badge for this item.</FieldDescription>
-										<RadioGroup name={field.name} value={field.value} onValueChange={field.onChange}>
-											<FieldLabel htmlFor="badge-bestseller">
-												<Field orientation="horizontal">
-													<FieldContent>
-														<FieldTitle>Bestseller</FieldTitle>
-														<FieldDescription>Mark as a top selling item</FieldDescription>
-													</FieldContent>
-													<RadioGroupItem value={ItemBadge.BESTSELLER} id="badge-bestseller" />
-												</Field>
-											</FieldLabel>
-											<FieldLabel htmlFor="badge-new">
-												<Field orientation="horizontal">
-													<FieldContent>
-														<FieldTitle>New</FieldTitle>
-														<FieldDescription>Recently added item</FieldDescription>
-													</FieldContent>
-													<RadioGroupItem value={ItemBadge.NEW} id="badge-new" />
-												</Field>
-											</FieldLabel>
-											<FieldLabel htmlFor="badge-sale">
-												<Field orientation="horizontal">
-													<FieldContent>
-														<FieldTitle>Sale</FieldTitle>
-														<FieldDescription>Item is on sale</FieldDescription>
-													</FieldContent>
-													<RadioGroupItem value={ItemBadge.SALE} id="badge-sale" />
-												</Field>
-											</FieldLabel>
-										</RadioGroup>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</FieldSet>
 								)}
 							/>
 						</FieldGroup>

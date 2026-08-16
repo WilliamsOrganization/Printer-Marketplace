@@ -26,8 +26,10 @@ const STATUS_VARIANT: Record<
 	"default" | "secondary" | "destructive"
 > = {
 	[OrderStatus.PENDING]: "secondary",
+	[OrderStatus.PAID]: "default",
 	[OrderStatus.COMPLETED]: "default",
-	[OrderStatus.CANCELLED]: "destructive",
+	[OrderStatus.EXPIRED]: "destructive",
+	[OrderStatus.FAILED]: "destructive",
 };
 
 export default async function OrdersPage() {

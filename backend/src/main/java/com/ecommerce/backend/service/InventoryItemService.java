@@ -119,8 +119,8 @@ public class InventoryItemService {
 		existing.setImageUrls(submitted.getImageUrls());
 		existing.setQuantity(submitted.getQuantity());
 		existing.setCurrency(submitted.getCurrency());
-		existing.setCategory(submitted.getCategory());
-		existing.setBadge(submitted.getBadge());
+		existing.setSizeCategory(submitted.getSizeCategory());
+		existing.setWeightCategory(submitted.getWeightCategory());
 		existing.setSale(submitted.getSale());
 
 		return inventoryItemRepository.save(existing);

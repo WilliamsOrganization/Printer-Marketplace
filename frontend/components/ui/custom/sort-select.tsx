@@ -37,6 +37,7 @@ export function SortSelect({ currentSort }: SortSelectProps) {
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="featured">Featured</SelectItem>
+        <SelectItem value="newest">Newest</SelectItem>
         <SelectItem value="price-asc">Price: Low to High</SelectItem>
         <SelectItem value="price-desc">Price: High to Low</SelectItem>
         <SelectItem value="name">Name</SelectItem>

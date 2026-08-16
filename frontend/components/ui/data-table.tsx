@@ -104,8 +104,6 @@ export const schema = z.object({
 	itemTitle: z.string(),
 	itemDescription: z.string(),
 	itemCost: z.number(),
-	category: z.string(),
-	badge: z.string().nullable().optional(),
 	createdAt: z.string().optional(),
 });
 
@@ -301,29 +299,6 @@ export function DataTable() {
 					${row.original.itemCost.toFixed(2)}
 				</div>
 			),
-		},
-		{
-			accessorKey: "category",
-			header: () => <div className="text-center">Category</div>,
-			cell: ({ row }) => (
-				<div className="flex justify-center">
-					<Badge variant="outline" className="text-muted-foreground px-1.5">
-						{row.original.category}
-					</Badge>
-				</div>
-			),
-		},
-		{
-			accessorKey: "badge",
-			header: () => <div className="text-center">Badge</div>,
-			cell: ({ row }) =>
-				row.original.badge ? (
-					<div className="flex justify-center">
-						<Badge variant="secondary" className="px-1.5">
-							{row.original.badge}
-						</Badge>
-					</div>
-				) : null,
 		},
 		{
 			accessorKey: "isArchived",
@@ -845,7 +820,7 @@ function TableCellViewer({ item }: { item: InventoryItem }) {
 				<DialogHeader className="gap-1">
 					<DialogTitle>{item.itemTitle}</DialogTitle>
 					<DialogDescription>
-						{item.category} · ${item.itemCost.toFixed(2)}
+						${item.itemCost.toFixed(2)}
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-4 overflow-y-auto text-sm">

@@ -18,6 +18,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
@@ -64,6 +65,13 @@ public class Shipping {
 	private String trackingNumber;
 	private String trackingUrl;
 	private String labelPdfUrl;
+
+	// Many shipments can reuse the same parcel size instead of each
+	// minting a new row - see ShippingParcelRepository for looking up an
+	// existing match before creating one.
+	@ManyToOne
+	@JoinColumn(name = "shipping_parcel_id")
+	private ShippingParcel parcel;
 
 	@Embedded
 	@AttributeOverrides({

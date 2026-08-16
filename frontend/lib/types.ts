@@ -2,25 +2,45 @@ export interface AuthResponse {
 	sessionToken: string;
 	userId: number;
 }
-export enum Category {
-	ELECTRONICS = "ELECTRONICS",
-	PRINTS = "PRINTS",
-	CUSTOM = "CUSTOM",
+// Values must match InventoryItem.SizeCategory's Java constant names exactly
+// (Jackson serializes enums by .name()) - backend is the source of truth.
+export enum SizeCategory {
+	SIZE_2X2 = "SIZE_2X2",
+	SIZE_4X5 = "SIZE_4X5",
+	SIZE_5X7 = "SIZE_5X7",
+	SIZE_8X10 = "SIZE_8X10",
+	SIZE_11X14 = "SIZE_11X14",
+	SIZE_16X20 = "SIZE_16X20",
+	SIZE_20X30 = "SIZE_20X30",
 }
-export const CategoryLabel: Record<Category, string> = {
-	[Category.CUSTOM]: "Custom",
-	[Category.ELECTRONICS]: "Electronics",
-	[Category.PRINTS]: "Prints",
+export const SizeCategoryLabel: Record<SizeCategory, string> = {
+	[SizeCategory.SIZE_2X2]: "2 x 2 cm",
+	[SizeCategory.SIZE_4X5]: "4 x 5 cm",
+	[SizeCategory.SIZE_5X7]: "5 x 7 cm",
+	[SizeCategory.SIZE_8X10]: "8 x 10 cm",
+	[SizeCategory.SIZE_11X14]: "11 x 14 cm",
+	[SizeCategory.SIZE_16X20]: "16 x 20 cm",
+	[SizeCategory.SIZE_20X30]: "20 x 30 cm",
 };
 
-export enum ItemBadge {
-	BESTSELLER = "BESTSELLER",
-	NEW = "NEW",
-	SALE = "SALE",
+// Values must match InventoryItem.WeightCategory's Java constant names
+// exactly - backend is the source of truth.
+export enum WeightCategory {
+	LIGHT = "LIGHT",
+	MEDIUM = "MEDIUM",
+	HEAVY = "HEAVY",
+	EXTRA_HEAVY = "EXTRA_HEAVY",
 }
+export const WeightCategoryLabel: Record<WeightCategory, string> = {
+	[WeightCategory.LIGHT]: "Light (~100g)",
+	[WeightCategory.MEDIUM]: "Medium (~500g)",
+	[WeightCategory.HEAVY]: "Heavy (~1kg)",
+	[WeightCategory.EXTRA_HEAVY]: "Extra Heavy (~2kg)",
+};
 
 export interface InventoryItem {
 	id: number;
+	createdAt: string;
 	itemTitle: string;
 	itemDescription: string;
 	itemCost: number;
@@ -31,8 +51,8 @@ export interface InventoryItem {
 	stripePriceId: string;
 	sale: boolean;
 	isArchived: boolean;
-	category: Category;
-	badge: ItemBadge;
+	sizeCategory: SizeCategory;
+	weightCategory: WeightCategory;
 }
 export interface CartItem {
 	id: number;
