@@ -61,6 +61,12 @@ public class InventoryItemController {
 		return inventoryItemService.save(submitted);
 	}
 
+	@PostMapping("/{id}/archive")
+	@PreAuthorize("hasRole('ADMIN')")
+	public InventoryItem setArchived(@PathVariable Long id, @RequestBody boolean archived) throws StripeException {
+		return inventoryItemService.setArchived(id, archived);
+	}
+
 	@DeleteMapping("/{id}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<String> delete(@PathVariable Long id) {

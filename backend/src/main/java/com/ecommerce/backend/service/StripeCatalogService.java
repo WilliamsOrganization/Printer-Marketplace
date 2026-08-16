@@ -143,12 +143,24 @@ public class StripeCatalogService {
 
 	/**
 	 * This method is used to activate a product that has been archived.
-	 * 
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void activateProduct(String id) throws StripeException {
 		Product resource = Product.retrieve(id);
 		resource.update(ProductUpdateParams.builder().setActive(true).build());
+	}
+
+	/**
+	 * Archives a product without deleting it (setting active=false) - the
+	 * same fallback deleteProduct uses when Stripe refuses a real delete,
+	 * exposed on its own so an item can be archived directly.
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void deactivateProduct(String id) throws StripeException {
+		Product resource = Product.retrieve(id);
+		resource.update(ProductUpdateParams.builder().setActive(false).build());
 	}
 
 	/**

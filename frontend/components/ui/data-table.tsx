@@ -51,6 +51,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -294,6 +295,21 @@ export function DataTable() {
 			});
 	};
 
+	const toggleArchived = function(id: number, archived: boolean) {
+		api
+			.post(`/inventoryitem/${id}/archive`, archived)
+			.then((res) => {
+				setInventory((prev) =>
+					prev.map((item) => (item.id === id ? res.data : item)),
+
+				);
+				toast.success("Successfully updated inventory item");
+			})
+			.catch((err) => {
+				toast.error("Error updating archived state: " + err.message);
+			});
+	};
+
 	const columns: ColumnDef<InventoryItem>[] = [
 		{
 			id: "drag",
@@ -357,14 +373,15 @@ export function DataTable() {
 		{
 			accessorKey: "isArchived",
 			header: () => <div className="text-center">Archived</div>,
-			cell: ({ row }) =>
-				row.original.isArchived ? (
-					<div className="flex justify-center">
-						<Badge variant="destructive" className="px-1.5">
-							Archived
-						</Badge>
-					</div>
-				) : null,
+			cell: ({ row }) => (
+				<div className="flex justify-center">
+					<Switch
+						checked={row.original.isArchived}
+						onCheckedChange={(checked) => toggleArchived(row.original.id, checked)}
+						aria-label="Toggle archived"
+					/>
+				</div>
+			),
 		},
 		{
 			id: "actions",

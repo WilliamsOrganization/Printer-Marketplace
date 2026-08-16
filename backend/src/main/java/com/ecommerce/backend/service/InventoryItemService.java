@@ -165,6 +165,25 @@ public class InventoryItemService {
 	}
 
 	/**
+	 * Toggles an item's archived state directly, syncing Stripe's product
+	 * active flag to match.
+	 *
+	 * @param id       the item's id
+	 * @param archived the archived state to set
+	 * @return the updated item
+	 */
+	public InventoryItem setArchived(Long id, boolean archived) throws StripeException {
+		InventoryItem item = inventoryItemRepository.findById(id).orElseThrow();
+		if (archived) {
+			stripeCatalogService.deactivateProduct(item.getStripeProductId());
+		} else {
+			stripeCatalogService.activateProduct(item.getStripeProductId());
+		}
+		item.setIsArchived(archived);
+		return inventoryItemRepository.save(item);
+	}
+
+	/**
 	 * Uploads images to S3 and returns their URLs.
 	 *
 	 * @param files the images to upload
