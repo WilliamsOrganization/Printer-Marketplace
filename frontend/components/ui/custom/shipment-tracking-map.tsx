@@ -2,6 +2,7 @@
 
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 import { Shipping } from '@/lib/types'
+import { GOOGLE_MAPS_LIBRARIES } from '@/lib/google-maps'
 
 /**
  * Single-marker map for a shipment - prefers its current tracking
@@ -13,6 +14,7 @@ import { Shipping } from '@/lib/types'
 export function ShipmentTrackingMap({ shipping }: { shipping: Shipping }) {
 	const { isLoaded } = useJsApiLoader({
 		googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
+		libraries: GOOGLE_MAPS_LIBRARIES,
 	})
 
 	const lat = shipping.currentLat ?? shipping.lat

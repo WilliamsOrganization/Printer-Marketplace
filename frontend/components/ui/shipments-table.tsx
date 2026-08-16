@@ -332,6 +332,21 @@ export default function ShipmentsTable({
 				},
 			},
 			{
+				id: 'currentLocation',
+				header: () => <div>Current Location</div>,
+				cell: ({ row }) => {
+					const current = row.original.shipping.currentLocation
+					return current ? (
+						<div className="text-sm text-muted-foreground">
+							{current.city}
+							{current.state ? `, ${current.state}` : ''}
+						</div>
+					) : (
+						<span className="text-muted-foreground">—</span>
+					)
+				},
+			},
+			{
 				accessorKey: 'shipping.status',
 				header: () => <div>Status</div>,
 				cell: ({ row }) => (

@@ -4,9 +4,8 @@ import { useMemo, useRef } from 'react'
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 import { useDashboard } from '@/src/context/dashboard-context'
 import { Shipping } from '@/lib/types'
+import { GOOGLE_MAPS_LIBRARIES } from '@/lib/google-maps'
 import ShipmentsTable, { getShippedOrders, type ShippedOrder } from './shipments-table'
-
-const libraries: ('places')[] = ['places']
 
 export default function ShipmentsAdmin() {
 	// TODO: needs a way to add existing shipment parcel sizes with most frequently used recommended.
@@ -14,7 +13,7 @@ export default function ShipmentsAdmin() {
 	// SHAREABLE LINK TO THE SHIPPMENTS PAGE (potentially via email?)
 	const { isLoaded } = useJsApiLoader({
 		googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
-		libraries,
+		libraries: GOOGLE_MAPS_LIBRARIES,
 	})
 	const { orders, setOrders } = useDashboard()
 	const shipments = useMemo(() => getShippedOrders(orders), [orders])
@@ -75,7 +74,7 @@ export default function ShipmentsAdmin() {
 				/>
 			</div>
 
-			<div className="flex-1 min-h-[40vh] overflow-hidden rounded-lg border">
+			<div className="min-w-[25vw] min-h-[25vh] max-w-[33.333vw] overflow-hidden rounded-lg border">
 				<GoogleMap
 					center={center}
 					zoom={5}
