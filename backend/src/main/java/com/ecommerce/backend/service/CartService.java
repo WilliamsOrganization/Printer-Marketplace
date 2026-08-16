@@ -65,7 +65,7 @@ public class CartService {
 	 * 
 	 * @return
 	 */
-	public Cart getCartItems() {
+	public Cart getCartItems(Users user) {
 		return getCart(userService.getUserFromSession());
 	}
 

@@ -16,7 +16,6 @@ import com.ecommerce.backend.entity.ShippingAddress;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.ShippingRepository;
-import com.ecommerce.backend.repository.UserRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.stripe.model.checkout.Session;
 

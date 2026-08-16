@@ -28,6 +28,18 @@ public class GlobalExceptionHandler {
 	}
 	
 	/**
+	 * handleExistingUserFound handles the ExistingUserFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(ExistingUserFoundException.class)
+	public ResponseEntity<String> handleExistingUserFound(ExistingUserFoundException ex) {
+		log.warn("ExistingUserFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+	}
+
+	/**
 	 * handleInvalidCredentials handles the InvalidCredentials
 	 * 
 	 * @param ex

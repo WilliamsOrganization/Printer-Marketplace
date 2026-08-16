@@ -5,11 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.backend.dto.ShipmentFromValues;
-import com.ecommerce.backend.dto.ShipmentToValues;
+import com.ecommerce.backend.dto.ShipmentToRequest;
 import com.ecommerce.backend.entity.ShippingParcel;
-import com.goshippo.shippo_sdk.Shipments;
 import com.goshippo.shippo_sdk.Shippo;
-import com.goshippo.shippo_sdk.models.components.AddressCompleteCreateRequest;
 import com.goshippo.shippo_sdk.models.components.AddressCreateRequest;
 import com.goshippo.shippo_sdk.models.components.AddressFrom;
 import com.goshippo.shippo_sdk.models.components.AddressTo;
@@ -17,11 +15,6 @@ import com.goshippo.shippo_sdk.models.components.CustomsDeclarationContentsTypeE
 import com.goshippo.shippo_sdk.models.components.CustomsDeclarationCreateRequest;
 import com.goshippo.shippo_sdk.models.components.CustomsDeclarationNonDeliveryOptionEnum;
 import com.goshippo.shippo_sdk.models.components.CustomsItemCreateRequest;
-import com.goshippo.shippo_sdk.models.components.DistanceUnitEnum;
-import com.goshippo.shippo_sdk.models.components.LineItem;
-import com.goshippo.shippo_sdk.models.components.LiveRateCreateRequest;
-import com.goshippo.shippo_sdk.models.components.LiveRateCreateRequestAddressFrom;
-import com.goshippo.shippo_sdk.models.components.LiveRateCreateRequestAddressTo;
 import com.goshippo.shippo_sdk.models.components.ParcelCreateRequest;
 import com.goshippo.shippo_sdk.models.components.Parcels;
 import com.goshippo.shippo_sdk.models.components.Rate;
@@ -29,7 +22,6 @@ import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequest;
 import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequestCustomsDeclaration;
 import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
-import com.goshippo.shippo_sdk.models.operations.CreateLiveRateResponse;
 import com.goshippo.shippo_sdk.models.operations.CreateShipmentResponse;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.goshippo.shippo_sdk.models.operations.GetShipmentResponse;
@@ -73,7 +65,7 @@ public class ShippoService {
 	 *               ShippingService.estimateParcel)
 	 * @return the assembled shipment creation request
 	 */
-	private ShipmentCreateRequest buildShipmentRequest(ShipmentFromValues from, ShipmentToValues to, ShippingParcel parcel) {
+	private ShipmentCreateRequest buildShipmentRequest(ShipmentFromValues from, ShipmentToRequest to, ShippingParcel parcel) {
 		return ShipmentCreateRequest.builder()
 				.addressFrom(
 						AddressFrom.of(AddressCreateRequest.builder()
@@ -86,7 +78,7 @@ public class ShippoService {
 								.phone(from.getPhone())
 								.build()))
 				.addressTo(AddressTo.of(AddressCreateRequest.builder()
-						.name(to.getName())
+						.name("Customer")
 						.street1(to.getStreet1())
 						.city(to.getCity())
 						.state(to.getState())
@@ -135,7 +127,7 @@ public class ShippoService {
 	 * @param parcel the parcel size/weight to quote rates for
 	 * @return the rates attached to the newly created shipment
 	 */
-	private List<Rate> createShipmentAndGetRates(ShipmentFromValues from, ShipmentToValues to, ShippingParcel parcel) throws Exception {
+	private List<Rate> createShipmentAndGetRates(ShipmentFromValues from, ShipmentToRequest to, ShippingParcel parcel) throws Exception {
 		CreateShipmentResponse shipment = shippo.shipments()
 				.create()
 				.shippoApiVersion("2018-02-08")
@@ -159,7 +151,7 @@ public class ShippoService {
 	 *               ShippingService.estimateParcel)
 	 * @return the shipment's carrier rates
 	 */
-	public List<Rate> getShipmentRates(ShipmentFromValues from, ShipmentToValues to, ShippingParcel parcel) throws Exception {
+	public List<Rate> getShipmentRates(ShipmentFromValues from, ShipmentToRequest to, ShippingParcel parcel) throws Exception {
 		List<Rate> rates = createShipmentAndGetRates(from, to, parcel);
 		// TODO: this is fucking cursed.
 		if (rates.isEmpty()) {

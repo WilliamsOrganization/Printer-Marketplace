@@ -39,7 +39,6 @@ public class Users {
 	private LocalDateTime createdAt;
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
-	// TODO: consider @Email + @NotBlank (jakarta.validation)
 	@Column(unique = true)
 	private String email;
 	// TODO: consider @Pattern for phone number format

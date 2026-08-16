@@ -45,7 +45,8 @@ public class CartController {
      */
     @GetMapping
     public Cart getOne() {
-		return cartService.getCartItems();
+		Users user = userService.getUserFromSession();
+		return cartService.getCartItems(user);
     }
 
     /**

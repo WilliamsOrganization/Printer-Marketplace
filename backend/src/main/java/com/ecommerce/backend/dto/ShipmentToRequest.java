@@ -10,8 +10,7 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-public class ShipmentToValues {
-	@Nonnull
+public class ShipmentToRequest {
 	private String name;
 	@Nonnull
 	private String street1;
@@ -27,4 +26,6 @@ public class ShipmentToValues {
 	private String country;
 	@Nonnull
 	private String phone;
+	@Nonnull
+	private String email;
 }

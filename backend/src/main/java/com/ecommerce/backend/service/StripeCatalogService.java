@@ -50,7 +50,7 @@ public class StripeCatalogService {
 	private final ShippoService shippoService;
 	private final CartService cartService;
 	private final OrderService orderService;
-	private final ResendService resendService;
+	private final UserService userService;
 
 	/**
 	 * This method is used to map the cart items to line items.
@@ -207,7 +207,7 @@ public class StripeCatalogService {
 	 */
 	public String createCheckoutSession(String email, String selectedShippingID)
 			throws Exception {
-		Cart cart = cartService.getCartItems();
+		Cart cart = cartService.getCartItems(userService.getUserFromSession());
 		List<LineItem> lineItems = mapCartItemstoLineItems(cart);
 		// get quoted price from shippo service.
 		GetRateResponse rate = shippoService.getShipmentRateById(selectedShippingID);

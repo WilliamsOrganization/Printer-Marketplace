@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.backend.dto.UpdateContactRequest;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.ExistingUserFoundException;
 import com.ecommerce.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -49,17 +50,29 @@ public class UserService {
 	 * @param user    the user to update
 	 * @param request fields to update; null fields are left unchanged
 	 */
-	public Users updateContactInfo(Users user, UpdateContactRequest request) {
-		if (request.email() != null) {
+	public Users updateContactInfo(Users user, UpdateContactRequest request) throws ExistingUserFoundException {
+		if (request.email() != null && !request.email().equals(user.getEmail())) {
+			userRepository.findByEmail(request.email()).ifPresent(existing -> {
+				throw new ExistingUserFoundException("Email " + request.email() + " is already in use");
+			});
 			user.setEmail(request.email());
 		}
-		if (request.phoneNumber() != null) {
+		if (request.phoneNumber() != null && !request.phoneNumber().equals(user.getPhoneNumber())) {
+			userRepository.findByPhoneNumber(request.phoneNumber()).ifPresent(existing -> {
+				throw new ExistingUserFoundException("Phone number " + request.phoneNumber() + " is already in use");
+			});
 			user.setPhoneNumber(request.phoneNumber());
 		}
 		userRepository.save(user);
 		return user;
 	}
 
+	/**
+	 * Registers a new user, setting their role to REGISTERED.
+	 *
+	 * @param user
+	 * @return
+	 */
 	public Users registerUser(Users user) {
 		if (user.getUserRole() != Users.Role.ADMIN) user.setUserRole(Users.Role.REGISTERED);
 		return userRepository.save(user);
