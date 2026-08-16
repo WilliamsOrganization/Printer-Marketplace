@@ -244,7 +244,7 @@ public class StripeCatalogService {
 				.setMode(SessionCreateParams.Mode.PAYMENT)
 				.build();
 		Session session = Session.create(params, null);
-		orderService.createPendingOrder(session, shipment, quote, cart);
+		orderService.createPendingOrder(session, shipment, quote, cart, selectedShippingID);
 
 		return session.getUrl();
 	}

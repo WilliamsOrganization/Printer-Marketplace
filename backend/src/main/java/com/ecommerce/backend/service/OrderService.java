@@ -35,20 +35,25 @@ public class OrderService {
 	private final ShippingRepository shippingRepository;
 	private final UserService userService;
 	private final ResendService resendService;
+	private final GoogleMapsService googleMapsService;
 
 	/**
 	 * Create a new pending order (and its shipping record) from the cart
 	 * being checked out, the Stripe checkout session just created for it, and
 	 * the Shippo shipment/quote backing the rate the customer selected.
 	 *
-	 * @param session  the created Stripe checkout session
-	 * @param shipment the Shippo shipment backing the selected rate, for its
-	 *                 origin/destination addresses
-	 * @param quote    the selected rate's price/service level info
-	 * @param cart     the cart being checked out
+	 * @param session         the created Stripe checkout session
+	 * @param shipment        the Shippo shipment backing the selected rate, for
+	 *                        its origin/destination addresses
+	 * @param quote           the selected rate's price/service level info
+	 * @param cart            the cart being checked out
+	 * @param selectedRateId  the Shippo rate object id the customer's quote is
+	 *                        locked in at - stored so the label can be
+	 *                        purchased at this same rate once payment confirms
 	 * @return the persisted order, marked as pending
 	 */
-	public Orders createPendingOrder(Session session, Shipment shipment, ShippingQuote quote, Cart cart) {
+	public Orders createPendingOrder(Session session, Shipment shipment, ShippingQuote quote, Cart cart,
+			String selectedRateId) {
 		Orders order = Orders.builder()
 				.user(cart.getUser())
 				.stripeSessionId(session.getId())
@@ -79,12 +84,17 @@ public class OrderService {
 		order.setTotal(subtotal + shippingCost);
 		order = orderRepository.save(order);
 
+		ShippingAddress addressTo = ShippingAddress.from(shipment.addressTo());
+		var location = googleMapsService.geocode(addressTo);
 		Shipping shipping = Shipping.builder()
 				.orders(order)
 				.shippingCost(shippingCost)
 				.serviceType(quote.name())
 				.addressFrom(ShippingAddress.from(shipment.addressFrom()))
-				.addressTo(ShippingAddress.from(shipment.addressTo()))
+				.addressTo(addressTo)
+				.lat(location != null ? location.lat : null)
+				.lng(location != null ? location.lng : null)
+				.shippoRateId(selectedRateId)
 				.status(Shipping.Status.PENDING)
 				.build();
 		order.setShipping(shippingRepository.save(shipping));
@@ -100,6 +110,16 @@ public class OrderService {
 	 */	
 	public Orders getOrderByStripeSessionId(String id) {
 		return orderRepository.findOrderByStripeSessionId(id).orElseThrow();
+	}
+
+	/**
+	 * Gets an order by its id.
+	 *
+	 * @param id the order's id
+	 * @return the order
+	 */
+	public Orders getOrder(Long id) {
+		return orderRepository.findById(id).orElseThrow();
 	}
 
 	/**

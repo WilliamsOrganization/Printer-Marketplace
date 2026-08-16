@@ -15,14 +15,19 @@ import com.goshippo.shippo_sdk.models.components.CustomsDeclarationContentsTypeE
 import com.goshippo.shippo_sdk.models.components.CustomsDeclarationCreateRequest;
 import com.goshippo.shippo_sdk.models.components.CustomsDeclarationNonDeliveryOptionEnum;
 import com.goshippo.shippo_sdk.models.components.CustomsItemCreateRequest;
+import com.goshippo.shippo_sdk.models.components.LabelFileTypeEnum;
 import com.goshippo.shippo_sdk.models.components.ParcelCreateRequest;
 import com.goshippo.shippo_sdk.models.components.Parcels;
 import com.goshippo.shippo_sdk.models.components.Rate;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequest;
 import com.goshippo.shippo_sdk.models.components.ShipmentCreateRequestCustomsDeclaration;
+import com.goshippo.shippo_sdk.models.components.Transaction;
+import com.goshippo.shippo_sdk.models.components.TransactionCreateRequest;
 import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
 import com.goshippo.shippo_sdk.models.operations.CreateShipmentResponse;
+import com.goshippo.shippo_sdk.models.operations.CreateTransactionRequestBody;
+import com.goshippo.shippo_sdk.models.operations.CreateTransactionResponse;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.goshippo.shippo_sdk.models.operations.GetShipmentResponse;
 
@@ -186,6 +191,28 @@ public class ShippoService {
 	public Shipment getShipmentForRate(Rate rate) throws Exception {
 		GetShipmentResponse response = shippo.shipments().get(rate.shipment());
 		return response.shipment().get();
+	}
+
+	/**
+	 * Purchases a shipping label for a previously-quoted rate - this is what
+	 * actually charges the carrier and generates the trackable label PDF.
+	 *
+	 * @param rateId the Shippo rate object id to buy a label for
+	 * @return the resulting transaction (tracking number/url, label PDF url)
+	 * @author William Ewanchuk https://www.github.com/ewanchukwilliam
+	 */
+	public Transaction purchaseLabel(String rateId) throws Exception {
+		CreateTransactionResponse response = shippo.transactions()
+				.create()
+				.requestBody(CreateTransactionRequestBody.of(
+						TransactionCreateRequest.builder()
+								.rate(rateId)
+								.labelFileType(LabelFileTypeEnum.PDF)
+								.async(false)
+								.build()))
+				.call();
+		return response.transaction()
+				.orElseThrow(() -> new IllegalStateException("Shippo did not return a transaction for rate " + rateId));
 	}
 
 }

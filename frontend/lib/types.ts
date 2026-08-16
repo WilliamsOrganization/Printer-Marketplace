@@ -146,6 +146,11 @@ export interface Shipping {
 	labelPdfUrl: string;
 	addressFrom: ShippingAddress;
 	addressTo: ShippingAddress;
+	lat: number | null;
+	lng: number | null;
+	currentLocation: ShippingAddress | null;
+	currentLat: number | null;
+	currentLng: number | null;
 	status: ShippingStatus;
 }
 

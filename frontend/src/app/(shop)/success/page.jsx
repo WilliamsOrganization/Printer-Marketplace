@@ -5,6 +5,7 @@ import apiServer from "@/lib/api-server";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowRight, PackageCheck } from "lucide-react";
+import { OrderConfetti } from "@/components/ui/custom/order-confetti";
 
 export default async function Success({ searchParams }) {
 	const { session_id } = await searchParams;
@@ -26,6 +27,7 @@ export default async function Success({ searchParams }) {
 
 		return (
 			<div className="flex flex-col">
+				<OrderConfetti />
 				<section className="min-h-[60vh] flex items-center justify-center px-6 py-20">
 					<div className="flex flex-col items-center text-center gap-8 w-full max-w-md">
 						<div className="size-16 rounded-full bg-muted flex items-center justify-center">

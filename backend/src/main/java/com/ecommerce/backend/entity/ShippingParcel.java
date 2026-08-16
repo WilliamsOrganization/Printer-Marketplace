@@ -39,6 +39,50 @@ import lombok.NonNull;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ShippingParcel {
+
+	/**
+	 * Standard box sizes for an actual outgoing shipment - deliberately a
+	 * separate, wider-ranging set from InventoryItem.SizeCategory, since one
+	 * box can hold many items combined and so may need to be larger than any
+	 * single item's own size category. Centimeters, length x width x height.
+	 */
+	public enum SizeCategory {
+		SMALL(20, 15, 10),
+		MEDIUM(30, 23, 15),
+		LARGE(40, 30, 20),
+		EXTRA_LARGE(50, 40, 30),
+		JUMBO(60, 45, 40);
+
+		public final int lengthCm;
+		public final int widthCm;
+		public final int heightCm;
+
+		SizeCategory(int lengthCm, int widthCm, int heightCm) {
+			this.lengthCm = lengthCm;
+			this.widthCm = widthCm;
+			this.heightCm = heightCm;
+		}
+	}
+
+	/**
+	 * Weight tiers for an actual outgoing shipment - same reasoning as
+	 * SizeCategory above, a combined box of several items can weigh more
+	 * than any single item's WeightCategory.
+	 */
+	public enum WeightCategory {
+		LIGHT(500),
+		MEDIUM(1500),
+		HEAVY(4000),
+		EXTRA_HEAVY(8000),
+		BULK(15000);
+
+		public final int grams;
+
+		WeightCategory(int grams) {
+			this.grams = grams;
+		}
+	}
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;

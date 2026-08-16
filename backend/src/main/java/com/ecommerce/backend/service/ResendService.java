@@ -3,11 +3,14 @@ package com.ecommerce.backend.service;
 import com.ecommerce.backend.config.ResendConfig;
 import com.ecommerce.backend.entity.OrderItem;
 import com.ecommerce.backend.entity.Orders;
+import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.Users;
 import com.resend.*;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
+
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -137,5 +140,10 @@ public class ResendService {
 	private String formatCents(Long cents) {
 		if (cents == null) return "0.00";
 		return String.format("%.2f", cents / (double) DOLLAR);
+	}
+
+	public void sendTrackingInformation(@NonNull Users user, Shipping shipping) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'sendTrackingInformation'");
 	}
 }
