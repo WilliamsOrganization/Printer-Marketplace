@@ -20,13 +20,14 @@ import { useState } from "react";
 
 export function LoginForm({
 	className,
+	callbackUrl = "/admin/dashboard",
 	...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { callbackUrl?: string }) {
 	const [error, useError] = useState(false)
 
 	const login = async function(formData: FormData) {
 		const result = await signIn("credentials", {
-			callbackUrl: '/admin/dashboard',
+			callbackUrl,
 			redirect: false,
 			email: formData.get("email"),
 			password: formData.get("password")
@@ -34,7 +35,7 @@ export function LoginForm({
 		if (result?.error) {
 			useError(true)
 		} else {
-			window.location.href = "/admin/dashboard"
+			window.location.href = callbackUrl
 		}
 	}
 
@@ -56,8 +57,7 @@ export function LoginForm({
 									type="button"
 
 									onClick={() => {
-										console.log("clicking clicking button")
-										signIn("apple", { callbackUrl: "/admin/dashboard" });
+										signIn("apple", { callbackUrl });
 									}}
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -70,8 +70,7 @@ export function LoginForm({
 								</Button>
 								<Button variant="outline" type="button"
 									onClick={() => {
-										console.log("clicking clicking button")
-										signIn("google", { callbackUrl: "/admin/dashboard" });
+										signIn("google", { callbackUrl });
 									}}
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

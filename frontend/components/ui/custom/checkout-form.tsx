@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import apiSession from "@/lib/api";
+import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -57,6 +59,7 @@ export function CheckoutForm({
 	const [phone, setPhone] = useState<string | undefined>()
 	const [email, setEmail] = useState<string | undefined>()
 	const { data: session, update } = useSession()
+	const router = useRouter()
 
 	// Prefill from the logged-in user's session once it loads. Guests won't
 	// have these on session.user, so this leaves the fields blank for them
@@ -91,7 +94,7 @@ export function CheckoutForm({
 		// TODO: migrate this and all other request over to tanstack query
 		apiSession
 			.post("/shipping/rates", {
-				name: "Customer",
+				email,
 				phone,
 				...address,
 			})
@@ -100,10 +103,14 @@ export function CheckoutForm({
 				setRates(results)
 				if (results.length === 0) {
 					toast.error("No shipping options available for this address")
-					// file number in the section header. time of incident what happened. window things stolen. drivers license. include camera's 
 				}
 			})
-			.catch(() => {
+			.catch((error) => {
+				if (isAxiosError(error) && error.response?.status === 409) {
+					toast.error(error.response.data ?? "This email/phone is already in use")
+					router.push("/login?callbackUrl=/checkout")
+					return
+				}
 				toast.error("Failed to get shipping rates")
 			})
 			.finally(() => {

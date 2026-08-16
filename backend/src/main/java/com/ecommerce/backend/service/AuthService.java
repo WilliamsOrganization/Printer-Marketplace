@@ -77,13 +77,13 @@ public class AuthService {
 				.orElseThrow(
 						() -> new UserNotFoundException("User does not exist"));
 		Sessions session = sessionCreateWithProvider(user, request);
-		return new AuthResponse(session.getToken(), user.getId());
+		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
 	/**
 	 * handlePasswordLogin handles the login request and returns the session
 	 * token
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -100,7 +100,7 @@ public class AuthService {
 		// TODO: NEEDS PASSWORD HASHING PROPERLY!!!
 
 		Sessions session = sessionCreateWithProvider(user, request);
-		return new AuthResponse(session.getToken(), user.getId());
+		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
 	/**

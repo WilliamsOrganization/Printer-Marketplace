@@ -7,6 +7,8 @@ import z from "zod";
 const AuthResponseSchema = z.object({
 	sessionToken: z.string(),
 	userId: z.number(),
+	email: z.string().nullish(),
+	phoneNumber: z.string().nullish(),
 })
 type AuthResponseSchema = z.infer<typeof AuthResponseSchema>;
 
@@ -37,7 +39,8 @@ export const authOptions: NextAuthOptions = {
 
 				return {
 					id: String(parsed.data.userId),
-					email: credentials.email,
+					email: parsed.data.email ?? credentials.email,
+					phoneNumber: parsed.data.phoneNumber ?? undefined,
 					backendToken: parsed.data.sessionToken,
 				};
 			},
@@ -92,6 +95,7 @@ export const authOptions: NextAuthOptions = {
 				}
 				user.backendToken = parsed.data.sessionToken;
 				user.id = String( parsed.data.userId );
+				if (parsed.data.phoneNumber) user.phoneNumber = parsed.data.phoneNumber;
 				return true;
 			}
 			if(account?.provider==="guest")return true;
