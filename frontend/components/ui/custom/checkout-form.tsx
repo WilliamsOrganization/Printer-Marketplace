@@ -108,7 +108,9 @@ export function CheckoutForm({
 			.catch((error) => {
 				if (isAxiosError(error) && error.response?.status === 409) {
 					toast.error(error.response.data ?? "This email/phone is already in use")
-					router.push("/login?callbackUrl=/checkout")
+					if (session?.user?.id === "guest") {
+						router.push("/login?callbackUrl=/checkout")
+					}
 					return
 				}
 				toast.error("Failed to get shipping rates")
