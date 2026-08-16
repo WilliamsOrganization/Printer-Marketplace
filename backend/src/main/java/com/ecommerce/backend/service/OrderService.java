@@ -34,7 +34,7 @@ public class OrderService {
 
 	private final OrderRepository orderRepository;
 	private final ShippingRepository shippingRepository;
-	private final UserRepository userRepository;
+	private final UserService userService;
 	private final ResendService resendService;
 
 	/**
@@ -127,12 +127,14 @@ public class OrderService {
 		order.setCurrency(session.getCurrency());
 		order.setSubtotal(session.getAmountSubtotal());
 		order.setTotal(session.getAmountTotal());
+		Users user=userService.registerUser(order.getUser());
 		if (session.getShippingCost() != null) {
 			order.setShippingCost(session.getShippingCost().getAmountTotal());
 		}
+
 		log.info("Order Status Updated to {}", order.getStatus());
-		resendService.sendConfirmationEmail(order.getUser(), order);
-		log.info("Email sent to this email: {}", order.getUser().getEmail());
+		resendService.sendConfirmationEmail(user, order);
+		log.info("Email sent to this email: {}", user.getEmail());
 	}
 
 	/**
@@ -149,6 +151,7 @@ public class OrderService {
 		}
 		order.setStatus(Orders.Status.EXPIRED);
 		orderRepository.save(order);
+		userService.registerUser(order.getUser());
 		log.info("Order Status Updated to {}", order.getStatus());
 	}
 
@@ -168,9 +171,7 @@ public class OrderService {
 		}
 		order.setStatus(Orders.Status.FAILED);
 		order = orderRepository.save(order);
-		Users user = order.getUser();
-		if (user.getUserRole() != Users.Role.ADMIN) user.setUserRole(Users.Role.REGISTERED);
-		userRepository.save(user);
+		userService.registerUser(order.getUser());
 		log.info("Order Status Updated to {}", order.getStatus());
 	}
 
@@ -188,6 +189,7 @@ public class OrderService {
 		}
 		order.setStatus(Orders.Status.PAID);
 		orderRepository.save(order);
+		userService.registerUser(order.getUser());
 		log.info("Order Status Updated to {}", order.getStatus());
 	}
 }

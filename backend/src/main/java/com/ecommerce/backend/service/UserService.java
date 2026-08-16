@@ -59,4 +59,9 @@ public class UserService {
 		userRepository.save(user);
 		return user;
 	}
+
+	public Users registerUser(Users user) {
+		if (user.getUserRole() != Users.Role.ADMIN) user.setUserRole(Users.Role.REGISTERED);
+		return userRepository.save(user);
+	}
 }

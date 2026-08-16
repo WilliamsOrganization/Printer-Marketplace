@@ -296,5 +296,4 @@ public class StripeCatalogService {
 		// update the shipping table with metadata and url for the pdf.
 		// FIX: Shitty blob storage implementation is shitty. fix it.
 	}
-
 }
