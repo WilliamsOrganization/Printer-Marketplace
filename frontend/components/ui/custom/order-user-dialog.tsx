@@ -14,6 +14,7 @@ import {
 import { Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { User } from "@/lib/types";
 
 function formatTimestamp(value?: string) {
@@ -27,11 +28,19 @@ function formatTimestamp(value?: string) {
 export function OrderUserDialog({ user }: { user: User }) {
 	return (
 		<Dialog>
-			<DialogTrigger asChild>
-				<Button variant="link" className="text-foreground truncate px-0 text-left">
-					{user?.email ?? "—"}
-				</Button>
-			</DialogTrigger>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<DialogTrigger asChild>
+						<Button
+							variant="ghost"
+							className="text-foreground h-full w-full cursor-pointer justify-start truncate rounded-none font-normal"
+						>
+							{user?.email ?? "—"}
+						</Button>
+					</DialogTrigger>
+				</TooltipTrigger>
+				<TooltipContent>View customer details</TooltipContent>
+			</Tooltip>
 			<DialogContent className="sm:max-w-sm">
 				<DialogHeader>
 					<DialogTitle>Customer</DialogTitle>

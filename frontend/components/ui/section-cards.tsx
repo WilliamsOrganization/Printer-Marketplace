@@ -12,7 +12,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Button } from "./button";
-import Link from "next/link";
+import { InventoryItemDialog } from "./custom/inventory-item-dialog";
 import { useDashboard } from "@/src/context/dashboard-context";
 
 export function SectionCards() {
@@ -39,9 +39,9 @@ export function SectionCards() {
 					</CardTitle>
 				</CardHeader>
 				<CardFooter className="flex-col items-start gap-1.5 text-sm">
-					<Link href="/admin/dashboard/item/" className="min-w-full">
-						<Button className="min-w-full" variant="outline">Create Inventory item</Button>
-					</Link>
+					<InventoryItemDialog
+						trigger={<Button className="min-w-full" variant="outline">Create Inventory Item</Button>}
+					/>
 				</CardFooter>
 			</Card>
 

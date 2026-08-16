@@ -44,25 +44,25 @@ import {
 	type ColumnFiltersState,
 	type Row,
 	type SortingState,
+	type Table as TanstackTable,
 	type VisibilityState,
 } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-	Drawer,
-	DrawerClose,
-	DrawerContent,
-	DrawerDescription,
-	DrawerFooter,
-	DrawerHeader,
-	DrawerTitle,
-	DrawerTrigger,
-} from "@/components/ui/drawer";
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
@@ -89,16 +89,15 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NumericFormat } from "react-number-format";
-import EditInventory from "./custom/dialog-popup-edit";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InventoryItemDialog } from "./custom/inventory-item-dialog";
+import ProductCard from "./custom/product-card";
 import { OrderUserDialog } from "./custom/order-user-dialog";
 import { OrderItemsDialog } from "./custom/order-items-dialog";
 import { OrderShippingDialog } from "./custom/order-shipping-dialog";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { InventoryItem, Orders as Order, OrderStatus } from "@/lib/types";
-
-const CURRENCIES = Intl.supportedValuesOf("currency");
 
 export const schema = z.object({
 	id: z.number(),
@@ -155,8 +154,54 @@ function DraggableRow({ row }: { row: Row<InventoryItem> }) {
 	);
 }
 
+function ColumnVisibilityDropdown({ table }: { table: TanstackTable<any> | null }) {
+	if (!table) return null;
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button variant="outline" size="sm">
+					<IconLayoutColumns />
+					<span className="hidden lg:inline">Customize Columns</span>
+					<span className="lg:hidden">Columns</span>
+					<IconChevronDown />
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="w-56">
+				{table
+					.getAllColumns()
+					.filter(
+						(column) =>
+							typeof column.accessorFn !== "undefined" &&
+							column.getCanHide(),
+					)
+					.map((column) => {
+						return (
+							<DropdownMenuCheckboxItem
+								key={column.id}
+								className="capitalize"
+								checked={column.getIsVisible()}
+								onCheckedChange={(value) =>
+									column.toggleVisibility(!!value)
+								}
+							>
+								{column.id}
+							</DropdownMenuCheckboxItem>
+						);
+					})}
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+}
+
 export function DataTable() {
-	const { inventory: initialData, setInventory } = useDashboard();
+	const [activeTab, setActiveTab] = React.useState("inventory");
+	const { inventory: initialData, setInventory, orders } = useDashboard();
+	const [ordersSorting, setOrdersSorting] = React.useState<SortingState>([]);
+	const [ordersColumnVisibility, setOrdersColumnVisibility] = React.useState<VisibilityState>({});
+	const [ordersPagination, setOrdersPagination] = React.useState({
+		pageIndex: 0,
+		pageSize: 10,
+	});
 	const [data, setData] = React.useState(() => [...initialData].sort((a, b) => b.id - a.id));
 	React.useEffect(() => {
 		setData([...initialData].sort((a, b) => b.id - a.id));
@@ -233,7 +278,7 @@ export function DataTable() {
 		},
 		{
 			accessorKey: "itemTitle",
-			header: "Item Title",
+			header: () => <div className="text-center">Item Title</div>,
 			cell: ({ row }) => {
 				return <TableCellViewer item={row.original} />;
 			},
@@ -241,7 +286,7 @@ export function DataTable() {
 		},
 		{
 			accessorKey: "itemDescription",
-			header: "Description",
+			header: () => <div className="text-center">Description</div>,
 			cell: ({ row }) => (
 				<div className="max-w-48 truncate text-muted-foreground">
 					{row.original.itemDescription}
@@ -250,18 +295,18 @@ export function DataTable() {
 		},
 		{
 			accessorKey: "itemCost",
-			header: () => <div className="w-full text-right">Price</div>,
+			header: () => <div className="text-center">Price</div>,
 			cell: ({ row }) => (
-				<div className="text-right font-medium">
+				<div className="text-center font-medium">
 					${row.original.itemCost.toFixed(2)}
 				</div>
 			),
 		},
 		{
 			accessorKey: "category",
-			header: "Category",
+			header: () => <div className="text-center">Category</div>,
 			cell: ({ row }) => (
-				<div className="w-32">
+				<div className="flex justify-center">
 					<Badge variant="outline" className="text-muted-foreground px-1.5">
 						{row.original.category}
 					</Badge>
@@ -270,22 +315,26 @@ export function DataTable() {
 		},
 		{
 			accessorKey: "badge",
-			header: "Badge",
+			header: () => <div className="text-center">Badge</div>,
 			cell: ({ row }) =>
 				row.original.badge ? (
-					<Badge variant="secondary" className="px-1.5">
-						{row.original.badge}
-					</Badge>
+					<div className="flex justify-center">
+						<Badge variant="secondary" className="px-1.5">
+							{row.original.badge}
+						</Badge>
+					</div>
 				) : null,
 		},
 		{
 			accessorKey: "isArchived",
-			header: "Archived",
+			header: () => <div className="text-center">Archived</div>,
 			cell: ({ row }) =>
 				row.original.isArchived ? (
-					<Badge variant="destructive" className="px-1.5">
-						Archived
-					</Badge>
+					<div className="flex justify-center">
+						<Badge variant="destructive" className="px-1.5">
+							Archived
+						</Badge>
+					</div>
 				) : null,
 		},
 		{
@@ -304,7 +353,10 @@ export function DataTable() {
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-40">
 						<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-							<EditInventory item={row.original} />
+							<InventoryItemDialog
+								item={row.original}
+								trigger={<span className="w-full cursor-default">Edit</span>}
+							/>
 						</DropdownMenuItem>
 						<DropdownMenuItem asChild>
 							<a
@@ -371,16 +423,133 @@ export function DataTable() {
 		}
 	}
 
+	const ordersColumns: ColumnDef<Order>[] = [
+		{
+			accessorKey: "id",
+			header: () => <div className="text-center">Order</div>,
+			cell: ({ row }) => <div className="font-medium">#{row.original.id}</div>,
+		},
+		{
+			accessorKey: "date",
+			header: () => <div className="text-center">Date</div>,
+			cell: ({ row }) => (
+				<div className="text-muted-foreground text-center">
+					{row.original.date ? new Date(row.original.date).toLocaleDateString() : "—"}
+				</div>
+			),
+		},
+		{
+			id: "email",
+			accessorFn: (row) => [row.user?.email ?? row.email, row.user?.phoneNumber].filter(Boolean).join(" "),
+			header: () => <div className="text-center">Customer</div>,
+			cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
+		},
+		{
+			id: "items",
+			accessorFn: (row) => row.items?.map((item) => item.itemTitle).join(" ") ?? "",
+			header: () => <div className="text-center">Items</div>,
+			cell: ({ row }) => (
+				<div className="text-center">
+					<OrderItemsDialog items={row.original.items} />
+				</div>
+			),
+		},
+		{
+			accessorKey: "subtotal",
+			header: () => <div className="text-center">Subtotal</div>,
+			cell: ({ row }) => (
+				<div className="text-center">
+					${(row.original.subtotal / 100).toFixed(2)}
+				</div>
+			),
+		},
+		{
+			accessorKey: "shippingCost",
+			header: () => <div className="text-center">Shipping</div>,
+			cell: ({ row }) => (
+				<div className="text-center">
+					${(row.original.shippingCost / 100).toFixed(2)}
+				</div>
+			),
+		},
+		{
+			accessorKey: "total",
+			header: () => <div className="text-center">Total</div>,
+			cell: ({ row }) => (
+				<div className="text-center font-medium">
+					${(row.original.total / 100).toFixed(2)}{" "}
+					<span className="text-muted-foreground text-xs uppercase">{row.original.currency}</span>
+				</div>
+			),
+		},
+		{
+			accessorKey: "status",
+			header: () => <div className="text-center">Status</div>,
+			cell: ({ row }) => (
+				<div className="flex justify-center">
+					<Badge variant={ORDER_STATUS_VARIANT[row.original.status]} className="px-1.5">
+						{row.original.status}
+					</Badge>
+				</div>
+			),
+		},
+		{
+			id: "shipping",
+			header: () => <div className="text-center">Shipping</div>,
+			cell: ({ row }) => <OrderShippingDialog shipping={row.original.shipping} />,
+		},
+		{
+			accessorKey: "stripeSessionId",
+			header: () => <div className="text-center">Stripe</div>,
+			cell: ({ row }) =>
+				row.original.stripeSessionId ? (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<a
+								href={`https://dashboard.stripe.com/${STRIPE_ACCOUNT_ID}/test/checkout/sessions/${row.original.stripeSessionId}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-muted-foreground hover:text-foreground hover:bg-muted flex h-full w-full cursor-pointer items-center"
+							>
+								{row.original.stripeSessionId.slice(0, 14)}…
+							</a>
+						</TooltipTrigger>
+						<TooltipContent>Open in Stripe Dashboard</TooltipContent>
+					</Tooltip>
+				) : (
+					"—"
+				),
+		},
+	];
+
+	const ordersTable = useReactTable({
+		data: orders,
+		columns: ordersColumns,
+		state: { sorting: ordersSorting, pagination: ordersPagination, globalFilter, columnVisibility: ordersColumnVisibility },
+		getRowId: (row) => row.id.toString(),
+		onSortingChange: setOrdersSorting,
+		onPaginationChange: setOrdersPagination,
+		onGlobalFilterChange: setGlobalFilter,
+		onColumnVisibilityChange: setOrdersColumnVisibility,
+		getCoreRowModel: getCoreRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+	});
+
+	const activeTable = activeTab === "inventory" ? table : activeTab === "orders" ? ordersTable : null;
+
 	return (
 		<Tabs
-			defaultValue="inventory"
+			value={activeTab}
+			onValueChange={setActiveTab}
 			className="w-full flex-col justify-start gap-6"
 		>
 			<div className="flex items-center justify-between px-4 lg:px-6">
 				<Label htmlFor="view-selector" className="sr-only">
 					View
 				</Label>
-				<Select defaultValue="inventory">
+				<Select value={activeTab} onValueChange={setActiveTab}>
 					<SelectTrigger
 						className="flex w-fit @4xl/main:hidden"
 						size="sm"
@@ -408,39 +577,7 @@ export function DataTable() {
 						onChange={(e) => setGlobalFilter(e.target.value)}
 						className="h-8 w-40 lg:w-56"
 					/>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="outline" size="sm">
-								<IconLayoutColumns />
-								<span className="hidden lg:inline">Customize Columns</span>
-								<span className="lg:hidden">Columns</span>
-								<IconChevronDown />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-56">
-							{table
-								.getAllColumns()
-								.filter(
-									(column) =>
-										typeof column.accessorFn !== "undefined" &&
-										column.getCanHide(),
-								)
-								.map((column) => {
-									return (
-										<DropdownMenuCheckboxItem
-											key={column.id}
-											className="capitalize"
-											checked={column.getIsVisible()}
-											onCheckedChange={(value) =>
-												column.toggleVisibility(!!value)
-											}
-										>
-											{column.id}
-										</DropdownMenuCheckboxItem>
-									);
-								})}
-						</DropdownMenuContent>
-					</DropdownMenu>
+					<ColumnVisibilityDropdown table={activeTable} />
 					<Button variant="outline" size="sm">
 						<IconPlus />
 						<span className="hidden lg:inline">Add Section</span>
@@ -584,7 +721,7 @@ export function DataTable() {
 				value="orders"
 				className="flex flex-col px-4 lg:px-6"
 			>
-				<OrdersTable globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
+				<OrdersTable table={ordersTable} orders={orders} />
 			</TabsContent>
 			<TabsContent value="shipping" className="flex flex-col px-4 lg:px-6">
 				<div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
@@ -610,125 +747,12 @@ const ORDER_STATUS_VARIANT: Record<OrderStatus, "default" | "secondary" | "destr
 };
 
 function OrdersTable({
-	globalFilter,
-	setGlobalFilter,
+	table,
+	orders,
 }: {
-	globalFilter: string;
-	setGlobalFilter: React.Dispatch<React.SetStateAction<string>>;
+	table: TanstackTable<Order>;
+	orders: Order[];
 }) {
-	const { orders } = useDashboard();
-	const [sorting, setSorting] = React.useState<SortingState>([]);
-	const [pagination, setPagination] = React.useState({
-		pageIndex: 0,
-		pageSize: 10,
-	});
-
-	const columns: ColumnDef<Order>[] = [
-		{
-			accessorKey: "id",
-			header: "Order",
-			cell: ({ row }) => <div className="font-medium">#{row.original.id}</div>,
-		},
-		{
-			accessorKey: "date",
-			header: "Date",
-			cell: ({ row }) => (
-				<div className="text-muted-foreground">
-					{row.original.date ? new Date(row.original.date).toLocaleDateString() : "—"}
-				</div>
-			),
-		},
-		{
-			id: "email",
-			accessorFn: (row) => [row.user?.email ?? row.email, row.user?.phoneNumber].filter(Boolean).join(" "),
-			header: "Customer",
-			cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
-		},
-		{
-			id: "items",
-			accessorFn: (row) => row.items?.map((item) => item.itemTitle).join(" ") ?? "",
-			header: () => <div className="text-right">Items</div>,
-			cell: ({ row }) => (
-				<div className="text-right">
-					<OrderItemsDialog items={row.original.items} />
-				</div>
-			),
-		},
-		{
-			accessorKey: "subtotal",
-			header: () => <div className="text-right">Subtotal</div>,
-			cell: ({ row }) => (
-				<div className="text-right">
-					${(row.original.subtotal / 100).toFixed(2)}
-				</div>
-			),
-		},
-		{
-			accessorKey: "shippingCost",
-			header: () => <div className="text-right">Shipping</div>,
-			cell: ({ row }) => (
-				<div className="text-right">
-					${(row.original.shippingCost / 100).toFixed(2)}
-				</div>
-			),
-		},
-		{
-			accessorKey: "total",
-			header: () => <div className="text-right">Total</div>,
-			cell: ({ row }) => (
-				<div className="text-right font-medium">
-					${(row.original.total / 100).toFixed(2)}{" "}
-					<span className="text-muted-foreground text-xs uppercase">{row.original.currency}</span>
-				</div>
-			),
-		},
-		{
-			accessorKey: "status",
-			header: "Status",
-			cell: ({ row }) => (
-				<Badge variant={ORDER_STATUS_VARIANT[row.original.status]} className="px-1.5">
-					{row.original.status}
-				</Badge>
-			),
-		},
-		{
-			id: "shipping",
-			header: "Shipping",
-			cell: ({ row }) => <OrderShippingDialog shipping={row.original.shipping} />,
-		},
-		{
-			accessorKey: "stripeSessionId",
-			header: "Stripe",
-			cell: ({ row }) =>
-				row.original.stripeSessionId ? (
-					<a
-						href={`https://dashboard.stripe.com/${STRIPE_ACCOUNT_ID}/test/checkout/sessions/${row.original.stripeSessionId}`}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-muted-foreground hover:text-foreground underline underline-offset-2"
-					>
-						{row.original.stripeSessionId.slice(0, 14)}…
-					</a>
-				) : (
-					"—"
-				),
-		},
-	];
-
-	const table = useReactTable({
-		data: orders,
-		columns,
-		state: { sorting, pagination, globalFilter },
-		getRowId: (row) => row.id.toString(),
-		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		onGlobalFilterChange: setGlobalFilter,
-		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-	});
-
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="overflow-hidden rounded-lg border">
@@ -759,7 +783,7 @@ function OrdersTable({
 							))
 						) : (
 							<TableRow>
-								<TableCell colSpan={columns.length} className="h-24 text-center">
+								<TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
 									No orders yet.
 								</TableCell>
 							</TableRow>
@@ -802,107 +826,37 @@ function OrdersTable({
 }
 
 function TableCellViewer({ item }: { item: InventoryItem }) {
-	const isMobile = useIsMobile();
-
 	return (
-		<Drawer direction={isMobile ? "bottom" : "right"}>
-			<DrawerTrigger asChild>
-				<Button variant="link" className="text-foreground w-fit px-0 text-left">
-					{item.itemTitle}
-				</Button>
-			</DrawerTrigger>
-			<DrawerContent>
-				<DrawerHeader className="gap-1">
-					<DrawerTitle>{item.itemTitle}</DrawerTitle>
-					<DrawerDescription>
+		<Dialog>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<DialogTrigger asChild>
+						<Button
+							variant="ghost"
+							className="text-foreground h-full w-full cursor-pointer justify-start rounded-none font-normal"
+						>
+							{item.itemTitle}
+						</Button>
+					</DialogTrigger>
+				</TooltipTrigger>
+				<TooltipContent>Preview</TooltipContent>
+			</Tooltip>
+			<DialogContent className="sm:max-w-lg">
+				<DialogHeader className="gap-1">
+					<DialogTitle>{item.itemTitle}</DialogTitle>
+					<DialogDescription>
 						{item.category} · ${item.itemCost.toFixed(2)}
-					</DrawerDescription>
-				</DrawerHeader>
-				<div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-					<form className="flex flex-col gap-4">
-						<div className="flex flex-col gap-3">
-							<Label htmlFor="itemTitle">Item Title</Label>
-							<Input id="itemTitle" defaultValue={item.itemTitle} />
-						</div>
-						<div className="flex flex-col gap-3">
-							<Label htmlFor="itemDescription">Description</Label>
-							<Input id="itemDescription" defaultValue={item.itemDescription} />
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="itemCost">Price</Label>
-								<NumericFormat
-									id="itemCost"
-									defaultValue={item.itemCost}
-									allowNegative={false}
-									decimalScale={2}
-									fixedDecimalScale
-									customInput={Input}
-								/>
-							</div>
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="quantity">Quantity</Label>
-								<NumericFormat
-									id="quantity"
-									defaultValue={item.quantity}
-									allowNegative={false}
-									decimalScale={0}
-									customInput={Input}
-								/>
-							</div>
-						</div>
-						<div className="grid grid-cols-2 gap-4">
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="currency">Currency</Label>
-								<Select defaultValue={item.currency ?? "CAD"}>
-									<SelectTrigger id="currency" className="w-full">
-										<SelectValue placeholder="Select currency" />
-									</SelectTrigger>
-									<SelectContent>
-										{CURRENCIES.map((code) => (
-											<SelectItem key={code} value={code}>
-												{code}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-							<div className="flex flex-col gap-3">
-								<Label htmlFor="category">Category</Label>
-								<Select defaultValue={item.category}>
-									<SelectTrigger id="category" className="w-full">
-										<SelectValue placeholder="Select a category" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="ELECTRONICS">Electronics</SelectItem>
-										<SelectItem value="PRINTS">Prints</SelectItem>
-										<SelectItem value="CUSTOM">Custom</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-						</div>
-						<div className="flex flex-col gap-3">
-							<Label htmlFor="badge">Badge</Label>
-							<Select defaultValue={item.badge ?? ""}>
-								<SelectTrigger id="badge" className="w-full">
-									<SelectValue placeholder="Select a badge" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="BESTSELLER">Bestseller</SelectItem>
-									<SelectItem value="NEW">New</SelectItem>
-									<SelectItem value="SALE">Sale</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</form>
+					</DialogDescription>
+				</DialogHeader>
+				<div className="flex flex-col gap-4 overflow-y-auto text-sm">
+					<ProductCard products={[item]} gridClassName="grid-cols-1 sm:grid-cols-1 lg:grid-cols-1" />
 				</div>
-				<DrawerFooter>
-					<Button>Submit</Button>
-					<DrawerClose asChild>
-						<Button variant="outline">Done</Button>
-					</DrawerClose>
-				</DrawerFooter>
-			</DrawerContent>
-		</Drawer>
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button variant="outline">Close</Button>
+					</DialogClose>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }

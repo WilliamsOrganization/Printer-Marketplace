@@ -11,16 +11,25 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Shipping } from "@/lib/types";
 
 export function OrderShippingDialog({ shipping }: { shipping: Shipping | null }) {
 	return (
 		<Dialog>
-			<DialogTrigger asChild>
-				<Button variant="link" className="text-foreground w-fit px-0 text-left">
-					{shipping?.status ?? "—"}
-				</Button>
-			</DialogTrigger>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<DialogTrigger asChild>
+						<Button
+							variant="ghost"
+							className="text-foreground h-full w-full cursor-pointer justify-center rounded-none font-normal"
+						>
+							{shipping?.status ?? "—"}
+						</Button>
+					</DialogTrigger>
+				</TooltipTrigger>
+				<TooltipContent>View shipping details</TooltipContent>
+			</Tooltip>
 			<DialogContent className="sm:max-w-sm">
 				<DialogHeader>
 					<DialogTitle>Shipping</DialogTitle>

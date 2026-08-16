@@ -11,6 +11,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { OrderItem } from "@/lib/types";
 
 export function OrderItemsDialog({ items }: { items: OrderItem[] }) {
@@ -18,11 +19,19 @@ export function OrderItemsDialog({ items }: { items: OrderItem[] }) {
 
 	return (
 		<Dialog>
-			<DialogTrigger asChild>
-				<Button variant="link" className="text-foreground w-fit px-0 text-left">
-					{itemCount} item{itemCount === 1 ? "" : "s"}
-				</Button>
-			</DialogTrigger>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<DialogTrigger asChild>
+						<Button
+							variant="ghost"
+							className="text-foreground h-full w-full cursor-pointer justify-center rounded-none font-normal"
+						>
+							{itemCount} item{itemCount === 1 ? "" : "s"}
+						</Button>
+					</DialogTrigger>
+				</TooltipTrigger>
+				<TooltipContent>View order items</TooltipContent>
+			</Tooltip>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>Order Items</DialogTitle>

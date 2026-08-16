@@ -10,10 +10,18 @@ import { Button } from "../button";
 import { useEffect, useState } from "react";
 import { ProductCarousel } from "./product-carousel";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const MotionCard = motion(Card);
 
-function ProductCard({ products }: { products: InventoryItem[] }) {
+function ProductCard({
+	products,
+	gridClassName,
+}: {
+	products: InventoryItem[];
+	/** Overrides the default responsive grid (e.g. for a single-item preview in a narrow container). */
+	gridClassName?: string;
+}) {
 	const [selected, setSelected] = useState<InventoryItem | null>(null);
 
 	useEffect(() => {
@@ -26,7 +34,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 	return (
 		<>
-			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+			<div className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4", gridClassName)}>
 				{products.map((product, i) => (
 					<MotionCard
 						initial={{ opacity: 0, y: 16 }}
