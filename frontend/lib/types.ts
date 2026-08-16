@@ -138,7 +138,7 @@ export enum ShippingStatus {
 export interface Shipping {
 	id: number;
 	createdAt: string;
-	shippingCost: number;
+	actualShippingCost: number | null;
 	serviceType: string;
 	easyPostId: string;
 	trackingNumber: string;

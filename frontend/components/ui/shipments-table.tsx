@@ -316,11 +316,20 @@ export default function ShipmentsTable({
 			{
 				id: 'destination',
 				header: () => <div>Destination</div>,
-				cell: ({ row }) => (
-					<div>
-						{row.original.shipping.addressTo.city}, {row.original.shipping.addressTo.state}
-					</div>
-				),
+				cell: ({ row }) => {
+					const addr = row.original.shipping.addressTo
+					return (
+						<div className="text-sm">
+							<div>
+								{addr.street1}
+								{addr.street2 ? ` ${addr.street2}` : ''}
+							</div>
+							<div className="text-muted-foreground">
+								{addr.city}, {addr.state} {addr.zip}
+							</div>
+						</div>
+					)
+				},
 			},
 			{
 				accessorKey: 'shipping.status',

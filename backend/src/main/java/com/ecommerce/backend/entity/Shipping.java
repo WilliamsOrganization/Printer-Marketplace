@@ -59,12 +59,11 @@ public class Shipping {
 	private Orders orders;
 
 	// TODO: consider @PositiveOrZero
-	// The rate quoted to the customer at checkout, against the estimated
-	// parcel size (see ShippingService.estimateParcel). Deliberately kept
-	// separate from actualShippingCost below - the real package used to
-	// fulfil the order can end up a different size than the estimate, so
-	// the label's real cost may not match what the customer was quoted.
-	private Long shippingCost;
+	// The label's real cost, from actually purchasing it - kept separate
+	// from Orders.shippingCost (the rate quoted to the customer at
+	// checkout), since the real package used to fulfil the order can end up
+	// a different size than the checkout-time estimate, so this may not
+	// match what the customer was quoted.
 	private Long actualShippingCost;
 	private String serviceType;
 	private String easyPostId;

@@ -88,7 +88,6 @@ public class OrderService {
 		var location = googleMapsService.geocode(addressTo);
 		Shipping shipping = Shipping.builder()
 				.orders(order)
-				.shippingCost(shippingCost)
 				.serviceType(quote.name())
 				.addressFrom(ShippingAddress.from(shipment.addressFrom()))
 				.addressTo(addressTo)

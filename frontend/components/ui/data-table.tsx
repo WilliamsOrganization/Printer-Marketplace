@@ -518,7 +518,9 @@ export function DataTable() {
 		{
 			id: "shipping",
 			header: () => <div className="text-center">Shipping</div>,
-			cell: ({ row }) => <OrderShippingDialog shipping={row.original.shipping} />,
+			cell: ({ row }) => (
+				<OrderShippingDialog shipping={row.original.shipping} estimateCost={row.original.shippingCost} />
+			),
 		},
 		{
 			accessorKey: "stripeSessionId",

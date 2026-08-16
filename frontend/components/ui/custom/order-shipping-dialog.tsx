@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -11,10 +12,28 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Shipping } from "@/lib/types";
+import { Shipping, ShippingStatus } from "@/lib/types";
 
-export function OrderShippingDialog({ shipping }: { shipping: Shipping | null }) {
+const SHIPPING_STATUS_VARIANT: Record<ShippingStatus, "default" | "secondary" | "destructive" | "outline"> = {
+	[ShippingStatus.PENDING]: "outline",
+	[ShippingStatus.PURCHASED]: "secondary",
+	[ShippingStatus.IN_TRANSIT]: "default",
+	[ShippingStatus.DELIVERED]: "secondary",
+};
+
+function formatCurrency(cents: number) {
+	return `$${(cents / 100).toFixed(2)}`;
+}
+
+export function OrderShippingDialog({
+	shipping,
+	estimateCost,
+}: {
+	shipping: Shipping | null;
+	estimateCost: number;
+}) {
 	return (
 		<Dialog>
 			<Tooltip>
@@ -37,12 +56,98 @@ export function OrderShippingDialog({ shipping }: { shipping: Shipping | null })
 						Shipping and tracking details for this order.
 					</DialogDescription>
 				</DialogHeader>
-				{/* TODO: implement once label generation lands (see
-					StripeCatalogService.handleSuccessCheckoutEvent) - populate with
-					shipping.trackingNumber/trackingUrl/labelPdfUrl/addressTo, etc. */}
-				<p className="text-muted-foreground text-sm">
-					Shipping details are not available yet - to be implemented.
-				</p>
+				{!shipping ? (
+					<p className="text-muted-foreground text-sm">
+						No shipping information for this order yet.
+					</p>
+				) : (
+					<div className="flex flex-col gap-4 text-sm">
+						<div className="flex items-center justify-between">
+							<span className="text-muted-foreground">Status</span>
+							<Badge variant={SHIPPING_STATUS_VARIANT[shipping.status]}>{shipping.status}</Badge>
+						</div>
+
+						<Separator />
+
+						<div className="flex flex-col gap-1">
+							<span className="text-muted-foreground">From</span>
+							<span>
+								{shipping.addressFrom.street1}
+								{shipping.addressFrom.street2 ? ` ${shipping.addressFrom.street2}` : ""}
+							</span>
+							<span className="text-muted-foreground">
+								{shipping.addressFrom.city}, {shipping.addressFrom.state} {shipping.addressFrom.zip}
+							</span>
+						</div>
+
+						<div className="flex flex-col gap-1">
+							<span className="text-muted-foreground">To</span>
+							<span>
+								{shipping.addressTo.street1}
+								{shipping.addressTo.street2 ? ` ${shipping.addressTo.street2}` : ""}
+							</span>
+							<span className="text-muted-foreground">
+								{shipping.addressTo.city}, {shipping.addressTo.state} {shipping.addressTo.zip}
+							</span>
+						</div>
+
+						{shipping.currentLocation && (
+							<div className="flex flex-col gap-1">
+								<span className="text-muted-foreground">Current location</span>
+								<span>
+									{shipping.currentLocation.city}, {shipping.currentLocation.state}
+								</span>
+							</div>
+						)}
+
+						<Separator />
+
+						<div className="flex items-center justify-between">
+							<span className="text-muted-foreground">Tracking</span>
+							{shipping.trackingUrl ? (
+								<a
+									href={shipping.trackingUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-primary underline underline-offset-4"
+								>
+									{shipping.trackingNumber ?? "Track"}
+								</a>
+							) : (
+								<span className="text-muted-foreground">Not yet shipped</span>
+							)}
+						</div>
+
+						<div className="flex items-center justify-between">
+							<span className="text-muted-foreground">Label</span>
+							{shipping.labelPdfUrl ? (
+								<a
+									href={shipping.labelPdfUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-primary underline underline-offset-4"
+								>
+									View PDF
+								</a>
+							) : (
+								<span className="text-muted-foreground">Not purchased yet</span>
+							)}
+						</div>
+
+						<Separator />
+
+						<div className="flex items-center justify-between">
+							<span className="text-muted-foreground">Quoted cost</span>
+							<span>{formatCurrency(estimateCost)}</span>
+						</div>
+						{shipping.actualShippingCost != null && (
+							<div className="flex items-center justify-between">
+								<span className="text-muted-foreground">Actual cost</span>
+								<span>{formatCurrency(shipping.actualShippingCost)}</span>
+							</div>
+						)}
+					</div>
+				)}
 				<DialogFooter>
 					<DialogClose asChild>
 						<Button variant="outline">Close</Button>

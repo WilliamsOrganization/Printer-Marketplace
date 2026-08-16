@@ -4,6 +4,7 @@ import * as React from "react"
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { useDashboard } from "@/src/context/dashboard-context"
+import { ShippingStatus } from "@/lib/types"
 import {
   Card,
   CardContent,
@@ -196,7 +197,7 @@ function PopularItemsChart({ data }: { data: { itemTitle: string; quantity: numb
 }
 
 export function AnalyticsView() {
-  const { analytics } = useDashboard()
+  const { analytics, orders, inventory } = useDashboard()
 
   const totalRevenue = analytics?.totalRevenueCents ?? 0
   const successfulOrderCount = analytics?.successfulOrderCount ?? 0
@@ -204,6 +205,32 @@ export function AnalyticsView() {
   const registeredUserCount = analytics?.registeredUserCount ?? 0
   const totalAccounts = analytics?.totalAccounts ?? 0
   const repeatPurchaseRate = analytics?.repeatPurchaseRatePercent ?? 0
+
+  // Everything below is computed straight from what's already loaded
+  // (orders/inventory), no extra backend calls - these aren't in
+  // DashboardAnalyticsResponse.
+  const avgOrderValue = orders.length
+    ? orders.reduce((sum, order) => sum + order.total, 0) / orders.length
+    : 0
+
+  const shippedOrders = orders.filter((order) => order.shipping != null)
+  const ordersNeedingLabel = shippedOrders.filter((order) => !order.shipping!.trackingNumber).length
+  const inTransitCount = shippedOrders.filter(
+    (order) => order.shipping!.status === ShippingStatus.IN_TRANSIT,
+  ).length
+
+  const quotedVsActual = shippedOrders.filter((order) => order.shipping!.actualShippingCost != null)
+  const avgShippingVariance = quotedVsActual.length
+    ? quotedVsActual.reduce(
+        (sum, order) => sum + (order.shipping!.actualShippingCost! - order.shippingCost),
+        0,
+      ) / quotedVsActual.length
+    : null
+
+  const LOW_STOCK_THRESHOLD = 5
+  const lowStockCount = inventory.filter(
+    (item) => !item.isArchived && item.quantity < LOW_STOCK_THRESHOLD,
+  ).length
 
   const revenueChartData = React.useMemo(
     () => (analytics?.revenueByDate ?? []).map((metric) => ({ date: metric.date, revenue: metric.value / 100 })),
@@ -272,6 +299,68 @@ export function AnalyticsView() {
           </CardHeader>
           <CardFooter className="text-muted-foreground text-sm">
             Customers with more than one order
+          </CardFooter>
+        </Card>
+      </div>
+
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-3">
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>Average Order Value</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {formatCurrency(avgOrderValue)}
+            </CardTitle>
+          </CardHeader>
+          <CardFooter className="text-muted-foreground text-sm">
+            Across {orders.length} order{orders.length === 1 ? "" : "s"}
+          </CardFooter>
+        </Card>
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>Shipping Cost Accuracy</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {avgShippingVariance == null
+                ? "—"
+                : `${avgShippingVariance >= 0 ? "+" : "-"}${formatCurrency(Math.abs(avgShippingVariance))}`}
+            </CardTitle>
+          </CardHeader>
+          <CardFooter className="text-muted-foreground text-sm">
+            {avgShippingVariance == null
+              ? "No labels purchased yet"
+              : `Avg. actual vs. quoted, over ${quotedVsActual.length} label${quotedVsActual.length === 1 ? "" : "s"}`}
+          </CardFooter>
+        </Card>
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>Orders Needing a Label</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {ordersNeedingLabel}
+            </CardTitle>
+          </CardHeader>
+          <CardFooter className="text-muted-foreground text-sm">
+            Out of {shippedOrders.length} shipped order{shippedOrders.length === 1 ? "" : "s"}
+          </CardFooter>
+        </Card>
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>In Transit</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {inTransitCount}
+            </CardTitle>
+          </CardHeader>
+          <CardFooter className="text-muted-foreground text-sm">
+            Shipment{inTransitCount === 1 ? "" : "s"} currently on the way
+          </CardFooter>
+        </Card>
+        <Card className="@container/card">
+          <CardHeader>
+            <CardDescription>Low Stock Items</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {lowStockCount}
+            </CardTitle>
+          </CardHeader>
+          <CardFooter className="text-muted-foreground text-sm">
+            Active items under {LOW_STOCK_THRESHOLD} units in stock
           </CardFooter>
         </Card>
       </div>
