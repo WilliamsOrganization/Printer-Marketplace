@@ -51,6 +51,7 @@ public class ShippingService {
     private final ShippingRepository shippingRepository;
     private final ShippoService shippoService;
     private final GoogleMapsService googleMapsService;
+    private final ResendService resendService;
 
     /**
      * Gets the existing ShippingParcel matching these exact dimensions, or
@@ -181,7 +182,11 @@ public class ShippingService {
 		shipping.setActualShippingCost(toCents(chosen.amount()));
 		shipping.setParcel(parcel);
 		shipping.setStatus(Shipping.Status.PURCHASED);
-		return shippingRepository.save(shipping);
+		Shipping saved = shippingRepository.save(shipping);
+
+		resendService.sendTrackingInformation(order.getUser(), saved);
+
+		return saved;
 	}
 
 	private Long toCents(String amount) {

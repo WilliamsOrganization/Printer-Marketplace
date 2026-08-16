@@ -142,8 +142,43 @@ public class ResendService {
 		return String.format("%.2f", cents / (double) DOLLAR);
 	}
 
+	/**
+	 * Sends a shipping notification email to the user, once a label's been
+	 * purchased and a real tracking number exists.
+	 *
+	 * @param user the user to send the email to
+	 * @param shipping the shipment, with its tracking info populated
+	 */
 	public void sendTrackingInformation(@NonNull Users user, Shipping shipping) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'sendTrackingInformation'");
+		CreateEmailOptions params = CreateEmailOptions.builder()
+				.from(from)
+				.to(user.getEmail())
+				.subject("Your order has shipped")
+				.html(buildTrackingHtml(shipping))
+				.build();
+
+		try {
+			CreateEmailResponse data = resend.emails().send(params);
+			log.info("Tracking email sent successfully to {} with id {}", user.getEmail(), data.getId());
+		} catch (ResendException e) {
+			log.error("Failed to send tracking email to {}: {}", user.getEmail(), e.getMessage());
+		}
+	}
+
+	private String buildTrackingHtml(Shipping shipping) {
+		String trackingNumber = shipping.getTrackingNumber() != null ? shipping.getTrackingNumber() : "N/A";
+		String trackingUrl = shipping.getTrackingUrl();
+
+		return "<div style=\"font-family:Georgia,'Times New Roman',serif;max-width:480px;margin:0 auto;color:#111;\">"
+				+ "<p style=\"text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#888;text-align:center;margin-bottom:8px;\">Order shipped</p>"
+				+ "<h1 style=\"font-size:26px;font-weight:normal;text-align:center;margin:0 0 12px;\">Your order is on its way.</h1>"
+				+ "<p style=\"font-family:Arial,sans-serif;font-size:14px;color:#555;text-align:center;line-height:1.6;margin:0 0 24px;\">"
+				+ "Tracking number <strong style=\"color:#111;\">" + trackingNumber + "</strong></p>"
+				+ "<div style=\"text-align:center;margin-top:8px;\">"
+				+ (trackingUrl != null
+						? "<a href=\"" + trackingUrl + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">Track Package</a>"
+						: "")
+				+ "</div>"
+				+ "</div>";
 	}
 }
