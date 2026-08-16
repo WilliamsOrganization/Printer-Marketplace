@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+	IconArrowsSort,
 	IconChevronDown,
 	IconChevronLeft,
 	IconChevronRight,
@@ -29,7 +30,6 @@ import {
 	IconDotsVertical,
 	IconGripVertical,
 	IconLayoutColumns,
-	IconPlus,
 } from "@tabler/icons-react";
 import {
 	flexRender,
@@ -98,7 +98,7 @@ import { OrderItemsDialog } from "./custom/order-items-dialog";
 import { OrderShippingDialog } from "./custom/order-shipping-dialog";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
-import { InventoryItem, Orders as Order, OrderStatus } from "@/lib/types";
+import { InventoryItem, Orders as Order, OrderStatus, ShippingStatus } from "@/lib/types";
 
 export const schema = z.object({
 	id: z.number(),
@@ -255,6 +255,9 @@ export function DataTable() {
 		pageIndex: 0,
 		pageSize: 10,
 	});
+	const [sortByPriority, setSortByPriority] = React.useState(true);
+	const [sortByShipping, setSortByShipping] = React.useState(true);
+	const [sortByDate, setSortByDate] = React.useState(true);
 	const [data, setData] = React.useState(() => [...initialData].sort((a, b) => b.id - a.id));
 	React.useEffect(() => {
 		setData([...initialData].sort((a, b) => b.id - a.id));
@@ -435,6 +438,13 @@ export function DataTable() {
 		}
 	}
 
+	const sortedOrders = React.useMemo(() => {
+		if (!sortByPriority && !sortByShipping && !sortByDate) return orders;
+		return [...orders].sort((a, b) =>
+			compareOrders(a, b, { priority: sortByPriority, shipping: sortByShipping, date: sortByDate }),
+		);
+	}, [orders, sortByPriority, sortByShipping, sortByDate]);
+
 	const ordersColumns: ColumnDef<Order>[] = [
 		{
 			accessorKey: "id",
@@ -535,7 +545,7 @@ export function DataTable() {
 	];
 
 	const ordersTable = useReactTable({
-		data: orders,
+		data: sortedOrders,
 		columns: ordersColumns,
 		state: { sorting: ordersSorting, pagination: ordersPagination, globalFilter, columnVisibility: ordersColumnVisibility },
 		getRowId: (row) => row.id.toString(),
@@ -590,10 +600,42 @@ export function DataTable() {
 						className="h-8 w-40 lg:w-56"
 					/>
 					<ColumnVisibilityDropdown table={activeTable} />
-					<Button variant="outline" size="sm">
-						<IconPlus />
-						<span className="hidden lg:inline">Add Section</span>
-					</Button>
+					{activeTab === "orders" && (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant={sortByPriority || sortByShipping || sortByDate ? "default" : "outline"}
+									size="sm"
+								>
+									<IconArrowsSort />
+									<span className="hidden lg:inline">Sort</span>
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-56">
+								<DropdownMenuCheckboxItem
+									checked={sortByPriority}
+									onSelect={(e) => e.preventDefault()}
+									onCheckedChange={setSortByPriority}
+								>
+									Priority (PAID, COMPLETED first)
+								</DropdownMenuCheckboxItem>
+								<DropdownMenuCheckboxItem
+									checked={sortByShipping}
+									onSelect={(e) => e.preventDefault()}
+									onCheckedChange={setSortByShipping}
+								>
+									Shipping status (unshipped first)
+								</DropdownMenuCheckboxItem>
+								<DropdownMenuCheckboxItem
+									checked={sortByDate}
+									onSelect={(e) => e.preventDefault()}
+									onCheckedChange={setSortByDate}
+								>
+									Date created (oldest first)
+								</DropdownMenuCheckboxItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
 				</div>
 			</div>
 			<TabsContent
@@ -733,7 +775,7 @@ export function DataTable() {
 				value="orders"
 				className="flex flex-col px-4 lg:px-6"
 			>
-				<OrdersTable table={ordersTable} orders={orders} />
+				<OrdersTable table={ordersTable} orders={sortedOrders} />
 			</TabsContent>
 			<TabsContent value="shipping" className="flex flex-col px-4 lg:px-6">
 				<div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
@@ -757,6 +799,56 @@ const ORDER_STATUS_VARIANT: Record<OrderStatus, "default" | "secondary" | "destr
 	[OrderStatus.EXPIRED]: "destructive",
 	[OrderStatus.FAILED]: "destructive",
 };
+
+// PAID first, COMPLETED second - the two statuses actually worth an admin's
+// attention. PENDING/FAILED/EXPIRED are all equally low priority, so they're
+// left tied rather than given an arbitrary order among themselves.
+const ORDER_STATUS_PRIORITY: Record<OrderStatus, number> = {
+	[OrderStatus.PAID]: 0,
+	[OrderStatus.COMPLETED]: 1,
+	[OrderStatus.PENDING]: 2,
+	[OrderStatus.FAILED]: 2,
+	[OrderStatus.EXPIRED]: 2,
+};
+
+// Not-yet-shipped orders need attention first; delivered ones don't.
+const SHIPPING_STATUS_PRIORITY: Record<ShippingStatus, number> = {
+	[ShippingStatus.PENDING]: 0,
+	[ShippingStatus.PURCHASED]: 1,
+	[ShippingStatus.IN_TRANSIT]: 2,
+	[ShippingStatus.DELIVERED]: 3,
+};
+// An order somehow missing its shipping record sorts after DELIVERED -
+// nothing actionable to do with it until that gets sorted out separately.
+const MISSING_SHIPPING_PRIORITY = SHIPPING_STATUS_PRIORITY[ShippingStatus.DELIVERED] + 1;
+
+/**
+ * Single comparator backing every combination of the three independent
+ * order-list toggles. Precedence when more than one is on: PRIORITY, then
+ * SHIPPING STATUS, then DATE - so the default (all three on) surfaces the
+ * oldest PAID order still awaiting shipment first.
+ */
+function compareOrders(
+	a: Order,
+	b: Order,
+	toggles: { priority: boolean; shipping: boolean; date: boolean },
+): number {
+	if (toggles.priority) {
+		const diff = ORDER_STATUS_PRIORITY[a.status] - ORDER_STATUS_PRIORITY[b.status];
+		if (diff !== 0) return diff;
+	}
+	if (toggles.shipping) {
+		const aShipping = a.shipping ? SHIPPING_STATUS_PRIORITY[a.shipping.status] : MISSING_SHIPPING_PRIORITY;
+		const bShipping = b.shipping ? SHIPPING_STATUS_PRIORITY[b.shipping.status] : MISSING_SHIPPING_PRIORITY;
+		const diff = aShipping - bShipping;
+		if (diff !== 0) return diff;
+	}
+	if (toggles.date) {
+		// Oldest first - the order that's been waiting longest gets handled first.
+		return new Date(a.date).getTime() - new Date(b.date).getTime();
+	}
+	return 0;
+}
 
 function OrdersTable({
 	table,
