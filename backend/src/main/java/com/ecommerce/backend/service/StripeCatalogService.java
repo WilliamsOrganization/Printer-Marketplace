@@ -14,10 +14,6 @@ import com.ecommerce.backend.dto.ShippingQuote;
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.InventoryItem;
-import com.ecommerce.backend.entity.Orders;
-import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.repository.OrderRepository;
-import com.ecommerce.backend.repository.UserRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.stripe.exception.StripeException;
@@ -51,11 +47,9 @@ public class StripeCatalogService {
 	private static final Long DOLLAR = 100L;
 	private static final Long PAGE_SIZE = 100L;
 
-	private final OrderRepository orderRepository;
 	private final ShippoService shippoService;
 	private final CartService cartService;
 	private final OrderService orderService;
-	private final UserRepository userRepository;
 	private final ResendService resendService;
 
 	/**
@@ -270,27 +264,7 @@ public class StripeCatalogService {
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleCompletedCheckoutEvent(Session session) {
-		Orders order = orderService.getOrderByStripeSessionId(session.getId());
-		if (order.getStatus() == Orders.Status.COMPLETED || order.getStatus() != Orders.Status.PENDING) {
-			log.info("Skipping completed order {}", order.getId());
-			return;
-		}
-		if ("paid".equals(session.getPaymentStatus())) {
-			order.setStatus(Orders.Status.PAID);
-		} else {
-			order.setStatus(Orders.Status.COMPLETED);
-		}
-		order.setStripeEmail(session.getCustomerEmail());
-		order.setCurrency(session.getCurrency());
-		order.setSubtotal(session.getAmountSubtotal());
-		order.setTotal(session.getAmountTotal());
-		if (session.getShippingCost() != null) {
-			order.setShippingCost(session.getShippingCost().getAmountTotal());
-		}
-		orderRepository.save(order);
-		log.info("Order Status Updated to {}", order.getStatus());
-		resendService.sendConfirmationEmail(order.getUser(), order);
-		log.info("Email sent to this email: {}", order.getUser().getEmail());
+		orderService.applyCompletedCheckout(session);
 	}
 	
 	/**
@@ -299,14 +273,7 @@ public class StripeCatalogService {
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleExpiredCheckoutEvent(Session session) {
-		Orders order = orderService.getOrderByStripeSessionId(session.getId());
-		if (order.getStatus() == Orders.Status.EXPIRED || order.getStatus() != Orders.Status.PENDING) {
-			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
-			return;
-		}
-		order.setStatus(Orders.Status.EXPIRED);
-		orderRepository.save(order);
-		log.info("Order Status Updated to {}", order.getStatus());
+		orderService.applyExpiredCheckout(session.getId());
 	}
 
 	/**
@@ -315,17 +282,7 @@ public class StripeCatalogService {
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleFailedCheckoutEvent(Session session) {
-		Orders order = orderService.getOrderByStripeSessionId(session.getId());
-		if (order.getStatus() != Orders.Status.COMPLETED) {
-			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
-			return;
-		}
-		order.setStatus(Orders.Status.FAILED);
-		orderRepository.save(order);
-		Users user = order.getUser();
-		user.setUserRole(Users.Role.REGISTERED);
-		userRepository.save(user);
-		log.info("Order Status Updated to {}", order.getStatus());
+		orderService.applyFailedCheckout(session.getId());
 	}
 
 	/**
@@ -334,17 +291,10 @@ public class StripeCatalogService {
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleSuccessCheckoutEvent(Session deserializeSession) {
-		Orders order = orderService.getOrderByStripeSessionId(deserializeSession.getId());
-		if (order.getStatus() != Orders.Status.COMPLETED) {
-			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
-			return;
-		}
-		order.setStatus(Orders.Status.PAID);
-		orderRepository.save(order);
-		log.info("Order Status Updated to {}", order.getStatus());
+		orderService.applySuccessfulCheckout(deserializeSession.getId());
 		// TODO: generate shipping label
-		// update the shipping table with metadata and url for the pdf. 
-		// FIX: Shitty blob storage implementation is shitty. fix it. 
+		// update the shipping table with metadata and url for the pdf.
+		// FIX: Shitty blob storage implementation is shitty. fix it.
 	}
 
 }

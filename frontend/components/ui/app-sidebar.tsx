@@ -9,12 +9,12 @@ import {
   IconFileAi,
   IconFileDescription,
   IconFileWord,
-  IconFolder,
   IconHelp,
   IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
+  IconUser,
   IconUsers,
 } from "@tabler/icons-react"
 import { Layers } from "lucide-react"
@@ -43,33 +43,28 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/admin/dashboard",
       icon: IconDashboard,
-      view: "dashboard",
     },
     {
       title: "Analytics",
-      url: "#",
+      url: "/admin/analytics",
       icon: IconChartBar,
-      view: "analytics",
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Shipments",
+      url: "/admin/shipments",
       icon: IconListDetails,
-      view: "lifecycle",
     },
     {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-      view: "projects",
+      title: "Users",
+      url: "/admin/users",
+      icon: IconUser,
     },
     {
       title: "Team",
-      url: "#",
+      url: "/admin/team",
       icon: IconUsers,
-      view: "team",
     },
   ],
   navClouds: [
@@ -156,14 +151,7 @@ const data = {
   ],
 }
 
-export function AppSidebar({
-  activeView,
-  onSelectView,
-  ...props
-}: React.ComponentProps<typeof Sidebar> & {
-  activeView?: string
-  onSelectView?: (view: string) => void
-}) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
   const user = {
     name: session?.user?.name ?? "Admin",
@@ -189,7 +177,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} activeView={activeView} onSelectView={onSelectView} />
+        <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

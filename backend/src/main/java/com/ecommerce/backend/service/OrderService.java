@@ -13,16 +13,20 @@ import com.ecommerce.backend.entity.OrderItem;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.ShippingAddress;
+import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.ShippingRepository;
+import com.ecommerce.backend.repository.UserRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.stripe.model.checkout.Session;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * OrderService
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -30,6 +34,8 @@ public class OrderService {
 
 	private final OrderRepository orderRepository;
 	private final ShippingRepository shippingRepository;
+	private final UserRepository userRepository;
+	private final ResendService resendService;
 
 	/**
 	 * Create a new pending order (and its shipping record) from the cart
@@ -95,5 +101,93 @@ public class OrderService {
 	 */	
 	public Orders getOrderByStripeSessionId(String id) {
 		return orderRepository.findOrderByStripeSessionId(id).orElseThrow();
+	}
+
+	/**
+	 * Applies a completed Stripe checkout session to its pending order -
+	 * marking it PAID or COMPLETED depending on whether Stripe reports the
+	 * session as already paid, and syncing the payment fields Stripe now
+	 * knows. No-ops (returns null) if the order isn't still PENDING, since
+	 * webhook events can be delivered more than once.
+	 *
+	 * @param session the completed Stripe checkout session
+	 * @return the updated order, or null if there was nothing to apply
+	 */
+	public void applyCompletedCheckout(Session session) {
+		Orders order = getOrderByStripeSessionId(session.getId());
+		if (order.getStatus() == Orders.Status.COMPLETED || order.getStatus() != Orders.Status.PENDING) {
+			log.info("Skipping completed order {}", order.getId());
+		}
+		if ("paid".equals(session.getPaymentStatus())) {
+			order.setStatus(Orders.Status.PAID);
+		} else {
+			order.setStatus(Orders.Status.COMPLETED);
+		}
+		order.setStripeEmail(session.getCustomerEmail());
+		order.setCurrency(session.getCurrency());
+		order.setSubtotal(session.getAmountSubtotal());
+		order.setTotal(session.getAmountTotal());
+		if (session.getShippingCost() != null) {
+			order.setShippingCost(session.getShippingCost().getAmountTotal());
+		}
+		log.info("Order Status Updated to {}", order.getStatus());
+		resendService.sendConfirmationEmail(order.getUser(), order);
+		log.info("Email sent to this email: {}", order.getUser().getEmail());
+	}
+
+	/**
+	 * Applies an expired Stripe checkout session to its pending order.
+	 * No-ops if the order isn't still PENDING.
+	 *
+	 * @param stripeSessionId the expired Stripe checkout session's id
+	 */
+	public void applyExpiredCheckout(String stripeSessionId) {
+		Orders order = getOrderByStripeSessionId(stripeSessionId);
+		if (order.getStatus() == Orders.Status.EXPIRED || order.getStatus() != Orders.Status.PENDING) {
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			return;
+		}
+		order.setStatus(Orders.Status.EXPIRED);
+		orderRepository.save(order);
+		log.info("Order Status Updated to {}", order.getStatus());
+	}
+
+	/**
+	 * Applies a failed Stripe checkout session to its completed order, and
+	 * demotes the buyer back to a plain registered account (unless they're an
+	 * admin) since the payment behind their most recent order didn't go
+	 * through. No-ops if the order isn't COMPLETED.
+	 *
+	 * @param stripeSessionId the failed Stripe checkout session's id
+	 */
+	public void applyFailedCheckout(String stripeSessionId) {
+		Orders order = getOrderByStripeSessionId(stripeSessionId);
+		if (order.getStatus() != Orders.Status.COMPLETED) {
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			return;
+		}
+		order.setStatus(Orders.Status.FAILED);
+		order = orderRepository.save(order);
+		Users user = order.getUser();
+		if (user.getUserRole() != Users.Role.ADMIN) user.setUserRole(Users.Role.REGISTERED);
+		userRepository.save(user);
+		log.info("Order Status Updated to {}", order.getStatus());
+	}
+
+	/**
+	 * Applies a successful Stripe checkout session to its completed order.
+	 * No-ops if the order isn't COMPLETED.
+	 *
+	 * @param stripeSessionId the successful Stripe checkout session's id
+	 */
+	public void applySuccessfulCheckout(String stripeSessionId) {
+		Orders order = getOrderByStripeSessionId(stripeSessionId);
+		if (order.getStatus() != Orders.Status.COMPLETED) {
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			return;
+		}
+		order.setStatus(Orders.Status.PAID);
+		orderRepository.save(order);
+		log.info("Order Status Updated to {}", order.getStatus());
 	}
 }

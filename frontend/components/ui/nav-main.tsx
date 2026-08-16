@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,18 +15,14 @@ import {
 
 export function NavMain({
   items,
-  activeView,
-  onSelectView,
 }: {
   items: {
     title: string
     url: string
     icon?: Icon
-    view?: string
   }[]
-  activeView?: string
-  onSelectView?: (view: string) => void
 }) {
+  const pathname = usePathname()
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -51,12 +49,14 @@ export function NavMain({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
+                asChild
                 tooltip={item.title}
-                isActive={item.view !== undefined && item.view === activeView}
-                onClick={item.view ? () => onSelectView?.(item.view!) : undefined}
+                isActive={pathname === item.url}
               >
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+                <Link href={item.url}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
