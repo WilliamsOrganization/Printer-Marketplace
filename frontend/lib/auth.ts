@@ -117,6 +117,7 @@ export const authOptions: NextAuthOptions = {
 			if (trigger === "update" && session) {
 				if (session.email !== undefined) token.email = session.email;
 				if (session.phoneNumber !== undefined) token.phoneNumber = session.phoneNumber;
+				if (session.userId !== undefined) token.userId = String(session.userId);
 			}
 			return token;
 		},

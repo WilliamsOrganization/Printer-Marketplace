@@ -1,11 +1,22 @@
 package com.ecommerce.backend.service;
 
-import com.ecommerce.backend.config.ResendConfig;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.ecommerce.backend.entity.EmailVerification;
 import com.ecommerce.backend.entity.OrderItem;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.Users;
-import com.resend.*;
+import com.ecommerce.backend.entity.EmailVerification.Reason;
+import com.ecommerce.backend.repository.EmailVerificationRepository;
+import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
@@ -13,10 +24,6 @@ import com.resend.services.emails.model.CreateEmailResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * Resend
@@ -30,12 +37,14 @@ public class ResendService {
 	// StripeCatalogService's SUCCESS_URL/CANCEL_URL once that's made configurable
 	private static final String STORE_URL = "http://localhost:3000";
 	private static final Long DOLLAR = 100L;
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+	private final EmailVerificationRepository emailVerificationRepository;
 	private final Resend resend;
+
 	@Value("${resend.email_from}")
 	private String from;
 
-	// TODO: DELETE ME FOR LATER
 	public void testEmailEndpoint(String toEmail, String body) {
 		CreateEmailOptions params = CreateEmailOptions.builder()
 				.from("Support@printmarket.ca")
@@ -72,7 +81,6 @@ public class ResendService {
 		} catch (ResendException e) {
 			log.error("Failed to send email to {}: {}", user.getEmail(), e.getMessage());
 		}
-
 	}
 
 	/**
@@ -209,4 +217,112 @@ public class ResendService {
 				+ "</div>"
 				+ "</div>";
 	}
+
+	/**
+	 * Sends a welcome/verification email to a newly created account.
+	 *
+	 * @param user the user to send the email to
+	 */
+	public void sendEmailVerification(Users user, Reason reason) throws ResendException {
+		EmailVerification emailVerification = createEmailVerification(user, reason);
+		CreateEmailOptions params = CreateEmailOptions.builder()
+				.from(from)
+				.to(user.getEmail())
+				.subject(reason == Reason.RESET_PASSWORD ? "Reset your password" : "Confirm your email")
+				.html(reason == Reason.RESET_PASSWORD
+						? buildResetPasswordHtml(user, emailVerification.getCode())
+						: buildVerificationHtml(user, emailVerification.getCode()))
+				.build();
+
+		try {
+			CreateEmailResponse data = resend.emails().send(params);
+			log.info("Verification email sent successfully to {} with id {}", user.getEmail(), data.getId());
+		} catch (ResendException e) {
+			log.error("Failed to send verification email to {}: {}", user.getEmail(), e.getMessage());
+			throw e;
+		}
+	}
+
+	/**
+	 * Builds the verification email body, mirroring the confirmation and
+	 * tracking emails' look: an uppercase eyebrow header, serif heading, and
+	 * the 6-digit code the user types into the /verify-email form.
+	 *
+	 * @param user the newly created user
+	 * @param code the verification code to display
+	 * @return the email's HTML body
+	 */
+	private String buildVerificationHtml(Users user, String code) {
+		String verifyUrl = STORE_URL + "/verify-email?email="
+				+ URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8);
+
+		return "<div style=\"font-family:Georgia,'Times New Roman',serif;max-width:480px;margin:0 auto;color:#111;\">"
+				+ "<p style=\"text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#888;text-align:center;margin-bottom:8px;\">Confirm your email</p>"
+				+ "<h1 style=\"font-size:26px;font-weight:normal;text-align:center;margin:0 0 12px;\">Welcome. Let's verify your email.</h1>"
+				+ "<p style=\"font-family:Arial,sans-serif;font-size:14px;color:#555;text-align:center;line-height:1.6;margin:0 0 32px;\">"
+				+ "Thanks for creating an account with <strong style=\"color:#111;\">" + user.getEmail() + "</strong>. "
+				+ "Enter this code to finish setting up your account.</p>"
+				+ "<div style=\"text-align:center;margin:0 0 32px;\">"
+				+ "<span style=\"display:inline-block;font-family:'Courier New',monospace;font-size:32px;font-weight:600;letter-spacing:8px;color:#111;background:#f5f5f5;border-radius:8px;padding:16px 24px;\">"
+				+ code
+				+ "</span>"
+				+ "</div>"
+				+ "<div style=\"text-align:center;margin-top:8px;\">"
+				+ "<a href=\"" + verifyUrl + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">Confirm Email</a>"
+				+ "</div>"
+				+ "<p style=\"font-family:Arial,sans-serif;font-size:12px;color:#999;text-align:center;line-height:1.6;margin:24px 0 0;\">"
+				+ "If you didn't create this account, you can safely ignore this email.</p>"
+				+ "</div>";
+	}
+
+	/**
+	 * Builds the password-reset email body. Unlike the account-verification
+	 * email, the link here carries both the email and the code as query
+	 * params - the reset page reads them off the URL rather than making the
+	 * user type the code in by hand.
+	 *
+	 * @param user the user requesting a reset
+	 * @param code the verification code to embed in the link
+	 * @return the email's HTML body
+	 */
+	private String buildResetPasswordHtml(Users user, String code) {
+		String resetUrl = STORE_URL + "/reset-password?email="
+				+ URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8)
+				+ "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8);
+
+		return "<div style=\"font-family:Georgia,'Times New Roman',serif;max-width:480px;margin:0 auto;color:#111;\">"
+				+ "<p style=\"text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#888;text-align:center;margin-bottom:8px;\">Reset your password</p>"
+				+ "<h1 style=\"font-size:26px;font-weight:normal;text-align:center;margin:0 0 12px;\">Let's get you back in.</h1>"
+				+ "<p style=\"font-family:Arial,sans-serif;font-size:14px;color:#555;text-align:center;line-height:1.6;margin:0 0 32px;\">"
+				+ "We got a request to reset the password for <strong style=\"color:#111;\">" + user.getEmail() + "</strong>. "
+				+ "Click below to choose a new one.</p>"
+				+ "<div style=\"text-align:center;margin-top:8px;\">"
+				+ "<a href=\"" + resetUrl + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">Reset Password</a>"
+				+ "</div>"
+				+ "<p style=\"font-family:Arial,sans-serif;font-size:12px;color:#999;text-align:center;line-height:1.6;margin:24px 0 0;\">"
+				+ "If you didn't request this, you can safely ignore this email.</p>"
+				+ "</div>";
+	}
+
+	private EmailVerification createEmailVerification(Users user, Reason reason) {
+		EmailVerification emailVerification = EmailVerification.builder()
+		.user(user)
+		.email(user.getEmail())
+		.code(generateVerificationCode())
+		.reason(reason)
+		.expiryDate(LocalDateTime.now().plusDays(1))
+		.build();
+		return emailVerificationRepository.save(emailVerification);
+	}
+
+	/**
+	 * Generates a 6-digit numeric verification code, zero-padded (e.g. "003942").
+	 *
+	 * @return the generated code
+	 */
+	private String generateVerificationCode() {
+		int value = SECURE_RANDOM.nextInt(1_000_000);
+		return String.format("%06d", value);
+	}
+
 }

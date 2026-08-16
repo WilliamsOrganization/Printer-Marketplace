@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * DataInitializer
@@ -24,20 +25,19 @@ public class UserDataInitializer {
     @Value("${app.admin.phone}") private String phone;
 
     @Bean
-    ApplicationRunner createDefaultAdmin(UserRepository userRepository) {
+    ApplicationRunner createDefaultAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             if (userRepository.findByEmail(email).isEmpty()) {
                 logger.info("[INIT]: No default admin detected "
                                 + "populating seed data for email: {}",
                             email);
                 Users admin = Users.builder()
-                                  .password(password)
+                                  .password(passwordEncoder.encode(password))
                                   .email(email)
                                   .phoneNumber(phone)
                                   .isAdmin(true)
                                   .userRole(Users.Role.ADMIN)
                                   .build();
-                // TODO: use proper password encoding
                 userRepository.save(admin);
             }
         };

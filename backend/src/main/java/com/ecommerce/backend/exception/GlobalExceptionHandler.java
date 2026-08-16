@@ -52,6 +52,18 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
+	 * handleForbidden handles the ForbiddenException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(ForbiddenException.class)
+	public ResponseEntity<String> handleForbidden(ForbiddenException ex) {
+		log.warn("ForbiddenException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+	}
+
+	/**
 	 * handleUnexpected handles any other exceptions
 	 * 
 	 * @param ex

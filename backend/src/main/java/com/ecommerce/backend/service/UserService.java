@@ -1,10 +1,12 @@
 package com.ecommerce.backend.service;
 
 import com.ecommerce.backend.dto.AccountCreationRequest;
+import com.ecommerce.backend.dto.ResetPasswordRequest;
 import com.ecommerce.backend.dto.UpdateContactRequest;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.exception.ExistingUserFoundException;
+import com.ecommerce.backend.exception.ForbiddenException;
 import com.ecommerce.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +61,10 @@ public class UserService {
 			throws ExistingUserFoundException {
 		if (request.email() != null &&
 				!request.email().equals(user.getEmail())) {
+			if (user.getUserRole() != Users.Role.CUSTOMER) {
+				throw new ForbiddenException(
+						"Registered accounts must change their email through the verified email-change flow");
+			}
 			userRepository.findByEmail(request.email()).ifPresent(existing -> {
 				throw new ExistingUserFoundException(
 						"Email " + request.email() + " is already in use");
@@ -102,4 +108,17 @@ public class UserService {
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 		return registerUser(user);
 	}
+
+	/**
+	 * Sets a new password for the user, once the caller has already
+	 * verified ownership of the account (see AuthService.verifyCode).
+	 *
+	 * @param user the user to update
+	 * @param rawPassword the new password, not yet hashed
+	 */
+	public Users resetPassword(Users user, String rawPassword) {
+		user.setPassword(passwordEncoder.encode(rawPassword));
+		return userRepository.save(user);
+	}
+
 }
