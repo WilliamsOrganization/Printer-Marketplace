@@ -18,8 +18,10 @@ export default async function Success({ searchParams }) {
 		.get(`/orders/${session_id}`)
 		.then((res) => res.data)
 		.catch((err) => {
-			console.error(err);
+			if(err?.response?.status === 404) {
 			redirect(`/login?callbackUrl=${encodeURIComponent(`/success?session_id=${session_id}`)}`);
+			}
+			redirect('/');
 		});
 
 	if (session.status === "open") {
