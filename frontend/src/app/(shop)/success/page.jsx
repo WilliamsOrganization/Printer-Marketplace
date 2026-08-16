@@ -16,7 +16,11 @@ export default async function Success({ searchParams }) {
 
 	const { order, session } = await apiServer
 		.get(`/orders/${session_id}`)
-		.then((res) => res.data);
+		.then((res) => res.data)
+		.catch((err) => {
+			console.error(err);
+			redirect(`/login?callbackUrl=${encodeURIComponent(`/success?session_id=${session_id}`)}`);
+		});
 
 	if (session.status === "open") {
 		return redirect("/");
