@@ -147,14 +147,15 @@ public class ResendService {
 	 * purchased and a real tracking number exists.
 	 *
 	 * @param user the user to send the email to
+	 * @param order the order the shipment belongs to, for its success-page link
 	 * @param shipping the shipment, with its tracking info populated
 	 */
-	public void sendTrackingInformation(@NonNull Users user, Shipping shipping) {
+	public void sendTrackingInformation(@NonNull Users user, Orders order, Shipping shipping) {
 		CreateEmailOptions params = CreateEmailOptions.builder()
 				.from(from)
 				.to(user.getEmail())
 				.subject("Your order has shipped")
-				.html(buildTrackingHtml(shipping))
+				.html(buildTrackingHtml(order, shipping))
 				.build();
 
 		try {
@@ -165,19 +166,46 @@ public class ResendService {
 		}
 	}
 
-	private String buildTrackingHtml(Shipping shipping) {
+	/**
+	 * Builds the shipping notification email body, mirroring the order
+	 * confirmation email's look: an uppercase eyebrow header, serif heading,
+	 * a destination card, and the same button row (a primary action plus a
+	 * secondary link back to the order's success page).
+	 *
+	 * @param order the order the shipment belongs to
+	 * @param shipping the shipment, with its tracking info populated
+	 * @return the email's HTML body
+	 */
+	private String buildTrackingHtml(Orders order, Shipping shipping) {
 		String trackingNumber = shipping.getTrackingNumber() != null ? shipping.getTrackingNumber() : "N/A";
 		String trackingUrl = shipping.getTrackingUrl();
+		String orderUrl = STORE_URL + "/success?session_id=" + order.getStripeSessionId();
+
+		String destination = shipping.getAddressTo() != null
+				? "<div style=\"border:1px solid #e5e5e5;border-radius:8px;padding:16px;margin:0 0 24px;font-family:Arial,sans-serif;\">"
+						+ "<p style=\"text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#888;margin:0 0 6px;\">Shipping to</p>"
+						+ "<p style=\"font-size:13px;color:#111;margin:0;line-height:1.5;\">"
+						+ shipping.getAddressTo().getStreet1()
+						+ (shipping.getAddressTo().getStreet2() != null ? " " + shipping.getAddressTo().getStreet2() : "")
+						+ "<br/>" + shipping.getAddressTo().getCity() + ", " + shipping.getAddressTo().getState()
+						+ " " + shipping.getAddressTo().getZip()
+						+ "</p>"
+						+ "</div>"
+				: "";
 
 		return "<div style=\"font-family:Georgia,'Times New Roman',serif;max-width:480px;margin:0 auto;color:#111;\">"
 				+ "<p style=\"text-transform:uppercase;letter-spacing:2px;font-size:11px;color:#888;text-align:center;margin-bottom:8px;\">Order shipped</p>"
 				+ "<h1 style=\"font-size:26px;font-weight:normal;text-align:center;margin:0 0 12px;\">Your order is on its way.</h1>"
 				+ "<p style=\"font-family:Arial,sans-serif;font-size:14px;color:#555;text-align:center;line-height:1.6;margin:0 0 24px;\">"
-				+ "Tracking number <strong style=\"color:#111;\">" + trackingNumber + "</strong></p>"
+				+ "Order <strong style=\"color:#111;\">" + order.getId() + "</strong> has shipped. Tracking number "
+				+ "<strong style=\"color:#111;\">" + trackingNumber + "</strong>.</p>"
+				+ destination
 				+ "<div style=\"text-align:center;margin-top:8px;\">"
 				+ (trackingUrl != null
 						? "<a href=\"" + trackingUrl + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">Track Package</a>"
 						: "")
+				+ "&nbsp;&nbsp;"
+				+ "<a href=\"" + orderUrl + "\" style=\"font-family:Arial,sans-serif;display:inline-block;color:#555;text-decoration:none;font-size:13px;padding:10px 24px;\">View Order</a>"
 				+ "</div>"
 				+ "</div>";
 	}

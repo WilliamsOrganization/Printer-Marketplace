@@ -184,7 +184,7 @@ public class ShippingService {
 		shipping.setStatus(Shipping.Status.PURCHASED);
 		Shipping saved = shippingRepository.save(shipping);
 
-		resendService.sendTrackingInformation(order.getUser(), saved);
+		resendService.sendTrackingInformation(order.getUser(), order, saved);
 
 		return saved;
 	}
