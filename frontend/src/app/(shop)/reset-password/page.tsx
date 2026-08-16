@@ -1,8 +1,8 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { KeyRound, MailCheck } from "lucide-react";
+import { AlertCircle, KeyRound, Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -102,6 +102,30 @@ function RequestResetForm() {
 	);
 }
 
+function ExpiredResetLink() {
+	return (
+		<div className="flex flex-col items-center text-center gap-8 w-full max-w-md">
+			<div className="size-16 rounded-full bg-muted flex items-center justify-center">
+				<AlertCircle className="size-7 text-muted-foreground" />
+			</div>
+			<div className="flex flex-col gap-3">
+				<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground">
+					Reset your password
+				</p>
+				<h1 className="text-4xl font-serif leading-snug">
+					This link has <span className="italic">expired.</span>
+				</h1>
+				<p className="text-muted-foreground leading-relaxed">
+					Reset links only last a little while. Request a new one to continue.
+				</p>
+			</div>
+			<Button asChild>
+				<a href="/reset-password">Request a new link</a>
+			</Button>
+		</div>
+	);
+}
+
 function ConfirmResetForm({ email, code }: { email: string; code: string }) {
 	const router = useRouter();
 	const { update } = useSession();
@@ -109,6 +133,22 @@ function ConfirmResetForm({ email, code }: { email: string; code: string }) {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+	const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+
+	useEffect(() => {
+		let cancelled = false;
+		apiSession
+			.get("/auth/reset-password/validate", { params: { email, code } })
+			.then(() => {
+				if (!cancelled) setTokenValid(true);
+			})
+			.catch(() => {
+				if (!cancelled) setTokenValid(false);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [email, code]);
 
 	const confirmReset = async function () {
 		setError(null);
@@ -134,6 +174,18 @@ function ConfirmResetForm({ email, code }: { email: string; code: string }) {
 			setSubmitting(false);
 		}
 	};
+
+	if (tokenValid === null) {
+		return (
+			<div className="flex flex-col items-center text-center gap-4 w-full max-w-md">
+				<Loader2 className="size-6 animate-spin text-muted-foreground" />
+			</div>
+		);
+	}
+
+	if (tokenValid === false) {
+		return <ExpiredResetLink />;
+	}
 
 	return (
 		<div className="flex flex-col items-center text-center gap-8 w-full max-w-md">

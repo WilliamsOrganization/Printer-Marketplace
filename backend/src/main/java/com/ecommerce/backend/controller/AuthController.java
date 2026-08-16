@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -84,5 +85,16 @@ public class AuthController {
 	@PostMapping("/reset-password/confirm")
 	public AuthResponse confirmReset(@RequestBody ResetPasswordConfirmRequest request) {
 		return authService.confirmResetPassword(request);
+	}
+
+	/**
+	 * Checks whether a reset-password link is still valid, without
+	 * consuming the code, so the frontend can reject an expired link
+	 * before showing the new-password fields.
+	 */
+	@GetMapping("/reset-password/validate")
+	public ResponseEntity<Void> validateReset(@RequestParam String email, @RequestParam String code) {
+		authService.validateResetCode(email, code);
+		return ResponseEntity.ok().build();
 	}
 }

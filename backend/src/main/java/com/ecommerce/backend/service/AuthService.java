@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,9 +17,9 @@ import com.ecommerce.backend.dto.LoginRequestWithProvider;
 import com.ecommerce.backend.dto.ResetPasswordConfirmRequest;
 import com.ecommerce.backend.dto.ResetPasswordRequest;
 import com.ecommerce.backend.entity.EmailVerification;
+import com.ecommerce.backend.entity.EmailVerification.Reason;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.entity.EmailVerification.Reason;
 import com.ecommerce.backend.exception.ExistingUserFoundException;
 import com.ecommerce.backend.exception.InvalidCredentials;
 import com.ecommerce.backend.exception.UserNotFoundException;
@@ -146,18 +144,17 @@ public class AuthService {
 	}
 
 	/**
-	 * Checks the user's latest verification code for the given reason
-	 * against what was submitted, rejecting it if it's wrong or expired.
-	 * On success, the code is burned (its expiry is pulled forward to now)
-	 * so it can't be replayed against a second request.
+	 * Looks up the user's latest verification code for the given reason and
+	 * checks it against what was submitted, without consuming it.
 	 *
 	 * @param user the user the code belongs to
 	 * @param reason which flow the code was issued for (CREATE_ACCOUNT,
 	 *               RESET_PASSWORD, ...) - codes are scoped per-reason so a
 	 *               code from one flow can't be used to satisfy another
 	 * @param submittedCode the code the user typed in
+	 * @return the matching, still-valid EmailVerification
 	 */
-	private void verifyCode(Users user, Reason reason, String submittedCode) {
+	private EmailVerification checkCode(Users user, Reason reason, String submittedCode) {
 		EmailVerification emailCode = emailVerificationRepository
 				.findFirstByUserAndReasonOrderByCreatedAtDesc(user, reason);
 		if (emailCode == null
@@ -165,6 +162,21 @@ public class AuthService {
 				|| emailCode.getExpiryDate().isBefore(LocalDateTime.now())) {
 			throw new InvalidCredentials("Invalid or expired verification code");
 		}
+		return emailCode;
+	}
+
+	/**
+	 * Checks the user's latest verification code for the given reason
+	 * against what was submitted, rejecting it if it's wrong or expired.
+	 * On success, the code is burned (its expiry is pulled forward to now)
+	 * so it can't be replayed against a second request.
+	 *
+	 * @param user the user the code belongs to
+	 * @param reason which flow the code was issued for
+	 * @param submittedCode the code the user typed in
+	 */
+	private void verifyCode(Users user, Reason reason, String submittedCode) {
+		EmailVerification emailCode = checkCode(user, reason, submittedCode);
 		emailCode.setExpiryDate(LocalDateTime.now());
 		emailVerificationRepository.save(emailCode);
 	}
@@ -191,6 +203,23 @@ public class AuthService {
 	 * @param request the email, code, and new password
 	 * @return AuthResponse
 	 */
+	/**
+	 * Checks whether a reset-password code is still valid, without
+	 * consuming it, so the confirm form can reject an expired link before
+	 * showing the password fields.
+	 *
+	 * @param email the email from the reset link
+	 * @param code the verification code from the reset link
+	 */
+	public void validateResetCode(String email, String code) {
+		Users user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
+		if (user.getUserRole() != Users.Role.REGISTERED) {
+			throw new UserNotFoundException("User does not exist");
+		}
+		checkCode(user, Reason.RESET_PASSWORD, code);
+	}
+
 	public AuthResponse confirmResetPassword(ResetPasswordConfirmRequest request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
