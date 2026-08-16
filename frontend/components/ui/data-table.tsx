@@ -410,8 +410,9 @@ export function DataTable() {
 		const { active, over } = event;
 		if (active && over && active.id !== over.id) {
 			setData((data) => {
-				const oldIndex = dataIds.indexOf(active.id);
-				const newIndex = dataIds.indexOf(over.id);
+				const oldIndex = data.findIndex((item) => item.id === active.id);
+				const newIndex = data.findIndex((item) => item.id === over.id);
+				if (oldIndex === -1 || newIndex === -1) return data;
 				return arrayMove(data, oldIndex, newIndex);
 			});
 		}

@@ -43,21 +43,17 @@ const chartConfig = {
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
-  const { sessionDates } = useDashboard()
+  const { analytics } = useDashboard()
   const [timeRange, setTimeRange] = React.useState("90d")
 
   React.useEffect(() => {
     if (isMobile) setTimeRange("7d")
   }, [isMobile])
 
-  const counts: Record<string, number> = {}
-  sessionDates.forEach((ts: string) => {
-    const date = ts.split("T")[0]
-    counts[date] = (counts[date] ?? 0) + 1
-  })
-  const chartData = Object.entries(counts)
-    .map(([date, sessions]) => ({ date, sessions }))
-    .sort((a, b) => a.date.localeCompare(b.date))
+  const chartData = (analytics?.sessionsByDate ?? []).map((metric) => ({
+    date: metric.date,
+    sessions: metric.value,
+  }))
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date)

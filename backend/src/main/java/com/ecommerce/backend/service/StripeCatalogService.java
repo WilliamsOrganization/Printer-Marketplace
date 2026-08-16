@@ -322,6 +322,9 @@ public class StripeCatalogService {
 		}
 		order.setStatus(Orders.Status.FAILED);
 		orderRepository.save(order);
+		Users user = order.getUser();
+		user.setUserRole(Users.Role.REGISTERED);
+		userRepository.save(user);
 		log.info("Order Status Updated to {}", order.getStatus());
 	}
 

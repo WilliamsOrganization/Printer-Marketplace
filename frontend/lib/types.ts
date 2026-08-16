@@ -187,3 +187,43 @@ export interface ImageDropFieldProps {
 	className?: string;
 	disabled?: boolean;
 }
+
+export interface DailyMetric {
+	date: string;
+	value: number;
+}
+
+export interface OrdersDailyMetric {
+	date: string;
+	totalOrders: number;
+	completedOrders: number;
+}
+
+export interface PopularItem {
+	itemTitle: string;
+	quantity: number;
+}
+
+// Matches backend DashboardAnalyticsResponse - server-side aggregation for
+// the admin dashboard home page and analytics page (GET /analytics/dashboard,
+// admin-only).
+export interface DashboardAnalyticsResponse {
+	inventoryActiveCount: number;
+	inventoryArchivedCount: number;
+	totalSessions: number;
+	activeSessions: number;
+	uniqueSessionUsers: number;
+	totalAccounts: number;
+	sessionGrowthRatePercent: number | null;
+	sessionsByDate: DailyMetric[];
+
+	totalRevenueCents: number;
+	successfulOrderCount: number;
+	totalOrderCount: number;
+	registeredUserCount: number;
+	repeatPurchaseRatePercent: number;
+	revenueByDate: DailyMetric[];
+	ordersByDate: OrdersDailyMetric[];
+	registeredUsersByDate: DailyMetric[];
+	popularItems: PopularItem[];
+}

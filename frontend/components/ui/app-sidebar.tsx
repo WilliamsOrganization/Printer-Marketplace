@@ -45,26 +45,31 @@ const data = {
       title: "Dashboard",
       url: "#",
       icon: IconDashboard,
-    },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      view: "dashboard",
     },
     {
       title: "Analytics",
       url: "#",
       icon: IconChartBar,
+      view: "analytics",
+    },
+    {
+      title: "Lifecycle",
+      url: "#",
+      icon: IconListDetails,
+      view: "lifecycle",
     },
     {
       title: "Projects",
       url: "#",
       icon: IconFolder,
+      view: "projects",
     },
     {
       title: "Team",
       url: "#",
       icon: IconUsers,
+      view: "team",
     },
   ],
   navClouds: [
@@ -151,7 +156,14 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  activeView,
+  onSelectView,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  activeView?: string
+  onSelectView?: (view: string) => void
+}) {
   const { data: session } = useSession()
   const user = {
     name: session?.user?.name ?? "Admin",
@@ -177,7 +189,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} activeView={activeView} onSelectView={onSelectView} />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
