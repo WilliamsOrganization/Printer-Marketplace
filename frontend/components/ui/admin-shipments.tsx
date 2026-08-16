@@ -70,12 +70,12 @@ export default function ShipmentsAdmin() {
 			<div className="flex-1">
 				<ShipmentsTable
 					shipments={shipments}
-					onLabelCreated={handleLabelCreated}
+					onShippingUpdated={handleLabelCreated}
 					onRowClick={handleRowClick}
 				/>
 			</div>
 
-			<div className="flex-1 min-h-[300px] overflow-hidden rounded-lg border">
+			<div className="flex-1 min-h-[40vh] overflow-hidden rounded-lg border">
 				<GoogleMap
 					center={center}
 					zoom={5}

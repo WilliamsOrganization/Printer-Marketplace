@@ -229,7 +229,7 @@ public class ShippingService {
 	// RETURNED/FAILURE/UNKNOWN have no equivalent in Shipping.Status yet, so
 	// the status is left as whatever it already was for those - only the
 	// location still gets updated for them.
-	private Optional<Shipping.Status> mapTrackingStatus(TrackingStatusEnum status) {
+	Optional<Shipping.Status> mapTrackingStatus(TrackingStatusEnum status) {
 		return switch (status) {
 			case PRE_TRANSIT -> Optional.of(Shipping.Status.PURCHASED);
 			case TRANSIT -> Optional.of(Shipping.Status.IN_TRANSIT);
