@@ -1,11 +1,14 @@
 package com.ecommerce.backend.service;
 
+import com.ecommerce.backend.dto.LoginRequestWithProvider;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDateTime;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 public class SessionService {
     private final SessionRepository sessionRepository;
 	private final UserRepository userRepository;
+	private final int DAYS = 1;
 
 	/**
 	 * create session and attach a user to it
@@ -57,5 +61,37 @@ public class SessionService {
 			return session;
 		}
 		return null;
+	}
+
+	/**
+	 * handleOAuthLogin handles the login request and returns the session token
+	 * 
+	 * @param request
+	 * @return
+	 */
+	public Sessions sessionCreateWithProvider(Users user, LoginRequestWithProvider request) {
+		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
+			Sessions newSession = Sessions.builder().user(user).build();
+			return newSession;
+		});
+		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
+		session.setProviderAccountID(request.getProviderAccountID());
+		return sessionRepository.save(session);
+	}
+	/**
+	 * Creates a new refreshed session token for a returning user
+	 *
+	 */
+	public Sessions refreshUserToken(Users user) {
+		Sessions session = sessionRepository.findByUser(user).orElseGet(()->{
+			Sessions newSession = Sessions.builder().user(user).build();
+			return newSession;
+		});
+		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
+		return sessionRepository.save(session);
+
+
+
+
 	}
 }

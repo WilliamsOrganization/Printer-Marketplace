@@ -4,15 +4,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.backend.dto.AccountCreationRequest;
 import com.ecommerce.backend.dto.AuthResponse;
-import com.ecommerce.backend.dto.LoginRequest;
+import com.ecommerce.backend.dto.LoginRequestWithProvider;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.ExistingUserFoundException;
 import com.ecommerce.backend.exception.InvalidCredentials;
 import com.ecommerce.backend.exception.UserNotFoundException;
 import com.ecommerce.backend.repository.SessionRepository;
@@ -30,7 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthService {
 	private static final long DAYS = 30;
 	private final UserRepository userRepository;
+	private final UserService userService;
 	private final SessionRepository sessionRepository;
+	private final PasswordEncoder passwordEncoder;
+	private final SessionService sessionService;
+
 
 	/**
 	 * Create a new session for a user if one doesn't already exist.
@@ -72,11 +81,11 @@ public class AuthService {
 	 * @param request
 	 * @return 
 	 */
-	public AuthResponse handleLogin(LoginRequest request) {
+	public AuthResponse handleLogin(LoginRequestWithProvider request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(
 						() -> new UserNotFoundException("User does not exist"));
-		Sessions session = sessionCreateWithProvider(user, request);
+		Sessions session = sessionService.sessionCreateWithProvider(user, request);
 		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
@@ -87,35 +96,31 @@ public class AuthService {
 	 * @param request
 	 * @return
 	 */
-	public AuthResponse handlePasswordLogin(LoginRequest request) {
+	public AuthResponse handlePasswordLogin(LoginRequestWithProvider request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(
 						() -> new UserNotFoundException("User does not exist"));
-		// this exists if the user logged in previously through oauth and hasn't
-		// set a password
-		if (user.getPassword() == null ||
-				!user.getPassword().equals(request.getPassword()))
+		if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword()))
 			throw new InvalidCredentials("Invalid Email Or Password");
-		// TODO: requires email authentication layer ie copy past password
-		// TODO: NEEDS PASSWORD HASHING PROPERLY!!!
 
-		Sessions session = sessionCreateWithProvider(user, request);
+		Sessions session = sessionService.sessionCreateWithProvider(user, request);
 		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
 	/**
-	 * handleOAuthLogin handles the login request and returns the session token
+	 * Account Creation Path
 	 * 
 	 * @param request
 	 * @return
 	 */
-	private Sessions sessionCreateWithProvider(Users user, LoginRequest request) {
-		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
-			Sessions newSession = Sessions.builder().user(user).build();
-			return newSession;
+	public AuthResponse handleAccountCreation(AccountCreationRequest request) {
+		userRepository.findByEmail(request.getEmail()).ifPresent(email -> {
+			throw new ExistingUserFoundException("User already exists");
 		});
-		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
-		session.setProviderAccountID(request.getProviderAccountID());
-		return sessionRepository.save(session);
+		Users user = userService.getUserFromSession();
+		userService.registerUserPassword(user, request);
+		Sessions newSession = sessionService.refreshUserToken(user);
+		return new AuthResponse(newSession.getToken() , user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
+
 }

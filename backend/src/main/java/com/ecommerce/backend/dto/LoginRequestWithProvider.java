@@ -6,7 +6,7 @@ import lombok.Data;
  * LoginRequest	
  */
 @Data
-public class LoginRequest {
+public class LoginRequestWithProvider {
 	private String provider;
 	private String providerAccountID;
 	private String email;

@@ -56,25 +56,4 @@ public class SessionController {
 				.map(Sessions::getCreatedAt)
 				.toList();
 	}
-
-	// @GetMapping
-	// public List<Sessions> getAll() {
-	// return repository.findAll();
-	// }
-	//
-	// @GetMapping("/{id}")
-	// public Sessions getOne(@PathVariable Long id) {
-	// return repository.findById(id).orElseThrow();
-	// }
-	//
-	// @PostMapping
-	// public Sessions create(@RequestBody Sessions session) {
-	// return repository.save(session);
-	// }
-	//
-	// @DeleteMapping("/{id}")
-	//
-	// public void delete(@PathVariable Long id) {
-	// repository.deleteById(id);
-	// }
 }

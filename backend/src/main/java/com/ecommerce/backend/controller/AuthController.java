@@ -1,7 +1,8 @@
 package com.ecommerce.backend.controller;
 
+import com.ecommerce.backend.dto.AccountCreationRequest;
 import com.ecommerce.backend.dto.AuthResponse;
-import com.ecommerce.backend.dto.LoginRequest;
+import com.ecommerce.backend.dto.LoginRequestWithProvider;
 import com.ecommerce.backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/login")
-	public ResponseEntity<AuthResponse> Login(@RequestBody LoginRequest request) {
+	public ResponseEntity<AuthResponse> Login(@RequestBody LoginRequestWithProvider request) {
 		if (request.getPassword() == null) {
 			return ResponseEntity.ok(authService.handleLogin(request));
 		}
@@ -35,5 +36,14 @@ public class AuthController {
 		public ResponseEntity<Void> verifyAdmin() {
 			return ResponseEntity.ok().build();
 		}
-		
+
+	/**
+	 * Creates a new account with a password
+	 *
+	 * @param AccountCreationRequest
+	 */
+	@PostMapping("/create")
+		public AuthResponse Create(@RequestBody AccountCreationRequest request) {
+			return authService.handleAccountCreation(request);
+		}
 }
