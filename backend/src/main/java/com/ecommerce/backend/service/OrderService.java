@@ -232,4 +232,14 @@ public class OrderService {
 		userService.registerUser(order.getUser());
 		log.info("Order Status Updated to {}", order.getStatus());
 	}
+
+	/**
+	 * Sets the order status to REFUNDED and awaits ADMIN approval
+	 * @param order the order to be paid
+	 */
+	public void setOrderReturned(Orders order) {
+		order.setStatus(Orders.Status.REFUNDED);
+		orderRepository.save(order);
+		log.info("Order Status Updated to {}", order.getStatus());
+	}
 }

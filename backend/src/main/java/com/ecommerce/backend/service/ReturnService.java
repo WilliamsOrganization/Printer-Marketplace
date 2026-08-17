@@ -48,6 +48,7 @@ public class ReturnService {
 				.reasonForReturn(request.getReason())
 				.status(Returns.ReturnStatus.PENDING)
 				.build();
+		orderService.setOrderReturned(order);
 		return returnRepository.save(returnRequest);
 	}
 
