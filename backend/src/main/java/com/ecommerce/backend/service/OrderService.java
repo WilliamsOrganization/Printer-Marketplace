@@ -238,7 +238,7 @@ public class OrderService {
 	 * @param order the order to be paid
 	 */
 	public void setOrderReturned(Orders order) {
-		order.setStatus(Orders.Status.REFUNDED);
+		order.setStatus(Orders.Status.RETURNED);
 		orderRepository.save(order);
 		log.info("Order Status Updated to {}", order.getStatus());
 	}
