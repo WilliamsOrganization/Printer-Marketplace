@@ -23,7 +23,7 @@ public interface ReturnRepository extends JpaRepository<Returns, Long> {
 	 * Finds every return row that hasn't been geocoded yet.
 	 * @return the un-geocoded returns rows
 	 */
-	public List<Returns> findByLatIsNull();
+	public List<Returns> findByShipping_LatIsNull();
 
 	/**
 	 * Finds a return by its stripeRefundId.

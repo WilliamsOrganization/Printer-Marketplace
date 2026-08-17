@@ -36,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/returns")
 public class ReturnController {
 	private final ReturnService returnService;
-	private final OrderService orderService;
 	private final UserService userService;
 
 	/**
