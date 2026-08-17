@@ -148,6 +148,8 @@ export interface Shipping {
 	addressTo: ShippingAddress;
 	lat: number | null;
 	lng: number | null;
+	fromLat: number | null;
+	fromLng: number | null;
 	currentLocation: ShippingAddress | null;
 	currentLat: number | null;
 	currentLng: number | null;
@@ -168,6 +170,25 @@ export interface Orders {
 	currency: string;
 	cardholderName: string | null;
 	status: OrderStatus;
+}
+
+export enum ReturnStatus {
+	PENDING = "PENDING",
+	CANCELLED = "CANCELLED",
+	REFUNDED = "REFUNDED",
+}
+
+export interface Returns {
+	id: number;
+	requestedDate: string;
+	orderId: number;
+	orderStripeSessionId: string;
+	itemsToReturn: OrderItem[];
+	reasonForReturn: string;
+	status: ReturnStatus;
+	refundedAmount: number | null;
+	refundedAt: string | null;
+	reviewed: boolean;
 }
 
 export interface CheckoutSummary {

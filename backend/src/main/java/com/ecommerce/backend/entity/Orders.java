@@ -65,7 +65,7 @@ public class Orders {
 	private Shipping shipping;
 
 	@OneToOne(mappedBy = "order")
-	@JsonManagedReference
+	@JsonManagedReference("order-returns")
 	private Returns returns;
 
 	private String stripeEmail;

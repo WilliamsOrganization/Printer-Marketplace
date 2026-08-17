@@ -49,7 +49,7 @@ public class Returns {
 	@NotNull
 	@OneToOne
 	@JoinColumn(name = "orders_id", unique = true)
-	@JsonBackReference
+	@JsonBackReference("order-returns")
 	private Orders order;
 
 	@NonNull
@@ -57,10 +57,10 @@ public class Returns {
 	@OneToMany
 	@JoinColumn(name = "returns_id")
 	private List<OrderItem> itemsToReturn;
-	
+
 	@OneToOne
 	@JoinColumn(name = "shipping_id")
-	@JsonBackReference
+	@JsonBackReference("shipping-returns")
 	private Shipping shipping;
 
 	@NonNull

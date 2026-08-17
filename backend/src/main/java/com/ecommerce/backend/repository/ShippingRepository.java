@@ -26,6 +26,12 @@ public interface ShippingRepository extends JpaRepository<Shipping, Long> {
 	List<Shipping> findByLatIsNull();
 
 	/**
+	 * Finds every shipping row whose pickup address hasn't been geocoded yet.
+	 * @return the un-geocoded shipping rows
+	 */
+	List<Shipping> findByFromLatIsNull();
+
+	/**
 	 * Finds a shipping by its carrier tracking number - how the Shippo
 	 * track_updated webhook looks up which row to update.
 	 * @param trackingNumber the carrier tracking number

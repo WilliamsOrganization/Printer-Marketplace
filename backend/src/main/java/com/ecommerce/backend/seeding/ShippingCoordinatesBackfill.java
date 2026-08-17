@@ -27,22 +27,35 @@ public class ShippingCoordinatesBackfill {
 	ApplicationRunner backfillShippingCoordinates(ShippingRepository shippingRepository,
 			GoogleMapsService googleMapsService) {
 		return args -> {
-			List<Shipping> ungeocoded = shippingRepository.findByLatIsNull();
-			if (ungeocoded.isEmpty()) {
-				return;
-			}
-			logger.info("[INIT]: backfilling coordinates for {} shipping row(s)", ungeocoded.size());
-			for (Shipping shipping : ungeocoded) {
+			List<Shipping> ungeocodedTo = shippingRepository.findByLatIsNull();
+			for (Shipping shipping : ungeocodedTo) {
 				LatLng location = googleMapsService.geocode(shipping.getAddressTo());
 				if (location == null) {
-					logger.warn("[INIT]: could not geocode shipping {}", shipping.getId());
+					logger.warn("[INIT]: could not geocode shipping {} destination", shipping.getId());
 					continue;
 				}
 				shipping.setLat(location.lat);
 				shipping.setLng(location.lng);
 				shippingRepository.save(shipping);
 			}
-			logger.info("[INIT]: shipping coordinate backfill complete");
+			if (!ungeocodedTo.isEmpty()) {
+				logger.info("[INIT]: backfilled destination coordinates for {} shipping row(s)", ungeocodedTo.size());
+			}
+
+			List<Shipping> ungeocodedFrom = shippingRepository.findByFromLatIsNull();
+			for (Shipping shipping : ungeocodedFrom) {
+				LatLng location = googleMapsService.geocode(shipping.getAddressFrom());
+				if (location == null) {
+					logger.warn("[INIT]: could not geocode shipping {} pickup address", shipping.getId());
+					continue;
+				}
+				shipping.setFromLat(location.lat);
+				shipping.setFromLng(location.lng);
+				shippingRepository.save(shipping);
+			}
+			if (!ungeocodedFrom.isEmpty()) {
+				logger.info("[INIT]: backfilled pickup coordinates for {} shipping row(s)", ungeocodedFrom.size());
+			}
 		};
 	}
 }

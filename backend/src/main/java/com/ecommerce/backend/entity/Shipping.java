@@ -60,7 +60,7 @@ public class Shipping {
 	private Orders orders;
 
 	@OneToOne(mappedBy = "shipping")
-	@JsonManagedReference
+	@JsonManagedReference("shipping-returns")
 	private Returns returns;
 
 	// TODO: consider @PositiveOrZero
@@ -110,6 +110,12 @@ public class Shipping {
 			@AttributeOverride(name = "country", column = @Column(name = "from_country")),
 	})
 	private ShippingAddress addressFrom;
+
+	// Geocoded once (at creation, or via a one-time backfill) from
+	// addressFrom, the same way lat/lng is geocoded from addressTo - lets the
+	// order-status page pin the pickup location while status is PURCHASED.
+	private Double fromLat;
+	private Double fromLng;
 
 	@Embedded
 	@AttributeOverrides({

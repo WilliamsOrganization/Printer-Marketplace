@@ -51,6 +51,9 @@ export function Header() {
 						<Link href="/orders" className="text-sm text-muted-foreground hover:text-foreground">Orders</Link>
 					</Button>
 					<Button variant="ghost" size="sm" asChild>
+						<Link href="/returns" className="text-sm text-muted-foreground hover:text-foreground">Returns</Link>
+					</Button>
+					<Button variant="ghost" size="sm" asChild>
 						<Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
 							Shop
 						</Link>

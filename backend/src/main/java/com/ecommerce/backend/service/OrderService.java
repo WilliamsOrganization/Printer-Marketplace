@@ -86,14 +86,18 @@ public class OrderService {
 		order = orderRepository.save(order);
 
 		ShippingAddress addressTo = ShippingAddress.from(shipment.addressTo());
+		ShippingAddress addressFrom = ShippingAddress.from(shipment.addressFrom());
 		var location = googleMapsService.geocode(addressTo);
+		var fromLocation = googleMapsService.geocode(addressFrom);
 		Shipping shipping = Shipping.builder()
 				.orders(order)
 				.serviceType(quote.name())
-				.addressFrom(ShippingAddress.from(shipment.addressFrom()))
+				.addressFrom(addressFrom)
 				.addressTo(addressTo)
 				.lat(location != null ? location.lat : null)
 				.lng(location != null ? location.lng : null)
+				.fromLat(fromLocation != null ? fromLocation.lat : null)
+				.fromLng(fromLocation != null ? fromLocation.lng : null)
 				.shippoRateId(selectedRateId)
 				.status(Shipping.Status.PENDING)
 				.build();

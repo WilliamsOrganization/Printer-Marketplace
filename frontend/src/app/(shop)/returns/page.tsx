@@ -17,45 +17,43 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, PackageOpen, Receipt } from "lucide-react";
-import type { OrderResponse, OrderItem } from "@/lib/types";
-import { OrderStatus } from "@/lib/types";
+import { ArrowRight, PackageX, Receipt } from "lucide-react";
+import type { Returns, OrderItem } from "@/lib/types";
+import { ReturnStatus } from "@/lib/types";
 
 const STATUS_VARIANT: Record<
-	OrderStatus,
+	ReturnStatus,
 	"default" | "secondary" | "destructive"
 > = {
-	[OrderStatus.PENDING]: "secondary",
-	[OrderStatus.PAID]: "default",
-	[OrderStatus.COMPLETED]: "default",
-	[OrderStatus.EXPIRED]: "destructive",
-	[OrderStatus.FAILED]: "destructive",
+	[ReturnStatus.PENDING]: "secondary",
+	[ReturnStatus.REFUNDED]: "default",
+	[ReturnStatus.CANCELLED]: "destructive",
 };
 
-export default async function OrdersPage() {
-	const orders = await apiServer
-		.get<OrderResponse[]>("/orders/")
+export default async function ReturnsPage() {
+	const returns = await apiServer
+		.get<Returns[]>("/returns/")
 		.then((res) => res.data);
 
-	if (!orders || orders.length === 0) {
+	if (!returns || returns.length === 0) {
 		return (
 			<div className="flex flex-col">
 				<section className="min-h-[60vh] flex items-center justify-center px-6 py-20">
 					<div className="flex flex-col items-center text-center gap-3 w-full max-w-md text-muted-foreground">
 						<div className="size-16 rounded-full bg-muted flex items-center justify-center">
-							<PackageOpen className="size-7" />
+							<PackageX className="size-7" />
 						</div>
 						<div className="text-center">
 							<p className="font-serif italic text-foreground">
-								No orders yet.
+								No returns yet.
 							</p>
 							<p className="text-xs mt-1 tracking-wide">
-								Orders you place will show up here.
+								Returns you request will show up here.
 							</p>
 						</div>
 						<Button asChild className="mt-4">
-							<Link href="/">
-								Continue Shopping
+							<Link href="/orders">
+								View orders
 								<ArrowRight className="ml-2 size-4" />
 							</Link>
 						</Button>
@@ -73,25 +71,25 @@ export default async function OrdersPage() {
 						<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground">
 							Your account
 						</p>
-						<h1 className="text-4xl font-serif leading-snug">Your orders</h1>
+						<h1 className="text-4xl font-serif leading-snug">Your returns</h1>
 					</div>
 
 					<div className="flex flex-col gap-4">
-						{orders.map(({ order }) => {
-							const items = order?.items ?? [];
+						{returns.map((returnRequest) => {
+							const items = returnRequest.itemsToReturn ?? [];
 							const previewItems = items.slice(0, 4);
 							const extraCount = items.length - previewItems.length;
 
 							return (
-								<Card key={order.id}>
+								<Card key={returnRequest.id}>
 									<CardHeader className="flex flex-row items-start justify-between gap-4">
 										<div className="flex flex-col gap-1">
 											<CardTitle className="text-base font-serif">
-												Order #{order.id}
+												Return #{returnRequest.id}
 											</CardTitle>
 											<p className="text-xs text-muted-foreground">
-												{order.date
-													? new Date(order.date).toLocaleDateString(
+												{returnRequest.requestedDate
+													? new Date(returnRequest.requestedDate).toLocaleDateString(
 															undefined,
 															{
 																year: "numeric",
@@ -102,8 +100,8 @@ export default async function OrdersPage() {
 													: null}
 											</p>
 										</div>
-										<Badge variant={STATUS_VARIANT[order.status] ?? "outline"}>
-											{order.status}
+										<Badge variant={STATUS_VARIANT[returnRequest.status] ?? "outline"}>
+											{returnRequest.status}
 										</Badge>
 									</CardHeader>
 
@@ -151,20 +149,19 @@ export default async function OrdersPage() {
 												+{extraCount} more item{extraCount === 1 ? "" : "s"}
 											</p>
 										)}
+										{returnRequest.reasonForReturn && (
+											<p className="text-xs text-muted-foreground mt-3 italic">
+												&ldquo;{returnRequest.reasonForReturn}&rdquo;
+											</p>
+										)}
 									</CardContent>
 
-									<CardFooter className="flex items-center justify-between">
-										<p className="text-sm font-semibold">
-											${((order.total ?? 0) / 100).toFixed(2)}{" "}
-											<span className="text-xs font-normal text-muted-foreground uppercase">
-												{order.currency}
-											</span>
-										</p>
+									<CardFooter className="flex items-center justify-end">
 										<Button variant="outline" size="sm" asChild>
 											<Link
-												href={`/order-status?session_id=${order.stripeSessionId}`}
+												href={`/order-status?session_id=${returnRequest.orderStripeSessionId}`}
 											>
-												View details
+												View order
 												<Receipt className="ml-2 size-4" />
 											</Link>
 										</Button>

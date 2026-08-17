@@ -138,7 +138,7 @@ public class ResendService {
 				+ order.getCurrency() + "</span></td></tr>"
 				+ "</table>"
 				+ "<div style=\"text-align:center;margin-top:32px;\">"
-				+ "<a href=\"" + STORE_URL + "/success?session_id=" + order.getStripeSessionId() + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">View Order</a>"
+				+ "<a href=\"" + STORE_URL + "/order-status?session_id=" + order.getStripeSessionId() + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">View Order</a>"
 				+ "&nbsp;&nbsp;"
 				+ "<a href=\"" + STORE_URL + "\" style=\"font-family:Arial,sans-serif;display:inline-block;color:#555;text-decoration:none;font-size:13px;padding:10px 24px;\">Continue Shopping</a>"
 				+ "</div>"
@@ -155,7 +155,7 @@ public class ResendService {
 	 * purchased and a real tracking number exists.
 	 *
 	 * @param user the user to send the email to
-	 * @param order the order the shipment belongs to, for its success-page link
+	 * @param order the order the shipment belongs to, for its order-status page link
 	 * @param shipping the shipment, with its tracking info populated
 	 */
 	public void sendTrackingInformation(@NonNull Users user, Orders order, Shipping shipping) {
@@ -178,7 +178,7 @@ public class ResendService {
 	 * Builds the shipping notification email body, mirroring the order
 	 * confirmation email's look: an uppercase eyebrow header, serif heading,
 	 * a destination card, and the same button row (a primary action plus a
-	 * secondary link back to the order's success page).
+	 * secondary link back to the order's status page).
 	 *
 	 * @param order the order the shipment belongs to
 	 * @param shipping the shipment, with its tracking info populated
@@ -187,7 +187,7 @@ public class ResendService {
 	private String buildTrackingHtml(Orders order, Shipping shipping) {
 		String trackingNumber = shipping.getTrackingNumber() != null ? shipping.getTrackingNumber() : "N/A";
 		String trackingUrl = shipping.getTrackingUrl();
-		String orderUrl = STORE_URL + "/success?session_id=" + order.getStripeSessionId();
+		String orderUrl = STORE_URL + "/order-status?session_id=" + order.getStripeSessionId();
 
 		String destination = shipping.getAddressTo() != null
 				? "<div style=\"border:1px solid #e5e5e5;border-radius:8px;padding:16px;margin:0 0 24px;font-family:Arial,sans-serif;\">"
