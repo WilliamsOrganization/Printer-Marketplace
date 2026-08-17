@@ -88,6 +88,18 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
+	 * handleOrderNotFound handles the OrderNotFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(OrderNotFoundException.class)
+	public ResponseEntity<String> handleOrderNotFound(OrderNotFoundException ex) {
+		log.warn("OrderNotFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	/**
 	 * handleUnexpected handles any other exceptions
 	 * 
 	 * @param ex

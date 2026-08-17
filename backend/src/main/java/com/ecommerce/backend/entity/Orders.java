@@ -64,6 +64,10 @@ public class Orders {
 	@JsonManagedReference
 	private Shipping shipping;
 
+	@OneToOne(mappedBy = "order")
+	@JsonManagedReference
+	private Returns returns;
+
 	private String stripeEmail;
 
 	private String stripeSessionId;

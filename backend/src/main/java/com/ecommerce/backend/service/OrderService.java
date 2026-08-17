@@ -14,6 +14,7 @@ import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.ShippingAddress;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.OrderNotFoundException;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.ShippingRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
@@ -119,6 +120,18 @@ public class OrderService {
 	 */
 	public Orders getOrder(Long id) {
 		return orderRepository.findById(id).orElseThrow();
+	}
+
+	/**
+	 * Gets an order by its User and Id.
+	 *
+	 * @param user the user
+	 * @param id the order's id
+	 * @return the order
+	 */
+	public Orders getOrderByUserAndId(Users user, Long id) {
+		return orderRepository.findByUserAndId(user, id)
+				.orElseThrow(() -> new OrderNotFoundException("Order not found"));
 	}
 
 	/**

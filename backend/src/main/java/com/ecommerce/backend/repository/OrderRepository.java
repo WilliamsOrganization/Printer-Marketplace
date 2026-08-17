@@ -25,4 +25,6 @@ public interface OrderRepository extends JpaRepository<Orders, Long> {
 	 * @return the order
 	 */
 	Optional<Orders> findOrderByStripeSessionId(String stripeSessionId);
+
+	Optional<Orders> findByUserAndId(Users user, Long id);
 }

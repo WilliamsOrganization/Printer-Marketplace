@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -57,6 +58,10 @@ public class Shipping {
 	@NonNull
 	@JsonBackReference
 	private Orders orders;
+
+	@OneToOne(mappedBy = "shipping")
+	@JsonManagedReference
+	private Returns returns;
 
 	// TODO: consider @PositiveOrZero
 	// The label's real cost, from actually purchasing it - kept separate
