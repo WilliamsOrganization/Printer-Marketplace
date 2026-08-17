@@ -4,6 +4,7 @@ import * as React from 'react'
 import {
 	flexRender,
 	getCoreRowModel,
+	getFilteredRowModel,
 	getPaginationRowModel,
 	useReactTable,
 	type ColumnDef,
@@ -53,6 +54,7 @@ import {
 } from './select'
 import { Label } from './label'
 import { Input } from './input'
+import { OrderUserDialog } from './custom/order-user-dialog'
 
 const SHIPPING_STATUS_VARIANT: Record<ShippingStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
 	[ShippingStatus.PENDING]: 'outline',
@@ -295,6 +297,7 @@ export default function ShipmentsTable({
 	const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 12 })
 	const [sortByStatus, setSortByStatus] = React.useState(true)
 	const [sortByDate, setSortByDate] = React.useState(true)
+	const [globalFilter, setGlobalFilter] = React.useState('')
 
 	// Same independent-toggle pattern as the orders table's Sort dropdown -
 	// status (when on) always wins ties first, date (when on) breaks those
@@ -321,7 +324,14 @@ export default function ShipmentsTable({
 				cell: ({ row }) => <div className="font-medium">#{row.original.id}</div>,
 			},
 			{
-				accessorKey: 'cardholderName',
+				id: 'email',
+				accessorFn: (row) => [row.user?.email ?? row.email, row.user?.phoneNumber].filter(Boolean).join(' '),
+				header: () => <div>Customer</div>,
+				cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
+			},
+			{
+				id: 'cardholderName',
+				accessorFn: (row) => row.cardholderName ?? '',
 				header: () => <div>Cardholder</div>,
 				cell: ({ row }) => (
 					<span className="text-sm text-muted-foreground">
@@ -331,6 +341,9 @@ export default function ShipmentsTable({
 			},
 			{
 				id: 'destination',
+				accessorFn: (row) =>
+					[row.shipping.addressTo.street1, row.shipping.addressTo.street2, row.shipping.addressTo.city,
+						row.shipping.addressTo.state, row.shipping.addressTo.zip].filter(Boolean).join(' '),
 				header: () => <div>Destination</div>,
 				cell: ({ row }) => {
 					const addr = row.original.shipping.addressTo
@@ -349,6 +362,10 @@ export default function ShipmentsTable({
 			},
 			{
 				id: 'currentLocation',
+				accessorFn: (row) =>
+					row.shipping.currentLocation
+						? [row.shipping.currentLocation.city, row.shipping.currentLocation.state].filter(Boolean).join(' ')
+						: '',
 				header: () => <div>Current Location</div>,
 				cell: ({ row }) => {
 					const current = row.original.shipping.currentLocation
@@ -373,6 +390,7 @@ export default function ShipmentsTable({
 			},
 			{
 				id: 'tracking',
+				accessorFn: (row) => row.shipping.trackingNumber ?? '',
 				header: () => <div>Tracking</div>,
 				cell: ({ row }) =>
 					row.original.shipping.trackingUrl ? (
@@ -434,16 +452,24 @@ export default function ShipmentsTable({
 	const table = useReactTable({
 		data: sortedShipments,
 		columns,
-		state: { pagination },
+		state: { pagination, globalFilter },
 		onPaginationChange: setPagination,
+		onGlobalFilterChange: setGlobalFilter,
 		getRowId: (row) => row.shipping.id.toString(),
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
 	})
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="flex items-center justify-end">
+			<div className="flex items-center justify-between">
+				<Input
+					placeholder="Search…"
+					value={globalFilter}
+					onChange={(e) => setGlobalFilter(e.target.value)}
+					className="h-8 w-40 lg:w-56"
+				/>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant={sortByStatus || sortByDate ? 'default' : 'outline'} size="sm">
@@ -511,7 +537,7 @@ export default function ShipmentsTable({
 			</div>
 			<div className="flex items-center justify-between px-1">
 				<div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-					{shipments.length} shipment{shipments.length === 1 ? '' : 's'}
+					{table.getFilteredRowModel().rows.length} of {shipments.length} shipment{shipments.length === 1 ? '' : 's'}
 				</div>
 				<div className="flex w-full items-center gap-8 lg:w-fit">
 					<div className="hidden items-center gap-2 lg:flex">

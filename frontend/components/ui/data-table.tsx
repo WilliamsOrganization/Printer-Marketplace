@@ -467,7 +467,8 @@ export function DataTable() {
 			cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
 		},
 		{
-			accessorKey: "cardholderName",
+			id: "cardholderName",
+			accessorFn: (row) => row.cardholderName ?? "",
 			header: () => <div className="text-center">Cardholder</div>,
 			cell: ({ row }) => (
 				<div className="text-center text-muted-foreground">
