@@ -4,10 +4,8 @@ import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.service.MockShippoService;
 import com.ecommerce.backend.service.OrderService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,14 +36,9 @@ public class MockShippoController {
 	 */
 	@PostMapping("/{orderId}/advance")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Shipping> advanceTracking(@PathVariable Long orderId) {
-		try {
-			Orders order = orderService.getOrder(orderId);
-			Shipping shipping = mockShippoService.advanceTracking(order);
-			return ResponseEntity.ok(shipping);
-		} catch (Exception e) {
-			log.error("failed to mock-advance tracking for order {}: ", orderId, e);
-			return ResponseEntity.internalServerError().build();
-		}
+	public ResponseEntity<Shipping> advanceTracking(@PathVariable Long orderId) throws Exception {
+		Orders order = orderService.getOrder(orderId);
+		Shipping shipping = mockShippoService.advanceTracking(order);
+		return ResponseEntity.ok(shipping);
 	}
 }

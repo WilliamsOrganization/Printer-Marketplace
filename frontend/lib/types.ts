@@ -166,6 +166,7 @@ export interface Orders {
 	shippingCost: number;
 	total: number;
 	currency: string;
+	cardholderName: string | null;
 	status: OrderStatus;
 }
 

@@ -303,7 +303,7 @@ public class StripeCatalogService {
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleSuccessCheckoutEvent(Session deserializeSession) {
-		orderService.applySuccessfulCheckout(deserializeSession.getId());
+		orderService.applySuccessfulCheckout(deserializeSession);
 		// TODO: generate shipping label
 		// update the shipping table with metadata and url for the pdf.
 		// FIX: Shitty blob storage implementation is shitty. fix it.

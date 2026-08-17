@@ -86,6 +86,10 @@ export function CheckoutForm({
 			setError("Please select an address from the suggestions.")
 			return
 		}
+		if (address.country !== "CA") {
+			setError("We currently only ship within Canada.")
+			return
+		}
 		setLoading(true)
 
 		// BUG: Backend may return empty rates on first request for a new address.
@@ -113,7 +117,10 @@ export function CheckoutForm({
 					}
 					return
 				}
-				toast.error("Failed to get shipping rates")
+				const reason = isAxiosError(error) && typeof error.response?.data === "string"
+					? error.response.data
+					: "Failed to get shipping rates"
+				toast.error(reason)
 			})
 			.finally(() => {
 				setLoading(false)

@@ -145,6 +145,7 @@ public class OrderService {
 		order.setCurrency(session.getCurrency());
 		order.setSubtotal(session.getAmountSubtotal());
 		order.setTotal(session.getAmountTotal());
+		order.setCardholderName(session.getCustomerDetails() != null ? session.getCustomerDetails().getName() : null);
 		Users user=userService.registerUser(order.getUser());
 		if (session.getShippingCost() != null) {
 			order.setShippingCost(session.getShippingCost().getAmountTotal());
@@ -199,13 +200,17 @@ public class OrderService {
 	 *
 	 * @param stripeSessionId the successful Stripe checkout session's id
 	 */
-	public void applySuccessfulCheckout(String stripeSessionId) {
-		Orders order = getOrderByStripeSessionId(stripeSessionId);
+	public void applySuccessfulCheckout(Session session) {
+		Orders order = getOrderByStripeSessionId(session.getId());
+		String customerName = session.getCustomerDetails() != null ? session.getCustomerDetails().getName() : null;
+
 		if (order.getStatus() != Orders.Status.COMPLETED) {
 			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
 			return;
 		}
 		order.setStatus(Orders.Status.PAID);
+		order.setCardholderName(customerName);
+		log.info("Cardholder name set to {}", customerName);
 		orderRepository.save(order);
 		userService.registerUser(order.getUser());
 		log.info("Order Status Updated to {}", order.getStatus());

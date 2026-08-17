@@ -34,7 +34,7 @@ export function AddressInput({ onAddressSelect }: AddressInputProps) {
 	} = usePlacesAutocomplete({
 		requestOptions: {
 			types: ["address"],
-			componentRestrictions: { country: ["ca", "us"] },
+			componentRestrictions: { country: ["ca"] },
 		},
 		debounce: 300,
 		initOnMount: isLoaded,

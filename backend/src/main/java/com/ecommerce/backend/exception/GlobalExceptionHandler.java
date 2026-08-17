@@ -40,8 +40,32 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
+	 * handleExistingShippingFound handles the ExistingShippingFound
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(ExistingShippingFound.class)
+	public ResponseEntity<String> handleExistingShippingFound(ExistingShippingFound ex) {
+		log.warn("ExistingShippingFound: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+	}
+
+	/**
+	 * handleUnsupportedShippingDestination handles the UnsupportedShippingDestination
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(UnsupportedShippingDestination.class)
+	public ResponseEntity<String> handleUnsupportedShippingDestination(UnsupportedShippingDestination ex) {
+		log.warn("UnsupportedShippingDestination: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
+
+	/**
 	 * handleInvalidCredentials handles the InvalidCredentials
-	 * 
+	 *
 	 * @param ex
 	 * @return
 	 */

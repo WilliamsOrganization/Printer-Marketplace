@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -17,16 +18,18 @@ import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.ShippingAddress;
 import com.ecommerce.backend.entity.ShippingParcel;
+import com.ecommerce.backend.exception.UnsupportedShippingDestination;
 import com.ecommerce.backend.repository.ShippingParcelRepository;
 import com.ecommerce.backend.repository.ShippingRepository;
+import com.google.maps.model.LatLng;
 import com.goshippo.shippo_sdk.models.components.DistanceUnitEnum;
 import com.goshippo.shippo_sdk.models.components.Rate;
 import com.goshippo.shippo_sdk.models.components.Track;
 import com.goshippo.shippo_sdk.models.components.TrackingStatusEnum;
 import com.goshippo.shippo_sdk.models.components.Transaction;
+import com.goshippo.shippo_sdk.models.components.TransactionStatusEnum;
 import com.goshippo.shippo_sdk.models.components.WebhookPayloadTrack;
 import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
-import com.google.maps.model.LatLng;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -141,7 +144,7 @@ public class ShippingService {
 	 * @return the updated shipment
 	 */
 	public Shipping createShippingLabel(Orders order, Long lengthCm, Long widthCm, Long heightCm,
-			Long weightGrams) throws Exception {
+			Long weightGrams) throws UnsupportedShippingDestination, Exception {
 		Shipping shipping = order.getShipping();
 
 		ShippingParcel parcel = getOrCreateParcel(ShippingParcel.builder()
@@ -176,6 +179,14 @@ public class ShippingService {
 								"No shipping rates available for order " + order.getId())));
 
 		Transaction transaction = shippoService.purchaseLabel(chosen.objectId());
+		if (transaction.status().orElse(null) != TransactionStatusEnum.SUCCESS) {
+			String reason = transaction.messages()
+					.map(messages -> messages.stream()
+							.map(message -> message.text().orElse(message.code().orElse("unknown error")))
+							.collect(Collectors.joining("; ")))
+					.orElse("no details returned");
+			throw new UnsupportedShippingDestination(reason);
+		}
 		shipping.setTrackingNumber(transaction.trackingNumber().orElse(null));
 		shipping.setTrackingUrl(transaction.trackingUrlProvider().orElse(null));
 		shipping.setLabelPdfUrl(transaction.labelUrl().orElse(null));

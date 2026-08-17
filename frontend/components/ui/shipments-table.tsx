@@ -15,6 +15,7 @@ import {
 	IconChevronsLeft,
 	IconChevronsRight,
 } from '@tabler/icons-react'
+import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import api from '@/lib/api'
 import { Orders, Shipping, ShippingStatus } from '@/lib/types'
@@ -141,7 +142,10 @@ function CreateLabelDialog({
 				setOpen(false)
 			})
 			.catch((err) => {
-				toast.error('Failed to create shipping label: ' + err.message)
+				const reason = isAxiosError(err) && typeof err.response?.data === 'string'
+					? err.response.data
+					: err.message
+				toast.error('Failed to create shipping label: ' + reason)
 			})
 			.finally(() => setLoading(false))
 	}
@@ -264,7 +268,10 @@ function AdvanceTrackingButton({
 				onAdvanced(res.data)
 			})
 			.catch((err) => {
-				toast.error('Failed to advance tracking: ' + err.message)
+				const reason = isAxiosError(err) && typeof err.response?.data === 'string'
+					? err.response.data
+					: err.message
+				toast.error('Failed to advance tracking: ' + reason)
 			})
 			.finally(() => setLoading(false))
 	}
@@ -312,6 +319,15 @@ export default function ShipmentsTable({
 				accessorKey: 'id',
 				header: () => <div>Order</div>,
 				cell: ({ row }) => <div className="font-medium">#{row.original.id}</div>,
+			},
+			{
+				accessorKey: 'cardholderName',
+				header: () => <div>Cardholder</div>,
+				cell: ({ row }) => (
+					<span className="text-sm text-muted-foreground">
+						{row.original.cardholderName ?? '—'}
+					</span>
+				),
 			},
 			{
 				id: 'destination',

@@ -467,6 +467,15 @@ export function DataTable() {
 			cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
 		},
 		{
+			accessorKey: "cardholderName",
+			header: () => <div className="text-center">Cardholder</div>,
+			cell: ({ row }) => (
+				<div className="text-center text-muted-foreground">
+					{row.original.cardholderName ?? "—"}
+				</div>
+			),
+		},
+		{
 			id: "items",
 			accessorFn: (row) => row.items?.map((item) => item.itemTitle).join(" ") ?? "",
 			header: () => <div className="text-center">Items</div>,

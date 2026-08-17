@@ -1,5 +1,13 @@
 package com.ecommerce.backend.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.ecommerce.backend.dto.CreateShippingLabelRequest;
 import com.ecommerce.backend.dto.ShipmentFromValues;
 import com.ecommerce.backend.dto.ShipmentToRequest;
@@ -9,7 +17,9 @@ import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.ShippingParcel;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.ExistingShippingFound;
 import com.ecommerce.backend.exception.ExistingUserFoundException;
+import com.ecommerce.backend.exception.UnsupportedShippingDestination;
 import com.ecommerce.backend.service.CartService;
 import com.ecommerce.backend.service.OrderService;
 import com.ecommerce.backend.service.ShippingService;
@@ -19,14 +29,6 @@ import com.goshippo.shippo_sdk.models.components.WebhookPayloadTrack;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * ShippingController
@@ -51,25 +53,27 @@ public class ShippingController {
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	@PostMapping("/rates")
-	public ResponseEntity<?> getShipmentRates(@RequestBody ShipmentToRequest shipmentToValues) {
-		try {
-			ShipmentFromValues shipmentFromValues = new ShipmentFromValues();
-			Users user = userService.getUserFromSession();
-			Cart cart = cartService.getCartItems(user);
-			userService.updateContactInfo(user, UpdateContactRequest.builder()
-					.email(shipmentToValues.getEmail())
-					.phoneNumber(shipmentToValues.getPhone())
-					.build());
-			ShippingParcel parcel = shippingService.estimateParcel(cart);
-			var rates = shippoService.getShipmentRates(shipmentFromValues, shipmentToValues, parcel);
-			return ResponseEntity.ok(rates);
-		} catch (ExistingUserFoundException e) {
-			throw e;
-		} catch (Exception e) {
-			log.error("failed to get shipment rates: ", e);
-			return ResponseEntity.internalServerError().build();
+	public ResponseEntity<?> getShipmentRates(@RequestBody ShipmentToRequest shipmentToValues)
+			throws ExistingUserFoundException, UnsupportedShippingDestination, Exception {
+		// Cross-border (e.g. to the US) needs a Zonos-backed customs/duty
+		// setup on the Shippo account that isn't configured yet - block it
+		// here rather than let Shippo silently fail to purchase a label
+		// later (see ShippingService.createShippingLabel's status check).
+		if (!shipmentToValues.getCountry().equalsIgnoreCase("CA")) {
+			throw new UnsupportedShippingDestination("We currently only ship within Canada");
 		}
-
+		ShipmentFromValues shipmentFromValues = new ShipmentFromValues();
+		Users user = userService.getUserFromSession();
+		Cart cart = cartService.getCartItems(user);
+		userService.updateContactInfo(
+				user, UpdateContactRequest.builder()
+						.email(shipmentToValues.getEmail())
+						.phoneNumber(shipmentToValues.getPhone())
+						.build());
+		ShippingParcel parcel = shippingService.estimateParcel(cart);
+		var rates = shippoService.getShipmentRates(shipmentFromValues,
+				shipmentToValues, parcel);
+		return ResponseEntity.ok(rates);
 	}
 
 	/**
@@ -82,16 +86,18 @@ public class ShippingController {
 	@PostMapping("/{orderId}/label")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Shipping> createShippingLabel(@PathVariable Long orderId,
-			@RequestBody CreateShippingLabelRequest request) {
-		try {
-			Orders order = orderService.getOrder(orderId);
-			Shipping shipping = shippingService.createShippingLabel(order, request.lengthCm(), request.widthCm(),
-					request.heightCm(), request.weightGrams());
-			return ResponseEntity.ok(shipping);
-		} catch (Exception e) {
-			log.error("failed to create shipping label for order {}: ", orderId, e);
-			return ResponseEntity.internalServerError().build();
+			@RequestBody CreateShippingLabelRequest request)
+			throws ExistingShippingFound, Exception, UnsupportedShippingDestination {
+		Orders order = orderService.getOrder(orderId);
+		Shipping existing = order.getShipping();
+		if (existing != null && existing.getLabelPdfUrl() != null && !existing.getLabelPdfUrl().isBlank()) {
+			throw new ExistingShippingFound(
+					"Shipping label already exists for order " + orderId);
 		}
+		Shipping shipping = shippingService.createShippingLabel(
+				order, request.lengthCm(), request.widthCm(), request.heightCm(),
+				request.weightGrams());
+		return ResponseEntity.ok(shipping);
 	}
 
 	/**
@@ -104,13 +110,7 @@ public class ShippingController {
 	 */
 	@PostMapping("/webhook")
 	public ResponseEntity<Void> handleTrackingWebhook(@RequestBody WebhookPayloadTrack payload) {
-		try {
-			shippingService.applyTrackingUpdate(payload);
-			return ResponseEntity.ok().build();
-		} catch (Exception e) {
-			log.error("failed to apply tracking update: ", e);
-			return ResponseEntity.internalServerError().build();
-		}
+		shippingService.applyTrackingUpdate(payload);
+		return ResponseEntity.ok().build();
 	}
 }
-

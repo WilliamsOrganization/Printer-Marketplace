@@ -77,6 +77,8 @@ public class Orders {
 	private Long total;
 	private String currency;
 
+	private String cardholderName;
+
 	@NotNull
 	@NonNull
 	@Column(nullable = false)
