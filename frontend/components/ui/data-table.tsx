@@ -98,7 +98,14 @@ import { OrderItemsDialog } from "./custom/order-items-dialog";
 import { OrderShippingDialog } from "./custom/order-shipping-dialog";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
-import { InventoryItem, Orders as Order, OrderStatus, ShippingStatus } from "@/lib/types";
+import {
+	InventoryItem,
+	Orders as Order,
+	OrderStatus,
+	ShippingStatus,
+	SizeCategoryLabel,
+	WeightCategoryLabel,
+} from "@/lib/types";
 
 export const schema = z.object({
 	id: z.number(),
@@ -349,7 +356,7 @@ export function DataTable() {
 		},
 		{
 			accessorKey: "itemTitle",
-			header: () => <div className="text-center">Item Title</div>,
+			header: () => <div className="text-center">Item Preview</div>,
 			cell: ({ row }) => {
 				return <TableCellViewer item={row.original} />;
 			},
@@ -372,6 +379,48 @@ export function DataTable() {
 					${row.original.itemCost.toFixed(2)}
 				</div>
 			),
+		},
+		{
+			accessorKey: "quantity",
+			header: () => <div className="text-center">Stock</div>,
+			cell: ({ row }) => (
+				<div className={`text-center font-medium ${row.original.quantity === 0 ? "text-destructive" : ""}`}>
+					{row.original.quantity}
+				</div>
+			),
+		},
+		{
+			id: "sizeCategory",
+			accessorFn: (row) => SizeCategoryLabel[row.sizeCategory],
+			header: () => <div className="text-center">Size</div>,
+			cell: ({ row }) => (
+				<div className="text-center text-muted-foreground">
+					{SizeCategoryLabel[row.original.sizeCategory]}
+				</div>
+			),
+		},
+		{
+			id: "weightCategory",
+			accessorFn: (row) => WeightCategoryLabel[row.weightCategory],
+			header: () => <div className="text-center">Weight</div>,
+			cell: ({ row }) => (
+				<div className="text-center text-muted-foreground">
+					{WeightCategoryLabel[row.original.weightCategory]}
+				</div>
+			),
+		},
+		{
+			id: "sale",
+			accessorFn: (row) => (row.sale ? "On Sale" : ""),
+			header: () => <div className="text-center">Sale</div>,
+			cell: ({ row }) =>
+				row.original.sale ? (
+					<div className="flex justify-center">
+						<Badge variant="default">On Sale</Badge>
+					</div>
+				) : (
+					<div className="text-center text-muted-foreground">—</div>
+				),
 		},
 		{
 			accessorKey: "isArchived",
@@ -944,19 +993,23 @@ function OrdersTable({
 function TableCellViewer({ item }: { item: InventoryItem }) {
 	return (
 		<Dialog>
+			<div className="flex justify-center">
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<DialogTrigger asChild>
 						<Button
 							variant="ghost"
-							className="text-foreground h-full w-full cursor-pointer justify-start rounded-none font-normal"
+							className="h-auto w-fit cursor-pointer justify-center rounded-full p-0 hover:bg-transparent"
 						>
-							{item.itemTitle}
+							<Badge variant="secondary" className="cursor-pointer px-6 transition-colors hover:bg-secondary/70">
+								{item.itemTitle}
+							</Badge>
 						</Button>
 					</DialogTrigger>
 				</TooltipTrigger>
 				<TooltipContent>Preview</TooltipContent>
 			</Tooltip>
+			</div>
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader className="gap-1">
 					<DialogTitle>{item.itemTitle}</DialogTitle>
