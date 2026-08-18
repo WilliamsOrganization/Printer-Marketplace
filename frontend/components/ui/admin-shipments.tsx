@@ -66,7 +66,7 @@ export default function ShipmentsAdmin() {
 
 	return (
 		<div className="flex flex-row gap-4">
-			<div className="flex-1">
+			<div className="@container/shipments min-w-0 flex-1">
 				<ShipmentsTable
 					shipments={shipments}
 					onShippingUpdated={handleLabelCreated}

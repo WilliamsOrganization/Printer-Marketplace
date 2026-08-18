@@ -1,94 +1,178 @@
 "use client";
 
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
-import { flexRender, type Table as TanstackTable } from "@tanstack/react-table";
-
-import { Button } from "@/components/ui/button";
+import * as React from "react";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
-import { Returns } from "@/lib/types";
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	getSortedRowModel,
+	useReactTable,
+	type ColumnDef,
+	type OnChangeFn,
+	type SortingState,
+	type Table as TanstackTable,
+	type VisibilityState,
+} from "@tanstack/react-table";
 
-export default function ReturnsTable({
-	table,
-	returns,
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DataTableGrid, DataTableSimplePagination } from "@/components/ui/data-table-grid";
+import { OrderItemsDialog } from "./custom/order-items-dialog";
+import { useDashboard } from "@/src/context/dashboard-context";
+import { Returns, ReturnStatus } from "@/lib/types";
+
+const STRIPE_ACCOUNT_ID = process.env.NEXT_PUBLIC_STRIPE_ACCOUNT_ID;
+
+const RETURN_STATUS_VARIANT: Record<ReturnStatus, "default" | "secondary" | "destructive" | "outline"> = {
+	[ReturnStatus.PENDING]: "secondary",
+	[ReturnStatus.REFUNDED]: "default",
+	[ReturnStatus.CANCELLED]: "destructive",
+};
+
+export function ReturnsTable({
+	globalFilter,
+	columnVisibility,
+	onColumnVisibilityChange,
+	onTableChange,
 }: {
-	table: TanstackTable<Returns>;
-	returns: Returns[];
+	globalFilter: string;
+	columnVisibility: VisibilityState;
+	onColumnVisibilityChange: OnChangeFn<VisibilityState>;
+	onTableChange: (table: TanstackTable<Returns>) => void;
 }) {
+	const { returns } = useDashboard();
+	const [sorting, setSorting] = React.useState<SortingState>([]);
+	const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
+
+	const columns: ColumnDef<Returns>[] = [
+		{
+			accessorKey: "id",
+			header: () => <div className="text-center">Return</div>,
+			cell: ({ row }) => <div className="font-medium">#{row.original.id}</div>,
+		},
+		{
+			accessorKey: "requestedDate",
+			header: () => <div className="text-center">Requested</div>,
+			cell: ({ row }) => (
+				<div className="text-muted-foreground text-center">
+					{row.original.requestedDate ? new Date(row.original.requestedDate).toLocaleDateString() : "—"}
+				</div>
+			),
+		},
+		{
+			id: "order",
+			accessorFn: (row) => row.orderId ?? "",
+			header: () => <div className="text-center">Order</div>,
+			cell: ({ row }) =>
+				row.original.orderStripeSessionId ? (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<a
+								href={`https://dashboard.stripe.com/${STRIPE_ACCOUNT_ID}/test/checkout/sessions/${row.original.orderStripeSessionId}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-foreground hover:text-foreground hover:bg-muted flex h-full w-full cursor-pointer items-center justify-center font-medium"
+							>
+								#{row.original.orderId}
+							</a>
+						</TooltipTrigger>
+						<TooltipContent>Open order in Stripe Dashboard</TooltipContent>
+					</Tooltip>
+				) : (
+					<div className="text-center font-medium">#{row.original.orderId}</div>
+				),
+		},
+		{
+			id: "items",
+			accessorFn: (row) => row.itemsToReturn?.map((item) => item.itemTitle).join(" ") ?? "",
+			header: () => <div className="text-center">Items</div>,
+			cell: ({ row }) => (
+				<div className="text-center">
+					<OrderItemsDialog
+						items={row.original.itemsToReturn}
+						title="Return Items"
+						description="Line items requested for return."
+						tooltip="View return items"
+						emptyMessage="No items on this return."
+					/>
+				</div>
+			),
+		},
+		{
+			accessorKey: "reasonForReturn",
+			header: () => <div className="text-center">Reason</div>,
+			cell: ({ row }) => (
+				<div className="max-w-48 truncate text-muted-foreground">
+					{row.original.reasonForReturn}
+				</div>
+			),
+		},
+		{
+			accessorKey: "status",
+			header: () => <div className="text-center">Status</div>,
+			cell: ({ row }) => (
+				<div className="flex justify-center">
+					<Badge variant={RETURN_STATUS_VARIANT[row.original.status]} className="px-1.5">
+						{row.original.status}
+					</Badge>
+				</div>
+			),
+		},
+		{
+			accessorKey: "refundedAmount",
+			header: () => <div className="text-center">Refunded</div>,
+			cell: ({ row }) => (
+				<div className="text-center font-medium">
+					{row.original.refundedAmount != null ? `$${(row.original.refundedAmount / 100).toFixed(2)}` : "—"}
+				</div>
+			),
+		},
+		{
+			accessorKey: "refundedAt",
+			header: () => <div className="text-center">Refunded At</div>,
+			cell: ({ row }) => (
+				<div className="text-muted-foreground text-center">
+					{row.original.refundedAt ? new Date(row.original.refundedAt).toLocaleDateString() : "—"}
+				</div>
+			),
+		},
+		{
+			accessorKey: "reviewed",
+			header: () => <div className="text-center">Reviewed</div>,
+			cell: ({ row }) => (
+				<div className="flex justify-center">
+					<Badge variant={row.original.reviewed ? "secondary" : "outline"}>
+						{row.original.reviewed ? "Reviewed" : "Pending"}
+					</Badge>
+				</div>
+			),
+		},
+	];
+
+	const table = useReactTable({
+		data: returns,
+		columns,
+		state: { sorting, pagination, globalFilter, columnVisibility },
+		getRowId: (row) => row.id.toString(),
+		onSortingChange: setSorting,
+		onPaginationChange: setPagination,
+		onColumnVisibilityChange,
+		getCoreRowModel: getCoreRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+	});
+
+	React.useEffect(() => {
+		onTableChange(table);
+	}, [table, onTableChange]);
+
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="overflow-hidden rounded-lg border">
-				<Table>
-					<TableHeader className="bg-muted sticky top-0 z-10">
-						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow key={headerGroup.id}>
-								{headerGroup.headers.map((header) => (
-									<TableHead key={header.id}>
-										{header.isPlaceholder
-											? null
-											: flexRender(header.column.columnDef.header, header.getContext())}
-									</TableHead>
-								))}
-							</TableRow>
-						))}
-					</TableHeader>
-					<TableBody>
-						{table.getRowModel().rows?.length ? (
-							table.getRowModel().rows.map((row) => (
-								<TableRow key={row.id}>
-									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
-											{flexRender(cell.column.columnDef.cell, cell.getContext())}
-										</TableCell>
-									))}
-								</TableRow>
-							))
-						) : (
-							<TableRow>
-								<TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
-									No returns yet.
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
-			</div>
-			<div className="flex items-center justify-between px-1">
-				<div className="text-muted-foreground text-sm">
-					{table.getFilteredRowModel().rows.length} of {returns.length} return{returns.length === 1 ? "" : "s"}
-				</div>
-				<div className="flex items-center gap-2">
-					<Button
-						variant="outline"
-						size="icon"
-						className="size-8"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-					>
-						<span className="sr-only">Go to previous page</span>
-						<IconChevronLeft />
-					</Button>
-					<div className="text-sm font-medium">
-						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
-					</div>
-					<Button
-						variant="outline"
-						size="icon"
-						className="size-8"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-					>
-						<span className="sr-only">Go to next page</span>
-						<IconChevronRight />
-					</Button>
-				</div>
-			</div>
+			<DataTableGrid table={table} emptyMessage="No returns yet." />
+			<DataTableSimplePagination table={table} itemLabel="return" count={returns.length} />
 		</div>
 	);
 }
+
+export default ReturnsTable;

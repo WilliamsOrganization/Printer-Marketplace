@@ -19,6 +19,7 @@ import {
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import api from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { Orders, Shipping, ShippingStatus } from '@/lib/types'
 import {
 	Table,
@@ -55,6 +56,16 @@ import {
 import { Label } from './label'
 import { Input } from './input'
 import { OrderUserDialog } from './custom/order-user-dialog'
+
+// Order # and Tracking # are the least essential columns for the at-a-glance
+// admin view - hide them once this table's own flex slot gets tight, so it
+// can shrink to make room for the map sitting alongside it (see
+// @container/shipments on the wrapper div in admin-shipments.tsx). This has
+// to be a container query scoped to that wrapper, not the page's outer
+// @container/main (too wide - it doesn't shrink when the map eats space,
+// only the table's own flex slot does) and not a viewport breakpoint like
+// lg: (the table narrows because of its flex sibling, not the window).
+const RESPONSIVE_HIDDEN_COLUMNS = new Set(['id', 'tracking'])
 
 const SHIPPING_STATUS_VARIANT: Record<ShippingStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
 	[ShippingStatus.PENDING]: 'outline',
@@ -327,14 +338,18 @@ export default function ShipmentsTable({
 				id: 'email',
 				accessorFn: (row) => [row.user?.email ?? row.email, row.user?.phoneNumber].filter(Boolean).join(' '),
 				header: () => <div>Customer</div>,
-				cell: ({ row }) => <OrderUserDialog user={row.original.user} />,
+				cell: ({ row }) => (
+					<div className="max-w-40">
+						<OrderUserDialog user={row.original.user} />
+					</div>
+				),
 			},
 			{
 				id: 'cardholderName',
 				accessorFn: (row) => row.cardholderName ?? '',
 				header: () => <div>Cardholder</div>,
 				cell: ({ row }) => (
-					<span className="text-sm text-muted-foreground">
+					<span className="text-sm text-muted-foreground max-w-32 truncate block">
 						{row.original.cardholderName ?? '—'}
 					</span>
 				),
@@ -348,12 +363,12 @@ export default function ShipmentsTable({
 				cell: ({ row }) => {
 					const addr = row.original.shipping.addressTo
 					return (
-						<div className="text-sm">
-							<div>
+						<div className="max-w-40 text-sm">
+							<div className="truncate">
 								{addr.street1}
 								{addr.street2 ? ` ${addr.street2}` : ''}
 							</div>
-							<div className="text-muted-foreground">
+							<div className="text-muted-foreground truncate">
 								{addr.city}, {addr.state} {addr.zip}
 							</div>
 						</div>
@@ -370,7 +385,7 @@ export default function ShipmentsTable({
 				cell: ({ row }) => {
 					const current = row.original.shipping.currentLocation
 					return current ? (
-						<div className="text-sm text-muted-foreground">
+						<div className="max-w-32 truncate text-sm text-muted-foreground">
 							{current.city}
 							{current.state ? `, ${current.state}` : ''}
 						</div>
@@ -501,7 +516,10 @@ export default function ShipmentsTable({
 						{table.getHeaderGroups().map((headerGroup) => (
 							<TableRow key={headerGroup.id}>
 								{headerGroup.headers.map((header) => (
-									<TableHead key={header.id}>
+									<TableHead
+										key={header.id}
+										className={cn(RESPONSIVE_HIDDEN_COLUMNS.has(header.column.id) && 'hidden @3xl/shipments:table-cell')}
+									>
 										{header.isPlaceholder
 											? null
 											: flexRender(header.column.columnDef.header, header.getContext())}
@@ -519,7 +537,10 @@ export default function ShipmentsTable({
 									onClick={() => onRowClick?.(row.original)}
 								>
 									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
+										<TableCell
+											key={cell.id}
+											className={cn(RESPONSIVE_HIDDEN_COLUMNS.has(cell.column.id) && 'hidden @3xl/shipments:table-cell')}
+										>
 											{flexRender(cell.column.columnDef.cell, cell.getContext())}
 										</TableCell>
 									))}
