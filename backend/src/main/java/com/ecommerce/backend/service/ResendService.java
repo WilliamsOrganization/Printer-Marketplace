@@ -45,22 +45,6 @@ public class ResendService {
 	@Value("${resend.email_from}")
 	private String from;
 
-	public void testEmailEndpoint(String toEmail, String body) {
-		CreateEmailOptions params = CreateEmailOptions.builder()
-				.from("Support@printmarket.ca")
-				.to(toEmail)
-				.subject("it works!")
-				.html("<strong>" + body + "</strong>")
-				.build();
-
-		try {
-			CreateEmailResponse data = resend.emails().send(params);
-			log.info("Email sent successfully to {} with id {}", toEmail, data.getId());
-		} catch (ResendException e) {
-			log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
-		}
-	}
-
 	/**
 	 * Sends an order confirmation email to the user.
 	 *
@@ -323,6 +307,18 @@ public class ResendService {
 	private String generateVerificationCode() {
 		int value = SECURE_RANDOM.nextInt(1_000_000);
 		return String.format("%06d", value);
+	}
+
+	/** 
+	 * This will be used to handle webhooks from Resend.
+	 * - there will be a handler for correspondance for returns
+	 * - there will be a help/information handler
+	 * - emails will be sorted by domain scoping. 
+	 *   @author: William Ewanchuk
+	 */
+	public void handleWebhook(String content) {
+		// TODO: implement this
+		throw new UnsupportedOperationException("Unimplemented method 'handleWebhook'");
 	}
 
 }

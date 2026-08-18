@@ -1,6 +1,5 @@
 package com.ecommerce.backend.controller;
 
-import com.ecommerce.backend.dto.TestResend;
 import com.ecommerce.backend.service.ResendService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ResendController {
 	private final ResendService resendService;
 
-	@PostMapping("/test")
-	public String sendEmail(@RequestBody TestResend content) {
-		resendService.testEmailEndpoint(content.getEmail(), content.getContent());
-		return content.getContent();
+	@PostMapping("/webhook")
+	public void webookHandler(@RequestBody String content) {
+		resendService.handleWebhook(content);
 	}
 }
