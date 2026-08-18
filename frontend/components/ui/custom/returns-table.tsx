@@ -18,6 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTableGrid, DataTableSimplePagination } from "@/components/ui/custom/data-table-grid";
 import { OrderItemsDialog } from "./order-items-dialog";
+import { ChatWithUserDialog } from "./chat-with-user-dialog";
+import { ReturnReviewedToggle } from "./return-reviewed-toggle";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { Returns, ReturnStatus } from "@/lib/types";
 
@@ -141,11 +143,19 @@ export function ReturnsTable({
 			header: () => <div className="text-center">Reviewed</div>,
 			cell: ({ row }) => (
 				<div className="flex justify-center">
-					<Badge variant={row.original.reviewed ? "secondary" : "outline"}>
-						{row.original.reviewed ? "Reviewed" : "Pending"}
-					</Badge>
+					<ReturnReviewedToggle reviewed={row.original.reviewed} />
 				</div>
 			),
+		},
+		{
+			id: "chat",
+			header: () => <div className="text-center">Chat</div>,
+			cell: () => (
+				<div className="flex justify-center">
+					<ChatWithUserDialog />
+				</div>
+			),
+			enableHiding: false,
 		},
 	];
 

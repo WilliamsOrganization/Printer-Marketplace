@@ -1,8 +1,10 @@
 import { IconTools } from "@tabler/icons-react"
 
-export function UnderConstruction({ title }: { title: string }) {
+import { cn } from "@/lib/utils"
+
+export function UnderConstruction({ title, className }: { title: string; className?: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-center">
+    <div className={cn("flex flex-1 flex-col items-center justify-center gap-3 py-24 text-center", className)}>
       <div className="bg-muted flex size-12 items-center justify-center rounded-full">
         <IconTools className="text-muted-foreground size-6" />
       </div>
