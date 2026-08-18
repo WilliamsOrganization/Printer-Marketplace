@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.ecommerce.backend.entity.Chat;
 import com.ecommerce.backend.entity.Message;
 
 
@@ -18,5 +19,5 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 	 * @param chatId
 	 * @return
 	 */
-	List<Message> findByChat(Long chatId);
+	List<Message> findByChat(Chat chat);
 }
