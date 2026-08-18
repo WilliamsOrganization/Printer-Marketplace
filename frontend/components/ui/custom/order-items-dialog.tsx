@@ -14,7 +14,19 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { OrderItem } from "@/lib/types";
 
-export function OrderItemsDialog({ items }: { items: OrderItem[] }) {
+export function OrderItemsDialog({
+	items,
+	title = "Order Items",
+	description = "Line items included in this order.",
+	tooltip = "View order items",
+	emptyMessage = "No items on this order.",
+}: {
+	items: OrderItem[];
+	title?: string;
+	description?: string;
+	tooltip?: string;
+	emptyMessage?: string;
+}) {
 	const itemCount = items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
 	return (
@@ -30,14 +42,12 @@ export function OrderItemsDialog({ items }: { items: OrderItem[] }) {
 						</Button>
 					</DialogTrigger>
 				</TooltipTrigger>
-				<TooltipContent>View order items</TooltipContent>
+				<TooltipContent>{tooltip}</TooltipContent>
 			</Tooltip>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>Order Items</DialogTitle>
-					<DialogDescription>
-						Line items included in this order.
-					</DialogDescription>
+					<DialogTitle>{title}</DialogTitle>
+					<DialogDescription>{description}</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col gap-3">
 					{items?.length ? (
@@ -58,7 +68,7 @@ export function OrderItemsDialog({ items }: { items: OrderItem[] }) {
 							</div>
 						))
 					) : (
-						<p className="text-muted-foreground text-sm">No items on this order.</p>
+						<p className="text-muted-foreground text-sm">{emptyMessage}</p>
 					)}
 				</div>
 				<DialogFooter>

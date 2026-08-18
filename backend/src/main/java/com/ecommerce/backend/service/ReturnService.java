@@ -108,4 +108,13 @@ public class ReturnService {
 	public List<Returns> getAllReturns() {
 		return returnRepository.findAll();
 	}
+
+	/**
+	 * Gets all returns, mapped to the flattened response shape list
+	 * endpoints send to the frontend.
+	 * @return
+	 */
+	public List<ReturnResponse> getAllReturnResponses() {
+		return mapToResponses(getAllReturns());
+	}
 }

@@ -1,6 +1,6 @@
 "use client";
 import api from "@/lib/api";
-import { DashboardAnalyticsResponse, InventoryItem, Orders, User } from "@/lib/types";
+import { DashboardAnalyticsResponse, InventoryItem, Orders, Returns, User } from "@/lib/types";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type DashboardContextType = {
@@ -8,6 +8,8 @@ type DashboardContextType = {
 	setInventory: React.Dispatch<React.SetStateAction<InventoryItem[]>>;
 	orders: Orders[];
 	setOrders: React.Dispatch<React.SetStateAction<Orders[]>>;
+	returns: Returns[];
+	setReturns: React.Dispatch<React.SetStateAction<Returns[]>>;
 	users: User[];
 	setUsers: React.Dispatch<React.SetStateAction<User[]>>;
 	sessionCount: number;
@@ -22,6 +24,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
 	const [inventory, setInventory] = useState<InventoryItem[]>([]);
 	const [orders, setOrders] = useState<Orders[]>([]);
+	const [returns, setReturns] = useState<Returns[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
 	const [analytics, setAnalytics] = useState<DashboardAnalyticsResponse | null>(null);
 
@@ -36,6 +39,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 		api
 			.get("/orders/admin/all")
 			.then((res) => setOrders(res.data))
+			.catch((err) => console.log("Error: " + err.message));
+	}, []);
+
+	useEffect(() => {
+		api
+			.get("/returns/all")
+			.then((res) => setReturns(res.data))
 			.catch((err) => console.log("Error: " + err.message));
 	}, []);
 
@@ -60,6 +70,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 				setInventory,
 				orders,
 				setOrders,
+				returns,
+				setReturns,
 				users,
 				setUsers,
 				sessionCount: analytics?.totalSessions ?? 0,

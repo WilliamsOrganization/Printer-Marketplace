@@ -96,12 +96,15 @@ import ProductCard from "./custom/product-card";
 import { OrderUserDialog } from "./custom/order-user-dialog";
 import { OrderItemsDialog } from "./custom/order-items-dialog";
 import { OrderShippingDialog } from "./custom/order-shipping-dialog";
+import ReturnsTable from "./returns-table";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
 import {
 	InventoryItem,
 	Orders as Order,
 	OrderStatus,
+	Returns,
+	ReturnStatus,
 	ShippingStatus,
 	SizeCategoryLabel,
 	WeightCategoryLabel,
@@ -255,10 +258,16 @@ function ColumnVisibilityDropdown({ table }: { table: TanstackTable<any> | null 
 
 export function DataTable() {
 	const [activeTab, setActiveTab] = React.useState("inventory");
-	const { inventory: initialData, setInventory, orders } = useDashboard();
+	const { inventory: initialData, setInventory, orders, returns } = useDashboard();
 	const [ordersSorting, setOrdersSorting] = React.useState<SortingState>([]);
 	const [ordersColumnVisibility, setOrdersColumnVisibility] = React.useState<VisibilityState>({});
 	const [ordersPagination, setOrdersPagination] = React.useState({
+		pageIndex: 0,
+		pageSize: 10,
+	});
+	const [returnsSorting, setReturnsSorting] = React.useState<SortingState>([]);
+	const [returnsColumnVisibility, setReturnsColumnVisibility] = React.useState<VisibilityState>({});
+	const [returnsPagination, setReturnsPagination] = React.useState({
 		pageIndex: 0,
 		pageSize: 10,
 	});
@@ -620,7 +629,128 @@ export function DataTable() {
 		getFilteredRowModel: getFilteredRowModel(),
 	});
 
-	const activeTable = activeTab === "inventory" ? table : activeTab === "orders" ? ordersTable : null;
+	const returnsColumns: ColumnDef<Returns>[] = [
+		{
+			accessorKey: "id",
+			header: () => <div className="text-center">Return</div>,
+			cell: ({ row }) => <div className="font-medium">#{row.original.id}</div>,
+		},
+		{
+			accessorKey: "requestedDate",
+			header: () => <div className="text-center">Requested</div>,
+			cell: ({ row }) => (
+				<div className="text-muted-foreground text-center">
+					{row.original.requestedDate ? new Date(row.original.requestedDate).toLocaleDateString() : "—"}
+				</div>
+			),
+		},
+		{
+			id: "order",
+			accessorFn: (row) => row.orderId ?? "",
+			header: () => <div className="text-center">Order</div>,
+			cell: ({ row }) =>
+				row.original.orderStripeSessionId ? (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<a
+								href={`https://dashboard.stripe.com/${STRIPE_ACCOUNT_ID}/test/checkout/sessions/${row.original.orderStripeSessionId}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-foreground hover:text-foreground hover:bg-muted flex h-full w-full cursor-pointer items-center justify-center font-medium"
+							>
+								#{row.original.orderId}
+							</a>
+						</TooltipTrigger>
+						<TooltipContent>Open order in Stripe Dashboard</TooltipContent>
+					</Tooltip>
+				) : (
+					<div className="text-center font-medium">#{row.original.orderId}</div>
+				),
+		},
+		{
+			id: "items",
+			accessorFn: (row) => row.itemsToReturn?.map((item) => item.itemTitle).join(" ") ?? "",
+			header: () => <div className="text-center">Items</div>,
+			cell: ({ row }) => (
+				<div className="text-center">
+					<OrderItemsDialog
+						items={row.original.itemsToReturn}
+						title="Return Items"
+						description="Line items requested for return."
+						tooltip="View return items"
+						emptyMessage="No items on this return."
+					/>
+				</div>
+			),
+		},
+		{
+			accessorKey: "reasonForReturn",
+			header: () => <div className="text-center">Reason</div>,
+			cell: ({ row }) => (
+				<div className="max-w-48 truncate text-muted-foreground">
+					{row.original.reasonForReturn}
+				</div>
+			),
+		},
+		{
+			accessorKey: "status",
+			header: () => <div className="text-center">Status</div>,
+			cell: ({ row }) => (
+				<div className="flex justify-center">
+					<Badge variant={RETURN_STATUS_VARIANT[row.original.status]} className="px-1.5">
+						{row.original.status}
+					</Badge>
+				</div>
+			),
+		},
+		{
+			accessorKey: "refundedAmount",
+			header: () => <div className="text-center">Refunded</div>,
+			cell: ({ row }) => (
+				<div className="text-center font-medium">
+					{row.original.refundedAmount != null ? `$${(row.original.refundedAmount / 100).toFixed(2)}` : "—"}
+				</div>
+			),
+		},
+		{
+			accessorKey: "refundedAt",
+			header: () => <div className="text-center">Refunded At</div>,
+			cell: ({ row }) => (
+				<div className="text-muted-foreground text-center">
+					{row.original.refundedAt ? new Date(row.original.refundedAt).toLocaleDateString() : "—"}
+				</div>
+			),
+		},
+		{
+			accessorKey: "reviewed",
+			header: () => <div className="text-center">Reviewed</div>,
+			cell: ({ row }) => (
+				<div className="flex justify-center">
+					<Badge variant={row.original.reviewed ? "secondary" : "outline"}>
+						{row.original.reviewed ? "Reviewed" : "Pending"}
+					</Badge>
+				</div>
+			),
+		},
+	];
+
+	const returnsTable = useReactTable({
+		data: returns,
+		columns: returnsColumns,
+		state: { sorting: returnsSorting, pagination: returnsPagination, globalFilter, columnVisibility: returnsColumnVisibility },
+		getRowId: (row) => row.id.toString(),
+		onSortingChange: setReturnsSorting,
+		onPaginationChange: setReturnsPagination,
+		onGlobalFilterChange: setGlobalFilter,
+		onColumnVisibilityChange: setReturnsColumnVisibility,
+		getCoreRowModel: getCoreRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+	});
+
+	const activeTable =
+		activeTab === "inventory" ? table : activeTab === "orders" ? ordersTable : activeTab === "returns" ? returnsTable : null;
 
 	return (
 		<Tabs
@@ -643,14 +773,12 @@ export function DataTable() {
 					<SelectContent>
 						<SelectItem value="inventory">Inventory Items</SelectItem>
 						<SelectItem value="orders">Orders</SelectItem>
-						<SelectItem value="shipping">Shipping</SelectItem>
 						<SelectItem value="returns">Returns</SelectItem>
 					</SelectContent>
 				</Select>
 				<TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
 					<TabsTrigger value="inventory">Inventory Items</TabsTrigger>
 					<TabsTrigger value="orders">Orders</TabsTrigger>
-					<TabsTrigger value="shipping">Shipping</TabsTrigger>
 					<TabsTrigger value="returns">Returns</TabsTrigger>
 				</TabsList>
 				<div className="flex items-center gap-2">
@@ -838,14 +966,11 @@ export function DataTable() {
 			>
 				<OrdersTable table={ordersTable} orders={sortedOrders} />
 			</TabsContent>
-			<TabsContent value="shipping" className="flex flex-col px-4 lg:px-6">
-				<div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
-			</TabsContent>
 			<TabsContent
 				value="returns"
 				className="flex flex-col px-4 lg:px-6"
 			>
-				<div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+				<ReturnsTable table={returnsTable} returns={returns} />
 			</TabsContent>
 		</Tabs>
 	);
@@ -859,6 +984,12 @@ const ORDER_STATUS_VARIANT: Record<OrderStatus, "default" | "secondary" | "destr
 	[OrderStatus.PAID]: "default",
 	[OrderStatus.EXPIRED]: "destructive",
 	[OrderStatus.FAILED]: "destructive",
+};
+
+const RETURN_STATUS_VARIANT: Record<ReturnStatus, "default" | "secondary" | "destructive" | "outline"> = {
+	[ReturnStatus.PENDING]: "secondary",
+	[ReturnStatus.REFUNDED]: "default",
+	[ReturnStatus.CANCELLED]: "destructive",
 };
 
 // PAID first, COMPLETED second - the two statuses actually worth an admin's

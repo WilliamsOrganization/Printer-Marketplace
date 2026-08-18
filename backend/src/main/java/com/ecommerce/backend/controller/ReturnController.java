@@ -61,7 +61,7 @@ public class ReturnController {
 	 */
 	@GetMapping("/all")
 	@PreAuthorize("hasRole('ADMIN')")
-	public List<Returns> getAllReturns() {
-		return  returnService.getAllReturns();
+	public List<ReturnResponse> getAllReturns() {
+		return returnService.getAllReturnResponses();
 	}
 }
