@@ -85,8 +85,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { InventoryItemDialog } from "./custom/inventory-item-dialog";
-import ProductCard from "./custom/product-card";
+import { InventoryItemDialog } from "./inventory-item-dialog";
+import ProductCard from "./product-card";
 import api from "@/lib/api";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { InventoryItem, SizeCategoryLabel, WeightCategoryLabel } from "@/lib/types";

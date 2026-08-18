@@ -16,10 +16,10 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DataTableGrid, DataTableSimplePagination } from "@/components/ui/data-table-grid";
-import { OrderItemsDialog } from "./custom/order-items-dialog";
-import { OrderShippingDialog } from "./custom/order-shipping-dialog";
-import { OrderUserDialog } from "./custom/order-user-dialog";
+import { DataTableGrid, DataTableSimplePagination } from "@/components/ui/custom/data-table-grid";
+import { OrderItemsDialog } from "./order-items-dialog";
+import { OrderShippingDialog } from "./order-shipping-dialog";
+import { OrderUserDialog } from "./order-user-dialog";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { Orders as Order, OrderStatus, ShippingStatus } from "@/lib/types";
 

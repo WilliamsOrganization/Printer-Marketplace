@@ -15,6 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Shipping, ShippingStatus } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 const SHIPPING_STATUS_VARIANT: Record<ShippingStatus, "default" | "secondary" | "destructive" | "outline"> = {
 	[ShippingStatus.PENDING]: "outline",
@@ -22,10 +23,6 @@ const SHIPPING_STATUS_VARIANT: Record<ShippingStatus, "default" | "secondary" | 
 	[ShippingStatus.IN_TRANSIT]: "default",
 	[ShippingStatus.DELIVERED]: "secondary",
 };
-
-function formatCurrency(cents: number) {
-	return `$${(cents / 100).toFixed(2)}`;
-}
 
 export function OrderShippingDialog({
 	shipping,

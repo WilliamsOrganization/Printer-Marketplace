@@ -1,5 +1,5 @@
-import ShipmentsAdmin from "@/components/ui/admin-shipments"
-import { DataTable } from "@/components/ui/data-table"
+import ShipmentsAdmin from "@/components/ui/custom/shipments-admin"
+import { DataTable } from "@/components/ui/custom/data-table"
 
 export default function ShipmentsPage() {
 	// TODO: wire up the shipments component.  it will be a ltable of shipments actively being tracked. 

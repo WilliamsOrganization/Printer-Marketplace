@@ -19,10 +19,10 @@ import {
 } from "@tabler/icons-react"
 import { Layers } from "lucide-react"
 
-import { NavDocuments } from "@/components/ui/nav-documents"
-import { NavMain } from "@/components/ui/nav-main"
-import { NavSecondary } from "@/components/ui/nav-secondary"
-import { NavUser } from "@/components/ui/nav-user"
+import { NavDocuments } from "@/components/ui/custom/nav-documents"
+import { NavMain } from "@/components/ui/custom/nav-main"
+import { NavSecondary } from "@/components/ui/custom/nav-secondary"
+import { NavUser } from "@/components/ui/custom/nav-user"
 import { useSession } from "next-auth/react"
 import {
   Sidebar,

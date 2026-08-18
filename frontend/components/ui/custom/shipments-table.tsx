@@ -16,9 +16,6 @@ import {
 	IconChevronsLeft,
 	IconChevronsRight,
 } from '@tabler/icons-react'
-import { isAxiosError } from 'axios'
-import { toast } from 'sonner'
-import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { Orders, Shipping, ShippingStatus } from '@/lib/types'
 import {
@@ -28,39 +25,32 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from './table'
-import { Badge } from './badge'
-import { Button } from './button'
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from './dialog'
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
 	DropdownMenuTrigger,
-} from './dropdown-menu'
+} from '@/components/ui/dropdown-menu'
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from './select'
-import { Label } from './label'
-import { Input } from './input'
-import { OrderUserDialog } from './custom/order-user-dialog'
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { OrderUserDialog } from './order-user-dialog'
+import { CreateLabelDialog } from './create-label-dialog'
+import { AdvanceTrackingButton } from './advance-tracking-button'
 
 // Order # and Tracking # are the least essential columns for the at-a-glance
 // admin view - hide them once this table's own flex slot gets tight, so it
 // can shrink to make room for the map sitting alongside it (see
-// @container/shipments on the wrapper div in admin-shipments.tsx). This has
+// @container/shipments on the wrapper div in shipments-admin.tsx). This has
 // to be a container query scoped to that wrapper, not the page's outer
 // @container/main (too wide - it doesn't shrink when the map eats space,
 // only the table's own flex slot does) and not a viewport breakpoint like
@@ -75,7 +65,7 @@ const SHIPPING_STATUS_VARIANT: Record<ShippingStatus, 'default' | 'secondary' | 
 }
 
 // Unshipped first - same "needs attention" ordering used for the orders
-// table's shipping-status sort (see data-table.tsx's SHIPPING_STATUS_PRIORITY).
+// table's shipping-status sort (see orders-table.tsx's SHIPPING_STATUS_PRIORITY).
 const SHIPPING_STATUS_PRIORITY: Record<ShippingStatus, number> = {
 	[ShippingStatus.PENDING]: 0,
 	[ShippingStatus.PURCHASED]: 1,
@@ -83,217 +73,10 @@ const SHIPPING_STATUS_PRIORITY: Record<ShippingStatus, number> = {
 	[ShippingStatus.DELIVERED]: 3,
 }
 
-// Mirrors backend ShippingParcel.SizeCategory/WeightCategory - deliberately
-// its own, wider-ranging set of boxes/weights from InventoryItem's, since
-// one shipment box can hold many items combined. These are just presets to
-// prefill the form below - the actual fields stay freely editable so a
-// custom size/weight can be entered instead.
-const SIZE_PRESETS = [
-	{ name: 'SMALL', lengthCm: 20, widthCm: 15, heightCm: 10 },
-	{ name: 'MEDIUM', lengthCm: 30, widthCm: 23, heightCm: 15 },
-	{ name: 'LARGE', lengthCm: 40, widthCm: 30, heightCm: 20 },
-	{ name: 'EXTRA_LARGE', lengthCm: 50, widthCm: 40, heightCm: 30 },
-	{ name: 'JUMBO', lengthCm: 60, widthCm: 45, heightCm: 40 },
-] as const
-
-const WEIGHT_PRESETS = [
-	{ name: 'LIGHT', grams: 500 },
-	{ name: 'MEDIUM', grams: 1500 },
-	{ name: 'HEAVY', grams: 4000 },
-	{ name: 'EXTRA_HEAVY', grams: 8000 },
-	{ name: 'BULK', grams: 15000 },
-] as const
-
 export type ShippedOrder = Orders & { shipping: Shipping }
 
 export function getShippedOrders(orders: Orders[]): ShippedOrder[] {
 	return orders.filter((order): order is ShippedOrder => order.shipping != null)
-}
-
-function CreateLabelDialog({
-	order,
-	onCreated,
-}: {
-	order: ShippedOrder
-	onCreated: (shipping: Shipping) => void
-}) {
-	const defaultSize = SIZE_PRESETS[1] // MEDIUM
-	const defaultWeight = WEIGHT_PRESETS[1] // MEDIUM
-
-	const [open, setOpen] = React.useState(false)
-	const [sizePreset, setSizePreset] = React.useState<string>(defaultSize.name)
-	const [weightPreset, setWeightPreset] = React.useState<string>(defaultWeight.name)
-	const [lengthCm, setLengthCm] = React.useState<number>(defaultSize.lengthCm)
-	const [widthCm, setWidthCm] = React.useState<number>(defaultSize.widthCm)
-	const [heightCm, setHeightCm] = React.useState<number>(defaultSize.heightCm)
-	const [weightGrams, setWeightGrams] = React.useState<number>(defaultWeight.grams)
-	const [loading, setLoading] = React.useState(false)
-
-	const applySizePreset = (name: string) => {
-		setSizePreset(name)
-		const preset = SIZE_PRESETS.find((p) => p.name === name)
-		if (preset) {
-			setLengthCm(preset.lengthCm)
-			setWidthCm(preset.widthCm)
-			setHeightCm(preset.heightCm)
-		}
-	}
-
-	const applyWeightPreset = (name: string) => {
-		setWeightPreset(name)
-		const preset = WEIGHT_PRESETS.find((p) => p.name === name)
-		if (preset) setWeightGrams(preset.grams)
-	}
-
-	const submit = () => {
-		setLoading(true)
-		api
-			.post<Shipping>(`/shipping/${order.id}/label`, { lengthCm, widthCm, heightCm, weightGrams })
-			.then((res) => {
-				toast.success(`Label created for order #${order.id}`)
-				onCreated(res.data)
-				setOpen(false)
-			})
-			.catch((err) => {
-				const reason = isAxiosError(err) && typeof err.response?.data === 'string'
-					? err.response.data
-					: err.message
-				toast.error('Failed to create shipping label: ' + reason)
-			})
-			.finally(() => setLoading(false))
-	}
-
-	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button variant="outline" size="sm">
-					Create Label
-				</Button>
-			</DialogTrigger>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Create shipping label for order #{order.id}</DialogTitle>
-					<DialogDescription>
-						Pick a preset to prefill the real box size/weight used to pack this
-						order, or edit the fields directly - it can be larger than any single
-						item's own size, since several items may ship together.
-					</DialogDescription>
-				</DialogHeader>
-				<div className="flex flex-col gap-4">
-					<div className="flex flex-col gap-2">
-						<Label htmlFor="size-preset">Box size preset</Label>
-						<Select value={sizePreset} onValueChange={applySizePreset}>
-							<SelectTrigger id="size-preset">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{SIZE_PRESETS.map((size) => (
-									<SelectItem key={size.name} value={size.name}>
-										{size.name} ({size.lengthCm}×{size.widthCm}×{size.heightCm} cm)
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-					<div className="grid grid-cols-3 gap-2">
-						<div className="flex flex-col gap-2">
-							<Label htmlFor="length-cm">Length (cm)</Label>
-							<Input
-								id="length-cm"
-								type="number"
-								min={1}
-								value={lengthCm}
-								onChange={(e) => setLengthCm(Number(e.target.value))}
-							/>
-						</div>
-						<div className="flex flex-col gap-2">
-							<Label htmlFor="width-cm">Width (cm)</Label>
-							<Input
-								id="width-cm"
-								type="number"
-								min={1}
-								value={widthCm}
-								onChange={(e) => setWidthCm(Number(e.target.value))}
-							/>
-						</div>
-						<div className="flex flex-col gap-2">
-							<Label htmlFor="height-cm">Height (cm)</Label>
-							<Input
-								id="height-cm"
-								type="number"
-								min={1}
-								value={heightCm}
-								onChange={(e) => setHeightCm(Number(e.target.value))}
-							/>
-						</div>
-					</div>
-					<div className="flex flex-col gap-2">
-						<Label htmlFor="weight-preset">Weight preset</Label>
-						<Select value={weightPreset} onValueChange={applyWeightPreset}>
-							<SelectTrigger id="weight-preset">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{WEIGHT_PRESETS.map((weight) => (
-									<SelectItem key={weight.name} value={weight.name}>
-										{weight.name} ({weight.grams}g)
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</div>
-					<div className="flex flex-col gap-2">
-						<Label htmlFor="weight-grams">Weight (grams)</Label>
-						<Input
-							id="weight-grams"
-							type="number"
-							min={1}
-							value={weightGrams}
-							onChange={(e) => setWeightGrams(Number(e.target.value))}
-						/>
-					</div>
-				</div>
-				<DialogFooter>
-					<Button onClick={submit} disabled={loading}>
-						{loading ? 'Purchasing…' : 'Purchase Label'}
-					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
-	)
-}
-
-function AdvanceTrackingButton({
-	order,
-	onAdvanced,
-}: {
-	order: ShippedOrder
-	onAdvanced: (shipping: Shipping) => void
-}) {
-	const [loading, setLoading] = React.useState(false)
-
-	const advance = () => {
-		setLoading(true)
-		api
-			.post<Shipping>(`/mock-shippo/${order.id}/advance`)
-			.then((res) => {
-				toast.success(`Order #${order.id} advanced to ${res.data.status}`)
-				onAdvanced(res.data)
-			})
-			.catch((err) => {
-				const reason = isAxiosError(err) && typeof err.response?.data === 'string'
-					? err.response.data
-					: err.message
-				toast.error('Failed to advance tracking: ' + reason)
-			})
-			.finally(() => setLoading(false))
-	}
-
-	return (
-		<Button variant="ghost" size="sm" onClick={advance} disabled={loading}>
-			{loading ? 'Advancing…' : 'Advance'}
-		</Button>
-	)
 }
 
 export default function ShipmentsTable({

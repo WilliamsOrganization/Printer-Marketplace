@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import { usePathname } from "next/navigation"
-import { AppSidebar } from "@/components/ui/app-sidebar"
-import { SiteHeader } from "@/components/ui/site-header"
+import { AppSidebar } from "@/components/ui/custom/app-sidebar"
+import { SiteHeader } from "@/components/ui/custom/site-header"
 import {
 	SidebarInset,
 	SidebarProvider,

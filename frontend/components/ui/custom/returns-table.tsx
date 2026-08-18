@@ -16,8 +16,8 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DataTableGrid, DataTableSimplePagination } from "@/components/ui/data-table-grid";
-import { OrderItemsDialog } from "./custom/order-items-dialog";
+import { DataTableGrid, DataTableSimplePagination } from "@/components/ui/custom/data-table-grid";
+import { OrderItemsDialog } from "./order-items-dialog";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { Returns, ReturnStatus } from "@/lib/types";
 

@@ -11,8 +11,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Button } from "./button";
-import { InventoryItemDialog } from "./custom/inventory-item-dialog";
+import { Button } from "@/components/ui/button";
+import { InventoryItemDialog } from "./inventory-item-dialog";
 import { useDashboard } from "@/src/context/dashboard-context";
 
 export function SectionCards() {

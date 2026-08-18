@@ -34,7 +34,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { ImageDropField } from "@/components/ui/drag-drop";
+import { ImageDropField } from "@/components/ui/custom/image-drop-field";
 import {
 	InventoryItem,
 	SizeCategory,

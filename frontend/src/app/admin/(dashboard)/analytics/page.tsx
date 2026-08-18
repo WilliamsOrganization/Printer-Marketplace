@@ -1,5 +1,5 @@
-import { AnalyticsView } from "@/components/ui/analytics-view"
-import { DashboardOverview } from "@/components/ui/dashboard-overview"
+import { AnalyticsView } from "@/components/ui/custom/analytics-view"
+import { DashboardOverview } from "@/components/ui/custom/dashboard-overview"
 
 export default function AnalyticsPage() {
 	return (

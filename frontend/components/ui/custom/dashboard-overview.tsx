@@ -1,5 +1,5 @@
-import { ChartAreaInteractive } from "@/components/ui/chart-area-interactive"
-import { SectionCards } from "@/components/ui/section-cards"
+import { ChartAreaInteractive } from "@/components/ui/custom/chart-area-interactive"
+import { SectionCards } from "@/components/ui/custom/section-cards"
 
 /**
  * Stat cards + sessions chart shared between the dashboard home page and

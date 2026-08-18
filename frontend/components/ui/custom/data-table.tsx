@@ -5,7 +5,7 @@ import { IconArrowsSort } from "@tabler/icons-react";
 import type { Table as TanstackTable, VisibilityState } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import { ColumnVisibilityDropdown } from "@/components/ui/data-table-grid";
+import { ColumnVisibilityDropdown } from "@/components/ui/custom/data-table-grid";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
