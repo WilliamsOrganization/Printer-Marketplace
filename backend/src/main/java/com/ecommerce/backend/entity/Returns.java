@@ -90,4 +90,8 @@ public class Returns {
 	public enum ReturnStatus {
 		PENDING, CANCELLED, REFUNDED
 	}
+
+	@OneToOne
+	@JoinColumn(name = "chat_id", unique = true)
+	private Chat chat;
 }
