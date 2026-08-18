@@ -45,6 +45,7 @@ export function ReturnsTable({
 	const { returns } = useDashboard();
 	const [sorting, setSorting] = React.useState<SortingState>([]);
 	const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
+	
 
 	const columns: ColumnDef<Returns>[] = [
 		{
@@ -143,7 +144,7 @@ export function ReturnsTable({
 			header: () => <div className="text-center">Reviewed</div>,
 			cell: ({ row }) => (
 				<div className="flex justify-center">
-					<ReturnReviewedToggle reviewed={row.original.reviewed} />
+					<ReturnReviewedToggle reviewed={row.original.reviewed} returnId={row.original.id} />
 				</div>
 			),
 		},

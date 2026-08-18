@@ -100,8 +100,20 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
+	 * handleNotFound handles the generic NotFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(NotFoundException.class)
+	public ResponseEntity<String> handleNotFound(NotFoundException ex) {
+		log.warn("NotFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	/**
 	 * handleUnexpected handles any other exceptions
-	 * 
+	 *
 	 * @param ex
 	 * @return
 	 */

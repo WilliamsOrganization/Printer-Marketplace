@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ecommerce.backend.dto.ReturnBodyToggleRequest;
 import com.ecommerce.backend.dto.ReturnRequest;
 import com.ecommerce.backend.dto.ReturnResponse;
 import com.ecommerce.backend.entity.Returns;
@@ -63,5 +64,16 @@ public class ReturnController {
 	@PreAuthorize("hasRole('ADMIN')")
 	public List<ReturnResponse> getAllReturns() {
 		return returnService.getAllReturnResponses();
+	}
+	
+	/**
+	 * Gets a return by id
+	 * @param request
+	 * @return
+	 */
+	@PostMapping("/review")
+	@PreAuthorize("hasRole('ADMIN')")
+	public Returns toggleReviewAndNotifyHandler(@RequestBody ReturnBodyToggleRequest request) {
+		return returnService.toggleReviewAndNotifyHandler(request.getId(), request.getReviewed());
 	}
 }

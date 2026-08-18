@@ -12,6 +12,7 @@ import com.ecommerce.backend.entity.OrderItem;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Returns;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.NotFoundException;
 import com.ecommerce.backend.repository.ReturnRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -116,5 +117,20 @@ public class ReturnService {
 	 */
 	public List<ReturnResponse> getAllReturnResponses() {
 		return mapToResponses(getAllReturns());
+	}
+
+	/**
+	 * Toggles the reviewed status of a Return Admin only
+	 *
+	 * @author William Ewanchuk
+	 */
+	public Returns toggleReviewAndNotifyHandler(Long returnId, Boolean reviewed) {
+		Users user = userService.getUserFromSession();
+		if (user.getUserRole() !=  Users.Role.ADMIN) {
+			throw new IllegalStateException("User must be an admin to toggle a return");
+		}
+		Returns returnObj = returnRepository.findById(returnId).orElseThrow(()-> new NotFoundException("Return not found: returnId"));
+		returnObj.setReviewed(reviewed);
+		return returnRepository.save(returnObj);
 	}
 }

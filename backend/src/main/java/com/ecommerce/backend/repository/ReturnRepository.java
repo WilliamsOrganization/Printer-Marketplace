@@ -38,4 +38,13 @@ public interface ReturnRepository extends JpaRepository<Returns, Long> {
 	 * @return the user's returns
 	 */
 	public List<Returns> findByOrder_User(Users user);
+
+	/**
+	 * Finds a return by a user and id.
+	 * @param user the user
+	 * @param id the id
+	 * @return the return
+	 */
+	public Returns findByOrder_UserAndId(Users user, Long id);
+
 }
