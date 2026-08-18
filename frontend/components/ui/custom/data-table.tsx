@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { ColumnVisibilityDropdown } from "@/components/ui/custom/data-table-grid";
 import {
 	DropdownMenu,
-	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventoryTable } from "./inventory-table";
-import { OrdersTable } from "./orders-table";
+import { OrdersTable, ORDER_SORT_MODE_LABEL, type OrderSortMode } from "./orders-table";
 import { ReturnsTable } from "./returns-table";
 
 export function DataTable() {
@@ -41,9 +42,7 @@ export function DataTable() {
 	const [ordersTable, setOrdersTable] = React.useState<TanstackTable<any> | null>(null);
 	const [returnsTable, setReturnsTable] = React.useState<TanstackTable<any> | null>(null);
 
-	const [sortByPriority, setSortByPriority] = React.useState(true);
-	const [sortByShipping, setSortByShipping] = React.useState(true);
-	const [sortByDate, setSortByDate] = React.useState(true);
+	const [sortMode, setSortMode] = React.useState<OrderSortMode>("default");
 
 	const activeTable =
 		activeTab === "inventory" ? inventoryTable : activeTab === "orders" ? ordersTable : activeTab === "returns" ? returnsTable : null;
@@ -94,7 +93,7 @@ export function DataTable() {
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button
-									variant={sortByPriority || sortByShipping || sortByDate ? "default" : "outline"}
+									variant={sortMode !== "default" ? "default" : "outline"}
 									size="sm"
 								>
 									<IconArrowsSort />
@@ -102,27 +101,13 @@ export function DataTable() {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end" className="w-56">
-								<DropdownMenuCheckboxItem
-									checked={sortByPriority}
-									onSelect={(e) => e.preventDefault()}
-									onCheckedChange={setSortByPriority}
-								>
-									Priority (PAID, COMPLETED first)
-								</DropdownMenuCheckboxItem>
-								<DropdownMenuCheckboxItem
-									checked={sortByShipping}
-									onSelect={(e) => e.preventDefault()}
-									onCheckedChange={setSortByShipping}
-								>
-									Shipping status (unshipped first)
-								</DropdownMenuCheckboxItem>
-								<DropdownMenuCheckboxItem
-									checked={sortByDate}
-									onSelect={(e) => e.preventDefault()}
-									onCheckedChange={setSortByDate}
-								>
-									Date created (oldest first)
-								</DropdownMenuCheckboxItem>
+								<DropdownMenuRadioGroup value={sortMode} onValueChange={(value) => setSortMode(value as OrderSortMode)}>
+									{(Object.keys(ORDER_SORT_MODE_LABEL) as OrderSortMode[]).map((mode) => (
+										<DropdownMenuRadioItem key={mode} value={mode}>
+											{ORDER_SORT_MODE_LABEL[mode]}
+										</DropdownMenuRadioItem>
+									))}
+								</DropdownMenuRadioGroup>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					)}
@@ -150,9 +135,7 @@ export function DataTable() {
 					columnVisibility={ordersColumnVisibility}
 					onColumnVisibilityChange={setOrdersColumnVisibility}
 					onTableChange={setOrdersTable}
-					sortByPriority={sortByPriority}
-					sortByShipping={sortByShipping}
-					sortByDate={sortByDate}
+					sortMode={sortMode}
 				/>
 			</TabsContent>
 			<TabsContent

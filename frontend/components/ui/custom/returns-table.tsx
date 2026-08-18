@@ -156,6 +156,9 @@ export function ReturnsTable({
 		getRowId: (row) => row.id.toString(),
 		onSortingChange: setSorting,
 		onPaginationChange: setPagination,
+		// Pagination state is manually controlled above - see shipments-table.tsx
+		// for why this needs to be explicit.
+		autoResetPageIndex: false,
 		onColumnVisibilityChange,
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),

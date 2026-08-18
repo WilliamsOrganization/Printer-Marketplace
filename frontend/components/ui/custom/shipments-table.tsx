@@ -30,8 +30,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
-	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -73,6 +74,42 @@ const SHIPPING_STATUS_PRIORITY: Record<ShippingStatus, number> = {
 	[ShippingStatus.DELIVERED]: 3,
 }
 
+const byStatus = (a: ShippedOrder, b: ShippedOrder) =>
+	SHIPPING_STATUS_PRIORITY[a.shipping.status] - SHIPPING_STATUS_PRIORITY[b.shipping.status]
+
+const byDateOldestFirst = (a: ShippedOrder, b: ShippedOrder) =>
+	new Date(a.shipping.createdAt).getTime() - new Date(b.shipping.createdAt).getTime()
+
+type ShipmentSortMode = 'default' | 'date-oldest' | 'date-newest' | 'priority' | 'priority-inverted'
+
+const SORT_MODE_LABEL: Record<ShipmentSortMode, string> = {
+	default: 'Default',
+	'date-oldest': 'Oldest first',
+	'date-newest': 'Newest first',
+	priority: 'Priority (unshipped first)',
+	'priority-inverted': 'Priority (delivered first)',
+}
+
+/**
+ * Exactly one sort mode is ever active - a Radix radio group, not
+ * independent toggles. "default" chains status then date as successive
+ * tie-breaks; every other mode is a single criterion, in one direction.
+ */
+function compareShipments(a: ShippedOrder, b: ShippedOrder, mode: ShipmentSortMode): number {
+	switch (mode) {
+		case 'date-oldest':
+			return byDateOldestFirst(a, b)
+		case 'date-newest':
+			return byDateOldestFirst(b, a)
+		case 'priority':
+			return byStatus(a, b)
+		case 'priority-inverted':
+			return byStatus(b, a)
+		default:
+			return byStatus(a, b) || byDateOldestFirst(a, b)
+	}
+}
+
 export type ShippedOrder = Orders & { shipping: Shipping }
 
 export function getShippedOrders(orders: Orders[]): ShippedOrder[] {
@@ -89,26 +126,13 @@ export default function ShipmentsTable({
 	onRowClick?: (order: ShippedOrder) => void
 }) {
 	const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 12 })
-	const [sortByStatus, setSortByStatus] = React.useState(true)
-	const [sortByDate, setSortByDate] = React.useState(true)
+	const [sortMode, setSortMode] = React.useState<ShipmentSortMode>('default')
 	const [globalFilter, setGlobalFilter] = React.useState('')
 
-	// Same independent-toggle pattern as the orders table's Sort dropdown -
-	// status (when on) always wins ties first, date (when on) breaks those
-	// ties; with only one on, that's the sole key.
-	const sortedShipments = React.useMemo(() => {
-		if (!sortByStatus && !sortByDate) return shipments
-		return [...shipments].sort((a, b) => {
-			if (sortByStatus) {
-				const diff = SHIPPING_STATUS_PRIORITY[a.shipping.status] - SHIPPING_STATUS_PRIORITY[b.shipping.status]
-				if (diff !== 0) return diff
-			}
-			if (sortByDate) {
-				return new Date(a.shipping.createdAt).getTime() - new Date(b.shipping.createdAt).getTime()
-			}
-			return 0
-		})
-	}, [shipments, sortByStatus, sortByDate])
+	const sortedShipments = React.useMemo(
+		() => [...shipments].sort((a, b) => compareShipments(a, b, sortMode)),
+		[shipments, sortMode],
+	)
 
 	const columns = React.useMemo<ColumnDef<ShippedOrder>[]>(
 		() => [
@@ -252,6 +276,11 @@ export default function ShipmentsTable({
 		columns,
 		state: { pagination, globalFilter },
 		onPaginationChange: setPagination,
+		// Pagination state is manually controlled above, so TanStack's default
+		// of resetting to page 1 whenever the (sorted/filtered) data array gets
+		// a new reference has to be turned off explicitly - otherwise toggling
+		// a Sort checkbox silently jumps you back to page 1 every time.
+		autoResetPageIndex: false,
 		onGlobalFilterChange: setGlobalFilter,
 		getRowId: (row) => row.shipping.id.toString(),
 		getCoreRowModel: getCoreRowModel(),
@@ -270,26 +299,19 @@ export default function ShipmentsTable({
 				/>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<Button variant={sortByStatus || sortByDate ? 'default' : 'outline'} size="sm">
+						<Button variant={sortMode !== 'default' ? 'default' : 'outline'} size="sm">
 							<IconArrowsSort />
 							<span className="hidden lg:inline">Sort</span>
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-56">
-						<DropdownMenuCheckboxItem
-							checked={sortByStatus}
-							onSelect={(e) => e.preventDefault()}
-							onCheckedChange={setSortByStatus}
-						>
-							Status (unshipped first)
-						</DropdownMenuCheckboxItem>
-						<DropdownMenuCheckboxItem
-							checked={sortByDate}
-							onSelect={(e) => e.preventDefault()}
-							onCheckedChange={setSortByDate}
-						>
-							Date created (oldest first)
-						</DropdownMenuCheckboxItem>
+						<DropdownMenuRadioGroup value={sortMode} onValueChange={(value) => setSortMode(value as ShipmentSortMode)}>
+							{(Object.keys(SORT_MODE_LABEL) as ShipmentSortMode[]).map((mode) => (
+								<DropdownMenuRadioItem key={mode} value={mode}>
+									{SORT_MODE_LABEL[mode]}
+								</DropdownMenuRadioItem>
+							))}
+						</DropdownMenuRadioGroup>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>

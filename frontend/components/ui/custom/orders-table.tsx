@@ -55,32 +55,59 @@ const SHIPPING_STATUS_PRIORITY: Record<ShippingStatus, number> = {
 // nothing actionable to do with it until that gets sorted out separately.
 const MISSING_SHIPPING_PRIORITY = SHIPPING_STATUS_PRIORITY[ShippingStatus.DELIVERED] + 1;
 
+const byPriority = (a: Order, b: Order) => ORDER_STATUS_PRIORITY[a.status] - ORDER_STATUS_PRIORITY[b.status];
+
+const byShipping = (a: Order, b: Order) => {
+	const aShipping = a.shipping ? SHIPPING_STATUS_PRIORITY[a.shipping.status] : MISSING_SHIPPING_PRIORITY;
+	const bShipping = b.shipping ? SHIPPING_STATUS_PRIORITY[b.shipping.status] : MISSING_SHIPPING_PRIORITY;
+	return aShipping - bShipping;
+};
+
+const byDateOldestFirst = (a: Order, b: Order) => new Date(a.date).getTime() - new Date(b.date).getTime();
+
+export type OrderSortMode =
+	| "default"
+	| "date-oldest"
+	| "date-newest"
+	| "priority"
+	| "priority-inverted"
+	| "shipping"
+	| "shipping-inverted";
+
+export const ORDER_SORT_MODE_LABEL: Record<OrderSortMode, string> = {
+	default: "Default",
+	"date-oldest": "Oldest first",
+	"date-newest": "Newest first",
+	priority: "Priority (PAID, COMPLETED first)",
+	"priority-inverted": "Priority (PAID, COMPLETED last)",
+	shipping: "Shipping status (unshipped first)",
+	"shipping-inverted": "Shipping status (delivered first)",
+};
+
 /**
- * Single comparator backing every combination of the three independent
- * order-list toggles. Precedence when more than one is on: PRIORITY, then
- * SHIPPING STATUS, then DATE - so the default (all three on) surfaces the
- * oldest PAID order still awaiting shipment first.
+ * Exactly one sort mode is ever active - a Radix radio group, not
+ * independent toggles. "default" chains all three as successive tie-breaks
+ * (priority, then shipping, then date), which surfaces the oldest PAID
+ * order still awaiting shipment first; every other mode is a single
+ * criterion, in one direction.
  */
-function compareOrders(
-	a: Order,
-	b: Order,
-	toggles: { priority: boolean; shipping: boolean; date: boolean },
-): number {
-	if (toggles.priority) {
-		const diff = ORDER_STATUS_PRIORITY[a.status] - ORDER_STATUS_PRIORITY[b.status];
-		if (diff !== 0) return diff;
+function compareOrders(a: Order, b: Order, mode: OrderSortMode): number {
+	switch (mode) {
+		case "date-oldest":
+			return byDateOldestFirst(a, b);
+		case "date-newest":
+			return byDateOldestFirst(b, a);
+		case "priority":
+			return byPriority(a, b);
+		case "priority-inverted":
+			return byPriority(b, a);
+		case "shipping":
+			return byShipping(a, b);
+		case "shipping-inverted":
+			return byShipping(b, a);
+		default:
+			return byPriority(a, b) || byShipping(a, b) || byDateOldestFirst(a, b);
 	}
-	if (toggles.shipping) {
-		const aShipping = a.shipping ? SHIPPING_STATUS_PRIORITY[a.shipping.status] : MISSING_SHIPPING_PRIORITY;
-		const bShipping = b.shipping ? SHIPPING_STATUS_PRIORITY[b.shipping.status] : MISSING_SHIPPING_PRIORITY;
-		const diff = aShipping - bShipping;
-		if (diff !== 0) return diff;
-	}
-	if (toggles.date) {
-		// Oldest first - the order that's been waiting longest gets handled first.
-		return new Date(a.date).getTime() - new Date(b.date).getTime();
-	}
-	return 0;
 }
 
 export function OrdersTable({
@@ -88,28 +115,22 @@ export function OrdersTable({
 	columnVisibility,
 	onColumnVisibilityChange,
 	onTableChange,
-	sortByPriority,
-	sortByShipping,
-	sortByDate,
+	sortMode,
 }: {
 	globalFilter: string;
 	columnVisibility: VisibilityState;
 	onColumnVisibilityChange: OnChangeFn<VisibilityState>;
 	onTableChange: (table: TanstackTable<Order>) => void;
-	sortByPriority: boolean;
-	sortByShipping: boolean;
-	sortByDate: boolean;
+	sortMode: OrderSortMode;
 }) {
 	const { orders } = useDashboard();
 	const [sorting, setSorting] = React.useState<SortingState>([]);
 	const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
 
-	const sortedOrders = React.useMemo(() => {
-		if (!sortByPriority && !sortByShipping && !sortByDate) return orders;
-		return [...orders].sort((a, b) =>
-			compareOrders(a, b, { priority: sortByPriority, shipping: sortByShipping, date: sortByDate }),
-		);
-	}, [orders, sortByPriority, sortByShipping, sortByDate]);
+	const sortedOrders = React.useMemo(
+		() => [...orders].sort((a, b) => compareOrders(a, b, sortMode)),
+		[orders, sortMode],
+	);
 
 	const columns: ColumnDef<Order>[] = [
 		{
@@ -229,6 +250,11 @@ export function OrdersTable({
 		getRowId: (row) => row.id.toString(),
 		onSortingChange: setSorting,
 		onPaginationChange: setPagination,
+		// Pagination state is manually controlled above, so TanStack's default
+		// of resetting to page 1 whenever the (sorted/filtered) data array gets
+		// a new reference has to be turned off explicitly - otherwise toggling
+		// a Sort checkbox silently jumps you back to page 1 every time.
+		autoResetPageIndex: false,
 		onColumnVisibilityChange,
 		getCoreRowModel: getCoreRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),

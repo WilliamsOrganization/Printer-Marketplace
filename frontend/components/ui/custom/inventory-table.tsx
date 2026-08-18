@@ -434,6 +434,9 @@ export function InventoryTable({
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange,
 		onPaginationChange: setPagination,
+		// Pagination state is manually controlled above - see shipments-table.tsx
+		// for why this needs to be explicit.
+		autoResetPageIndex: false,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
