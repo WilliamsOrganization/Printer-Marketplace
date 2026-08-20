@@ -1,8 +1,8 @@
 package com.ecommerce.backend.entity;
 
-import com.goshippo.shippo_sdk.models.components.Address;
-
 import jakarta.persistence.Embeddable;
+
+import com.goshippo.shippo_sdk.models.components.Address;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

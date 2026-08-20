@@ -1,5 +1,14 @@
 package com.ecommerce.backend.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.ecommerce.backend.dto.AccountCreationRequest;
 import com.ecommerce.backend.dto.AuthResponse;
 import com.ecommerce.backend.dto.EmailVerificationRequest;
@@ -12,15 +21,8 @@ import com.ecommerce.backend.repository.UserRepository;
 import com.ecommerce.backend.service.AuthService;
 import com.ecommerce.backend.service.UserService;
 import com.resend.core.exception.ResendException;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * AuthController
@@ -33,6 +35,9 @@ public class AuthController {
 	private final UserService userService;
 	private final UserRepository userRepository;
 
+	/**
+	 * Handles logins and password logins
+	 */
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> Login(@RequestBody LoginRequestWithProvider request) {
 		if (request.getPassword() == null) {
@@ -41,6 +46,9 @@ public class AuthController {
 		return ResponseEntity.ok(authService.handlePasswordLogin(request));
 	}
 
+	/**
+	 * Verifies that the user is an admin
+	 */
 	@GetMapping("/verify-admin")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Void> verifyAdmin() {

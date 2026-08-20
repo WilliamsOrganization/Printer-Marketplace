@@ -6,7 +6,7 @@ import lombok.Data;
  * ChatMessageRequest
  */
 @Data
-public class ChatRequest {
-    private Long adminId;
-    private Long customerId;
+public class ChatMessageRequest {
+    private Long chatId;
+    private String message;
 }

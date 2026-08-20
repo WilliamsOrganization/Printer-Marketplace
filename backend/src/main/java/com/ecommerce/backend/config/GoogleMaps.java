@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.maps.GeoApiContext;
+
 /**
  * Google Maps Geocoding Api for shipping address lookups. 
  * 
@@ -16,13 +18,12 @@ public class GoogleMaps {
 	@Value("${google.maps.api.key}")
 	private String apiKey;
 
-	
 	/**
 	 * 
-	 * @return the google maps api key
+	 * @return the google maps api context
 	 */
 	@Bean
-	public String getApiKey() {
-		return apiKey;
+	GeoApiContext getGeoApiContext() {
+		return new GeoApiContext.Builder().apiKey(apiKey).build();
 	}
 }

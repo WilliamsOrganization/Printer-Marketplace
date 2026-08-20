@@ -30,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class MockShippoService {
+
+	public static final int notFound = 404;
 	private static final List<TrackingStatusEnum> MOCK_TRACKING_CYCLE =
 			List.of(TrackingStatusEnum.PRE_TRANSIT, TrackingStatusEnum.TRANSIT, TrackingStatusEnum.DELIVERED);
 
@@ -45,6 +47,7 @@ public class MockShippoService {
 
 	@Value("${server.port:8080}")
 	private int serverPort;
+
 
 	/**
 	 * Advances a shipment one step through PRE_TRANSIT ("shipping") ->
@@ -108,7 +111,7 @@ public class MockShippoService {
 				.POST(HttpRequest.BodyPublishers.ofString(payload))
 				.build();
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		if (response.statusCode() >= 400) {
+		if (response.statusCode() >= notFound) {
 			throw new IllegalStateException(
 					"Mock tracking webhook call failed: " + response.statusCode() + " " + response.body());
 		}

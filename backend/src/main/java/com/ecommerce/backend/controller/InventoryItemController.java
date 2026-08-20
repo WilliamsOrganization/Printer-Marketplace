@@ -1,13 +1,7 @@
 package com.ecommerce.backend.controller;
 
-import com.ecommerce.backend.entity.InventoryItem;
-import com.ecommerce.backend.service.InventoryItemService;
-import com.ecommerce.backend.service.InventoryItemService.DeleteOutcome;
-import com.stripe.exception.StripeException;
-
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +14,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ecommerce.backend.entity.InventoryItem;
+import com.ecommerce.backend.service.InventoryItemService;
+import com.ecommerce.backend.service.InventoryItemService.DeleteOutcome;
+import com.stripe.exception.StripeException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * REST controller for product inventory operations. Routing and HTTP status
  * decisions only - the actual work happens in InventoryItemService.
@@ -31,17 +33,33 @@ import org.springframework.web.multipart.MultipartFile;
 public class InventoryItemController {
 	private final InventoryItemService inventoryItemService;
 
+	/**
+	 * Gets all inventory items.
+	 *
+	 * @return the inventory items
+	 */
 	@GetMapping
 	public List<InventoryItem> getAll() {
 		return inventoryItemService.getAll();
 	}
 
+	/**
+	 * Gets all admin-only inventory items.
+	 *
+	 * @return the inventory items
+	 */
 	@GetMapping("/admin/all")
 	@PreAuthorize("hasRole('ADMIN')")
 	public List<InventoryItem> getAll_admin() {
 		return inventoryItemService.getAllAdmin();
 	}
 
+	/**
+	 * Gets an inventory item by ID.
+	 *
+	 * @param id the ID of the inventory item to get
+	 * @return the inventory item
+	 */	
 	@GetMapping("/{id}")
 	public InventoryItem getOne(@PathVariable Long id) {
 		return inventoryItemService.getOne(id);
@@ -61,12 +79,27 @@ public class InventoryItemController {
 		return inventoryItemService.save(submitted);
 	}
 
+	/**
+	 * Archives or unarchives an inventory item.
+	 *
+	 * @param id the ID of the inventory item to archive
+	 * @param archived whether to archive or unarchive the inventory item
+	 * @return the archived inventory item
+	 * @throws StripeException if the Stripe product/price call fails
+	 */
 	@PostMapping("/{id}/archive")
 	@PreAuthorize("hasRole('ADMIN')")
 	public InventoryItem setArchived(@PathVariable Long id, @RequestBody boolean archived) throws StripeException {
 		return inventoryItemService.setArchived(id, archived);
 	}
 
+	/**
+	 * Deletes an inventory item.
+	 *
+	 * @param id the ID of the inventory item to delete
+	 * @return a response indicating whether the inventory item was deleted,
+	 * unarchived, or not found
+	 */
 	@DeleteMapping("/{id}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<String> delete(@PathVariable Long id) {

@@ -25,11 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ReturnService {
-	private static final Long DOLLAR = 100L;
+	// private static final Long DOLLAR = 100L;
 	private final ReturnRepository returnRepository;
 	private final UserService userService;
-	private final ResendService resendService;
-	private final GoogleMapsService googleMapsService;
 	private final OrderService orderService;
 
 	/** 

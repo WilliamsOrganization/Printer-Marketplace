@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CartService {
-	private static final long DAYS = 30;
+	// private static final long DAYS = 30;
 	private final UserService userService;
 	private final SessionRepository sessionRepository;
 	private final CartRepository cartRepository;

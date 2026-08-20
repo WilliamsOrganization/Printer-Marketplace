@@ -1,5 +1,10 @@
 package com.ecommerce.backend.service;
 
+import java.time.LocalDateTime;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
 import com.ecommerce.backend.dto.LoginRequestWithProvider;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
@@ -7,11 +12,6 @@ import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
-
-import java.time.LocalDateTime;
-
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
 
 /**
  * SessionService

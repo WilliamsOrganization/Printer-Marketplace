@@ -36,12 +36,19 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AnalyticsService {
+
+	public static final int months = 12;
+	public static final double scale = 100.0;
+	public static final int maxPopularItems = 8;
+	public static final int scaleInt = 100;
+
 	private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
 	private final InventoryItemRepository inventoryItemRepository;
 	private final OrderRepository orderRepository;
 	private final UserRepository userRepository;
 	private final SessionRepository sessionRepository;
+
 
 	/**
 	 * Builds the full set of metrics behind both the admin dashboard home page
@@ -157,7 +164,7 @@ public class AnalyticsService {
 		}
 		return quantityByTitle.entrySet().stream()
 				.sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-				.limit(8)
+				.limit(maxPopularItems)
 				.map(entry -> new PopularItem(entry.getKey(), entry.getValue()))
 				.toList();
 	}
@@ -175,7 +182,7 @@ public class AnalyticsService {
 		}
 		if (ordersPerCustomer.isEmpty()) return 0;
 		long repeatCustomers = ordersPerCustomer.values().stream().filter(count -> count > 1).count();
-		return (int) Math.round((repeatCustomers * 100.0) / ordersPerCustomer.size());
+		return (int) Math.round((repeatCustomers * scale) / ordersPerCustomer.size());
 	}
 
 	/**
@@ -187,7 +194,7 @@ public class AnalyticsService {
 		LocalDate now = LocalDate.now();
 		int thisMonth = now.getMonthValue();
 		int thisYear = now.getYear();
-		int prevMonth = thisMonth == 1 ? 12 : thisMonth - 1;
+		int prevMonth = thisMonth == 1 ? months : thisMonth - 1;
 		int prevYear = thisMonth == 1 ? thisYear - 1 : thisYear;
 
 		long current = sessionDates.stream()
@@ -197,7 +204,7 @@ public class AnalyticsService {
 				.filter(date -> date.getMonthValue() == prevMonth && date.getYear() == prevYear)
 				.count();
 
-		if (previous == 0) return current > 0 ? 100 : 0;
-		return (int) Math.round(((current - previous) / (double) previous) * 100);
+		if (previous == 0) return current > 0 ? scaleInt : 0;
+		return (int) Math.round(((current - previous) / (double) previous) * scaleInt);
 	}
 }

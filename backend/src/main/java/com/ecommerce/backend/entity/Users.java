@@ -2,9 +2,6 @@ package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,6 +11,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -53,6 +53,11 @@ public class Users {
 	@Enumerated(EnumType.STRING)
 	private Role userRole;
 
+	/**
+	 * User roles.
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
 	public enum Role {
 		CUSTOMER, REGISTERED, ADMIN
 	}

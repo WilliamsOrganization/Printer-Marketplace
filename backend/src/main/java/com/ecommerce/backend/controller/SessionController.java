@@ -1,22 +1,18 @@
 package com.ecommerce.backend.controller;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.service.SessionService;
 
 import lombok.RequiredArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * REST controller for Session account operations.
@@ -42,6 +38,11 @@ public class SessionController {
 		return newSession.getToken();
 	}
 
+	/**
+	 * Gets stats about the current app's sessions.
+	 *
+	 * @return the stats
+	 */
 	@GetMapping("/stats")
 	public Map<String, Long> getStats() {
 		return Map.of(
@@ -50,6 +51,11 @@ public class SessionController {
 			"uniqueUsers", repository.countUniqueUsers());
 	}
 
+	/**
+	 * Gets a list of all session creation dates.
+	 *
+	 * @return the dates
+	 */
 	@GetMapping("/dates")
 	public List<LocalDateTime> getDates() {
 		return repository.findAll().stream()

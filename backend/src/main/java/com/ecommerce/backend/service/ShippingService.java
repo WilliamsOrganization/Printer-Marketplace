@@ -1,5 +1,6 @@
 package com.ecommerce.backend.service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
@@ -21,6 +22,7 @@ import com.ecommerce.backend.entity.ShippingParcel;
 import com.ecommerce.backend.exception.UnsupportedShippingDestination;
 import com.ecommerce.backend.repository.ShippingParcelRepository;
 import com.ecommerce.backend.repository.ShippingRepository;
+import com.google.maps.errors.ApiException;
 import com.google.maps.model.LatLng;
 import com.goshippo.shippo_sdk.models.components.DistanceUnitEnum;
 import com.goshippo.shippo_sdk.models.components.Rate;
@@ -231,7 +233,13 @@ public class ShippingService {
 						.build();
 				shipping.setCurrentLocation(current);
 
-				LatLng geocoded = googleMapsService.geocode(current);
+				LatLng geocoded = null;
+				try {
+					geocoded = googleMapsService.geocode(current);
+				} catch (ApiException | InterruptedException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				if (geocoded != null) {
 					shipping.setCurrentLat(geocoded.lat);
 					shipping.setCurrentLng(geocoded.lng);

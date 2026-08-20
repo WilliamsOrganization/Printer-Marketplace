@@ -20,6 +20,11 @@ import lombok.RequiredArgsConstructor;
 public class AnalyticsController {
 	private final AnalyticsService analyticsService;
 
+	/**
+	 * Main route for the dashboard analytics page.
+	 * 
+	 * @return {@link DashboardAnalyticsResponse}
+	 */
 	@GetMapping("/dashboard")
 	@PreAuthorize("hasRole('ADMIN')")
 	public DashboardAnalyticsResponse getDashboardAnalytics() {

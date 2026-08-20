@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 
 import lombok.Data;
 
+/**
+ * ChatResponse
+ */
 @Data
 public class ChatResponse {
 	private Long id;

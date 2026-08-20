@@ -1,8 +1,5 @@
 package com.ecommerce.backend.seeding;
 
-import java.util.List;
-import java.util.concurrent.Executors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,11 +7,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
-import com.stripe.exception.StripeException;
-import com.stripe.model.ProductCollection;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,14 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 public class InventoryItemInitializer {
-    private static final Long ID = 1L;
-    private static final Long QUANTITY = 10L;
-    private static final String CURRENCY = "CAD";
-    // dollars, not cents - StripeCatalogService multiplies by 100 internally
-    private static final Long UNIT_AMOUNT = 2L;
-    private static final List<String> IMAGE_URLS =
+    // private static final Long ID = 1L;
+    // private static final Long QUANTITY = 10L;
+    // private static final String CURRENCY = "CAD";
+    // // dollars, not cents - StripeCatalogService multiplies by 100 internally
+    // private static final Long UNIT_AMOUNT = 2L;
 	// TODO: make these local uploads 
-        List.of("https://placehold.co/600x400.png");
+    // private static final List<String> IMAGE_URLS =
+    //     List.of("https://placehold.co/600x400.png");
 	private static final Logger logger = LoggerFactory.getLogger(InventoryItemInitializer.class);
 
     @Value("${app.admin.password}") private String password;
@@ -51,7 +45,7 @@ public class InventoryItemInitializer {
         return args -> {
             if (inventoryItemRepository.count() > 0) {
 				logger.info("[INIT]: no seed data detected clearing out stripe. populating new data");
-				ProductCollection products = stripeCatalogService.getAllProducts();
+				// ProductCollection products = stripeCatalogService.getAllProducts();
 				// logger.info("[INIT]: ATTEMPTING TO DELETE: {}", products.getData().size());
 				// CleanUnusedProductsAndArchive(stripeCatalogService, products);
 				// TODO: FIX THIS
@@ -66,8 +60,8 @@ public class InventoryItemInitializer {
      * Unimplemented stub for uploading an item's seed images to blob
      * storage.
      */
-    private void seedS3Images(InventoryItem item) {
-    }
+    // private void seedS3Images(InventoryItem item) {
+    // }
 
 	/**
 	 * This method sucks. you cant delete many products at once. You have to delete one at a time. 
@@ -75,42 +69,42 @@ public class InventoryItemInitializer {
 	 * https://stripe.com/docs/api/products/delete
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	private void CleanUnusedProductsAndArchive(StripeCatalogService stripeCatalogService, ProductCollection products) {
-		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			products.autoPagingIterable().forEach(product -> {
-				executor.submit(() -> {
-					try {
-						stripeCatalogService.deleteProduct(product.getId());
-					} catch (StripeException e) {
-						logger.error("Failed to delete product: {}", e.getMessage());
-					} finally {
-						logger.info("[INIT]: deleted product: {}", product.getName());
-					}
-				});
-			});
-		}
-	}
+	// private void CleanUnusedProductsAndArchive(StripeCatalogService stripeCatalogService, ProductCollection products) {
+	// 	try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+	// 		products.autoPagingIterable().forEach(product -> {
+	// 			executor.submit(() -> {
+	// 				try {
+	// 					stripeCatalogService.deleteProduct(product.getId());
+	// 				} catch (StripeException e) {
+	// 					logger.error("Failed to delete product: {}", e.getMessage());
+	// 				} finally {
+	// 					logger.info("[INIT]: deleted product: {}", product.getName());
+	// 				}
+	// 			});
+	// 		});
+	// 	}
+	// }
 
 	/**
 	 * This method is going to transform the ProductCollection our seeded data as it contains in parallel most of what we need then we require very little synchronizing logic. 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	private void seedInventoryWithStripeProduct(InventoryItemRepository inventoryItemRepository
-		, StripeCatalogService stripeCatalogService, ProductCollection products) {
-		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			products.autoPagingIterable().forEach(product -> {
-				executor.submit(() -> {
-					try {
-						stripeCatalogService.deleteProduct(product.getId());
-					} catch (StripeException e) {
-						logger.error("Failed to delete product: {}", e.getMessage());
-					} finally {
-						logger.info("[INIT]: deleted product: {}", product.getName());
-					}
-				});
-			});
-		}
-	}
+	// private void seedInventoryWithStripeProduct(InventoryItemRepository inventoryItemRepository
+	// 	, StripeCatalogService stripeCatalogService, ProductCollection products) {
+	// 	try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+	// 		products.autoPagingIterable().forEach(product -> {
+	// 			executor.submit(() -> {
+	// 				try {
+	// 					stripeCatalogService.deleteProduct(product.getId());
+	// 				} catch (StripeException e) {
+	// 					logger.error("Failed to delete product: {}", e.getMessage());
+	// 				} finally {
+	// 					logger.info("[INIT]: deleted product: {}", product.getName());
+	// 				}
+	// 			});
+	// 		});
+	// 	}
+	// }
 
 	/**
 	 * Reactivates every archived Stripe product in the given collection,
@@ -122,21 +116,21 @@ public class InventoryItemInitializer {
 	 * @param stripeCatalogService    used to activate each Stripe product
 	 * @param products                the products to activate
 	 */
-	private void activateInventoryWithStripeProduct(InventoryItemRepository inventoryItemRepository
-		, StripeCatalogService stripeCatalogService, ProductCollection products) {
-		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			products.autoPagingIterable().forEach(product -> {
-				executor.submit(() -> {
-					try {
-						
-						stripeCatalogService.activateProduct(product.getId());
-					} catch (StripeException e) {
-						logger.error("[ERROR]: Failed to activate product: {}", e.getMessage());
-					} finally {
-						logger.info("[INIT]: activated product: {}", product.getName());
-					}
-				});
-			});
-		}
-	}
+	// private void activateInventoryWithStripeProduct(InventoryItemRepository inventoryItemRepository
+	// 	, StripeCatalogService stripeCatalogService, ProductCollection products) {
+	// 	try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+	// 		products.autoPagingIterable().forEach(product -> {
+	// 			executor.submit(() -> {
+	// 				try {
+	//
+	// 					stripeCatalogService.activateProduct(product.getId());
+	// 				} catch (StripeException e) {
+	// 					logger.error("[ERROR]: Failed to activate product: {}", e.getMessage());
+	// 				} finally {
+	// 					logger.info("[INIT]: activated product: {}", product.getName());
+	// 				}
+	// 			});
+	// 		});
+	// 	}
+	// }
 }

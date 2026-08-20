@@ -1,10 +1,12 @@
 package com.ecommerce.backend.config;
 
-import com.stripe.Stripe;
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+
+import com.stripe.Stripe;
+
 
 /**
  * Configures the Stripe SDK's global API key on startup.
@@ -20,7 +22,7 @@ public class StripeConfig {
 	 * (Product.create, Price.create, Session.create, etc.) in this app.
 	 */
 	@PostConstruct
-	public void init() {
+	void init() {
 		Stripe.apiKey = stripeSecretKey;
 	}
 }

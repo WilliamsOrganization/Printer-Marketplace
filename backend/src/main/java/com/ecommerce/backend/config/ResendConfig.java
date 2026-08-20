@@ -1,12 +1,10 @@
 package com.ecommerce.backend.config;
 
-import com.resend.Resend;
-import com.resend.core.exception.ResendException;
-import com.resend.services.emails.model.CreateEmailOptions;
-import com.resend.services.emails.model.CreateEmailResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.resend.Resend;
 
 /**
  * ResendConfig
@@ -19,8 +17,12 @@ public class ResendConfig {
 	@Value("${resend.webhook_secret}")
 	private String webhook;
 
+	/**
+	 * Creates a new Resend.
+	 * @return the new Resend
+	 */
 	@Bean
-	public Resend resend() {
+	Resend resend() {
 		return new Resend(apiKey);
 	}
 }

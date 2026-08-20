@@ -189,6 +189,25 @@ export interface Returns {
 	refundedAmount: number | null;
 	refundedAt: string | null;
 	reviewed: boolean;
+	Chat: Chat | null;
+}
+
+export interface Chat {
+	id: number;
+	createdAt: string;
+	updatedAt: string;
+	admin: User;
+	customer: User;
+	messages: Message[];
+}
+
+export interface Message {
+	id: number;
+	createdAt: string;
+	updatedAt: string;
+	chat: Chat;
+	sender: User;
+	content: string;
 }
 
 export interface CheckoutSummary {

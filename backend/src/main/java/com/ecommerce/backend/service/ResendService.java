@@ -10,11 +10,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.backend.entity.EmailVerification;
+import com.ecommerce.backend.entity.EmailVerification.Reason;
 import com.ecommerce.backend.entity.OrderItem;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.entity.EmailVerification.Reason;
 import com.ecommerce.backend.repository.EmailVerificationRepository;
 import com.resend.Resend;
 import com.resend.core.exception.ResendException;
@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ResendService {
 	// TODO: pull from the same env-configurable base url as
 	// StripeCatalogService's SUCCESS_URL/CANCEL_URL once that's made configurable
+	public static final int aMillion = 1_000_000;
 	private static final String STORE_URL = "http://localhost:3000";
 	private static final Long DOLLAR = 100L;
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -305,7 +306,7 @@ public class ResendService {
 	 * @return the generated code
 	 */
 	private String generateVerificationCode() {
-		int value = SECURE_RANDOM.nextInt(1_000_000);
+		int value = SECURE_RANDOM.nextInt(aMillion);
 		return String.format("%06d", value);
 	}
 

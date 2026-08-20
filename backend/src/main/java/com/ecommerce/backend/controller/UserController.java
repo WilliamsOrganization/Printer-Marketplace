@@ -1,13 +1,5 @@
 package com.ecommerce.backend.controller;
 
-import com.ecommerce.backend.dto.UpdateContactRequest;
-import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.entity.Users.Role;
-import com.ecommerce.backend.repository.UserRepository;
-import com.ecommerce.backend.service.UserService;
-
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +10,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.ecommerce.backend.dto.UpdateContactRequest;
+import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.entity.Users.Role;
+import com.ecommerce.backend.repository.UserRepository;
+import com.ecommerce.backend.service.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * REST controller for user account operations.

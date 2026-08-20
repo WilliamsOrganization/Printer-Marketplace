@@ -2,8 +2,6 @@ package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,6 +11,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+
+import org.hibernate.annotations.CreationTimestamp;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,4 +56,9 @@ public class Message {
 	@NonNull
 	@NotNull
 	private String content;
+
+	// // TODO: drop this and join a table so you can track per-user reactions
+	// @JdbcTypeCode(SqlTypes.ARRAY)
+	// @Column(columnDefinition = "text[]")
+	// private String[] reactions;
 }

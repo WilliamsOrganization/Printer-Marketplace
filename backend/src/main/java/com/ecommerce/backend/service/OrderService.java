@@ -18,6 +18,7 @@ import com.ecommerce.backend.exception.OrderNotFoundException;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.repository.ShippingRepository;
 import com.goshippo.shippo_sdk.models.components.Shipment;
+import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,7 @@ public class OrderService {
 	 * @return the persisted order, marked as pending
 	 */
 	public Orders createPendingOrder(Session session, Shipment shipment, ShippingQuote quote, Cart cart,
-			String selectedRateId) {
+			String selectedRateId) throws StripeException , Exception {
 		Orders order = Orders.builder()
 				.user(cart.getUser())
 				.stripeSessionId(session.getId())

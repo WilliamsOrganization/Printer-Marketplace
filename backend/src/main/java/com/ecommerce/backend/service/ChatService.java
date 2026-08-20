@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.backend.dto.ChatResponse;
 import com.ecommerce.backend.entity.Chat;
 import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.repository.ChatRepository;
+// import com.ecommerce.backend.repository.ChatRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private final ChatRepository chatRepository;
+    // private final ChatRepository chatRepository;
 
     /**
      * Creates a chat between two users

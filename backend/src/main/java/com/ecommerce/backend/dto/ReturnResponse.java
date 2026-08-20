@@ -27,6 +27,12 @@ public class ReturnResponse {
 	private LocalDateTime refundedAt;
 	private Boolean reviewed;
 
+	/**
+	 * Converts a Returns row into a ReturnResponse.
+	 *
+	 * @param returns the returns row to convert
+	 * @return the converted returns row
+	 */
 	public static ReturnResponse from(Returns returns) {
 		ReturnResponse response = new ReturnResponse();
 		response.id = returns.getId();

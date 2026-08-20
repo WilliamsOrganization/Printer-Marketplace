@@ -1,12 +1,6 @@
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
-import org.hibernate.annotations.CreationTimestamp;
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -23,6 +17,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -157,6 +156,9 @@ public class Shipping {
 	@Enumerated(EnumType.STRING)
 	private Status status;
 
+	/**
+	 * Shipping status.
+	 */
 	public enum Status {
 		PENDING, PURCHASED, IN_TRANSIT, DELIVERED
 	}

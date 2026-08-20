@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// import com.ecommerce.backend.dto.ChatMessageRequest;
 import com.ecommerce.backend.dto.ChatRequest;
 import com.ecommerce.backend.dto.ChatResponse;
 import com.ecommerce.backend.entity.Chat;
@@ -35,11 +36,24 @@ public class ChatController {
 	 * @param request
 	 * @return
 	 */
-	@PostMapping
+	@PostMapping("/create")
 	public Chat createChat(@RequestBody ChatRequest request) {
 		Users user = userService.getUserFromSession();
 		return chatService.createChat(user, request.getAdminId(), request.getCustomerId());
 	}
+
+	//
+	// /**
+	//  * Sends a message to a chat
+	//  * @param request
+	//  * @return
+	//  */
+	// @PostMapping("/message")
+	// public Chat sendMessage(@RequestBody ChatMessageRequest request) {
+	// 	Users user = userService.getUserFromSession();
+	// 	return chatService.sendMessage(user, request.getChatId(), request.getMessage());
+	// }
+
 
 	/**
 	 * Gets all chats for a user

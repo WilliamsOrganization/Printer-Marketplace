@@ -1,5 +1,8 @@
 package com.ecommerce.backend.entity;
 
+
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,7 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,9 +26,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-import org.hibernate.annotations.CreationTimestamp;
 
-
+/**
+ * EmailVerification
+ */
 @Entity
 @Table(name = "email_verification_codes")
 @Data
@@ -33,6 +37,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class EmailVerification {
+	private static final int length = 6;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,7 +48,7 @@ public class EmailVerification {
 	private Users user;
 	@NotNull @NonNull private String email;
 	@NotNull @NonNull
-	@Column(length = 6)
+	@Column(length = length) 
 	private String code;
 	@NotNull @NonNull private LocalDateTime expiryDate;
 
@@ -57,6 +62,9 @@ public class EmailVerification {
 	@Enumerated(EnumType.STRING)
 	private Reason reason;
 
+	/**
+	 * Reasons for email verification.
+	 */
 	public enum Reason {
 		CREATE_ACCOUNT, RESET_PASSWORD, CHANGE_EMAIL
 	}

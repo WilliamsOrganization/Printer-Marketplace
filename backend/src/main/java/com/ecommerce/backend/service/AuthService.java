@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-	private static final long DAYS = 30;
+	// private static final long DAYS = 30;
 	private final UserRepository userRepository;
 	private final UserService userService;
 	private final SessionRepository sessionRepository;
@@ -220,6 +220,15 @@ public class AuthService {
 		checkCode(user, Reason.RESET_PASSWORD, code);
 	}
 
+	/**
+	 * Confirms a password reset: checks the code from the reset email
+	 * against the user identified by the email in the request (there's no
+	 * session to fall back on here - the user may be on a device that's
+	 * never had one), then sets the new password and logs them in.
+	 *
+	 * @param request the email, code, and new password
+	 * @return AuthResponse
+	 */
 	public AuthResponse confirmResetPassword(ResetPasswordConfirmRequest request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(() -> new UserNotFoundException("User does not exist"));

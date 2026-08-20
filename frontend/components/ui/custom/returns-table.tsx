@@ -151,9 +151,9 @@ export function ReturnsTable({
 		{
 			id: "chat",
 			header: () => <div className="text-center">Chat</div>,
-			cell: () => (
+			cell: ({row}) => (
 				<div className="flex justify-center">
-					<ChatWithUserDialog />
+					<ChatWithUserDialog chat={row.original.Chat} />
 				</div>
 			),
 			enableHiding: false,

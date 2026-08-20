@@ -2,11 +2,6 @@ package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
-import com.goshippo.shippo_sdk.models.components.DistanceUnitEnum;
-import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,6 +10,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.goshippo.shippo_sdk.models.components.DistanceUnitEnum;
+import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

@@ -3,6 +3,11 @@ package com.ecommerce.backend.config;
 import java.io.IOException;
 import java.util.Set;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -12,10 +17,7 @@ import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.exception.UserNotFoundException;
 import com.ecommerce.backend.service.AuthService;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +52,7 @@ public class SessionAuthFilter extends OncePerRequestFilter {
     private static final String STRIPE_WEBHOOK_PATH = "/stripe/webhook";
     private static final String SHIPPING_WEBHOOK_PATH = "/server/shipping/webhook";
     private static final String AUTH_LOGIN_PATH = "/server/auth/login";
+	private static final int bearerSubstring = 7;
 
     // GET-only, unauthenticated-friendly routes - no @PreAuthorize guards
     // these on the controller side, so they must not be hard-rejected here
@@ -94,7 +97,7 @@ public class SessionAuthFilter extends OncePerRequestFilter {
     private String getTokenFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+            return authHeader.substring(bearerSubstring);
         }
         return null;
     }

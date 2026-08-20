@@ -1,18 +1,19 @@
 package com.ecommerce.backend.service;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.ecommerce.backend.dto.AccountCreationRequest;
-import com.ecommerce.backend.dto.ResetPasswordRequest;
 import com.ecommerce.backend.dto.UpdateContactRequest;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.exception.ExistingUserFoundException;
 import com.ecommerce.backend.exception.ForbiddenException;
 import com.ecommerce.backend.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 /**
  * UserService
