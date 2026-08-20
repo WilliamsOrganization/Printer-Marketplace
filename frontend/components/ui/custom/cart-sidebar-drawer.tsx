@@ -25,9 +25,11 @@ import { useCart } from "@/src/context/cart-context";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function CartSidebarDrawer() {
-	const { cart, setCart, cartDrawer, setCartDrawer } = useCart();
+	const { cart, cartDrawer, setCartDrawer } = useCart();
+	const queryClient = useQueryClient();
 
 	const itemCount = cart?.items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 	const subtotal =
@@ -35,14 +37,9 @@ export function CartSidebarDrawer() {
 
 	const handleQuantityChange = (id: number, qty: number) => {
 		if (qty < 1) return;
-		setCart((prev) => ({
-			...prev!,
-			items: prev!.items.map((i) =>
-				i.id === id ? { ...i, quantity: qty } : i,
-			),
-		}));
 		api
 			.put(`/cartitem/quantity/${id}`, qty)
+			.then(() => queryClient.invalidateQueries({ queryKey: ["cart"] }))
 			.catch(() => toast.error("Failed to update quantity"));
 	};
 
@@ -51,10 +48,7 @@ export function CartSidebarDrawer() {
 			.delete(`/cartitem/${id}`)
 			.then(() => {
 				toast.success("Item removed");
-				setCart((prev) => ({
-					...prev!,
-					items: prev!.items.filter((i) => i.id !== id),
-				}));
+				queryClient.invalidateQueries({ queryKey: ["cart"] });
 			})
 			.catch(() => toast.error("Failed to remove item"));
 	};
@@ -207,10 +201,6 @@ function CartItemCard({
 						<Trash2 className="size-3.5" />
 					</Button>
 				</div>
-
-				<p className="text-xs text-muted-foreground capitalize">
-					{item.category.toLowerCase()}
-				</p>
 
 				{/* Quantity + price row */}
 				<div className="flex items-center justify-between mt-auto pt-1">

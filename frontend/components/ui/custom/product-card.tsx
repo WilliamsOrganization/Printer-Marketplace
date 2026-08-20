@@ -4,16 +4,24 @@
 import { Card, CardContent, CardFooter } from "../card";
 import Image from "next/image";
 import { AddToCartButton } from "./add-to-cart-button";
-import { InventoryItem, ItemBadge } from "@/lib/types";
+import { InventoryItem } from "@/lib/types";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "../button";
 import { useEffect, useState } from "react";
 import { ProductCarousel } from "./product-carousel";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const MotionCard = motion(Card);
 
-function ProductCard({ products }: { products: InventoryItem[] }) {
+function ProductCard({
+	products,
+	gridClassName,
+}: {
+	products: InventoryItem[];
+	/** Overrides the default responsive grid (e.g. for a single-item preview in a narrow container). */
+	gridClassName?: string;
+}) {
 	const [selected, setSelected] = useState<InventoryItem | null>(null);
 
 	useEffect(() => {
@@ -26,13 +34,9 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 	return (
 		<>
-			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+			<div className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4", gridClassName)}>
 				{products.map((product, i) => (
 					<MotionCard
-						initial={{ opacity: 0, y: 16 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						transition={{ duration: 1.2 }}
-						viewport={{ once: true }}
 						key={product.id}
 						layoutId={`card-${product.id}`}
 						className="group overflow-hidden flex flex-col p-0 py-0 gap-0 hover:shadow-lg transition-shadow duration-200"
@@ -42,18 +46,10 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 							className="p-0 cursor-pointer"
 							onClick={() => setSelected(product)}
 						>
-							<div className="relative aspect-square bg-muted overflow-hidden">
-								{/* Editorial badge label */}
-								{product.badge && (
-									<span
-										className={`absolute top-2 left-2 z-10 text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${product.badge === ItemBadge.SALE
-												? "bg-destructive text-destructive-foreground"
-												: "bg-background/90 text-foreground"
-											}`}
-									>
-										{product.badge}
-									</span>
-								)}
+							<motion.div
+								layoutId={`image-${product.id}`}
+								className="relative aspect-square bg-muted overflow-hidden"
+							>
 								<Image
 									src={product.imageUrls?.[0] || `/stock-${i + 1}.jpg`}
 									alt={product.itemTitle}
@@ -66,7 +62,7 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 										View details
 									</span>
 								</div>
-							</div>
+							</motion.div>
 						</CardContent>
 
 						<CardFooter className="flex flex-col items-start gap-3 p-4">
@@ -82,9 +78,6 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 										${product.itemCost.toFixed(2)}
 									</p>
 								</div>
-								<p className="text-xs text-muted-foreground mt-0.5 tracking-wide uppercase">
-									{product.category.toLowerCase()}
-								</p>
 							</div>
 							<AddToCartButton item={product} quantity={1} />
 						</CardFooter>
@@ -121,32 +114,19 @@ function ProductCard({ products }: { products: InventoryItem[] }) {
 
 							{/* Left — Carousel */}
 							<div className="w-1/2 shrink-0 bg-muted self-stretch flex items-center">
-								<ProductCarousel product={selected} />
+								<ProductCarousel product={selected} layoutId={`image-${selected.id}`} />
 							</div>
 
 							{/* Right — Product info */}
 							<div className="flex flex-col flex-1 p-8 overflow-y-auto">
-								{/* Badge + title */}
+								{/* Title */}
 								<div className="flex flex-col gap-2 mb-2 pr-10">
-									{selected.badge && (
-										<span
-											className={`w-fit text-[10px] tracking-[0.15em] uppercase px-2 py-1 font-medium ${selected.badge === ItemBadge.SALE
-													? "bg-destructive text-destructive-foreground"
-													: "bg-muted text-muted-foreground"
-												}`}
-										>
-											{selected.badge}
-										</span>
-									)}
 									<motion.h2
 										layoutId={`title-${selected.id}`}
 										className="text-3xl font-serif leading-tight"
 									>
 										{selected.itemTitle}
 									</motion.h2>
-									<p className="text-xs tracking-[0.15em] uppercase text-muted-foreground">
-										{selected.category.toLowerCase()}
-									</p>
 								</div>
 
 								{/* Price */}

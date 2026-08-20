@@ -1,7 +1,7 @@
 package com.ecommerce.backend.entity;
 
-import com.goshippo.shippo_sdk.models.components.DistanceUnitEnum;
-import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,16 +10,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Inventory Item is the Product available for purchase in the store contains
@@ -37,14 +37,45 @@ import org.hibernate.annotations.UpdateTimestamp;
 public class InventoryItem {
 
     /**
-     * These are the categories of products that can be purchased in the store
+     * Standard physical package footprint sizes an item ships in, width by
+     * length in centimeters. A rough classification (not the item's exact
+     * dimensions) so a whole order's items can be combined into one
+     * estimated ShippingParcel at checkout - see ShippingService.estimateParcel.
      */
-    public enum Category { ELECTRONICS, PRINTS, CUSTOM }
+    public enum SizeCategory {
+        SIZE_2X2(2, 2),
+        SIZE_4X5(4, 5),
+        SIZE_5X7(5, 7),
+        SIZE_8X10(8, 10),
+        SIZE_11X14(11, 14),
+        SIZE_16X20(16, 20),
+        SIZE_20X30(20, 30);
+
+        public final int widthCm;
+        public final int lengthCm;
+
+        SizeCategory(int widthCm, int lengthCm) {
+            this.widthCm = widthCm;
+            this.lengthCm = lengthCm;
+        }
+    }
 
     /**
-     * These are the badges that can be awarded to products
+     * Standard weight tiers an item ships at, in grams - same rough,
+     * checkout-estimate purpose as SizeCategory above.
      */
-    public enum Badge { BESTSELLER, NEW, SALE }
+    public enum WeightCategory {
+        LIGHT(100),
+        MEDIUM(500),
+        HEAVY(1000),
+        EXTRA_HEAVY(2000);
+
+        public final int grams;
+
+        WeightCategory(int grams) {
+            this.grams = grams;
+        }
+    }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
 
@@ -91,27 +122,11 @@ public class InventoryItem {
 
     @NonNull
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Category category;
-
-    @Enumerated(EnumType.STRING) private Badge badge;
-
-	// TODO: conider moving these to a separate class for shipping item information
-    @NonNull @NotNull @Column(nullable = false, columnDefinition = "integer default 500") private Long height;
-
-    @NonNull @NotNull @Column(nullable = false, columnDefinition = "integer default 500") private Long width;
-
-    @NonNull @NotNull @Column(nullable = false, columnDefinition = "integer default 500") private Long length;
-
-    @NonNull @NotNull @Column(nullable = false, columnDefinition = "integer default 500") private Long weight;
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'SIZE_4X5'")
+    private SizeCategory sizeCategory;
 
     @NonNull
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(255) default 'LB'")
-    private WeightUnitEnum weightUnit;
-
-    @NonNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(255) default 'IN'")
-    private DistanceUnitEnum distanceUnit;
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'MEDIUM'")
+    private WeightCategory weightCategory;
 }

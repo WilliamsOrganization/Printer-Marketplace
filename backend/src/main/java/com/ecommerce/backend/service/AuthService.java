@@ -3,21 +3,30 @@ package com.ecommerce.backend.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.backend.dto.AccountCreationRequest;
 import com.ecommerce.backend.dto.AuthResponse;
-import com.ecommerce.backend.dto.LoginRequest;
+import com.ecommerce.backend.dto.EmailVerificationRequest;
+import com.ecommerce.backend.dto.LoginRequestWithProvider;
+import com.ecommerce.backend.dto.ResetPasswordConfirmRequest;
+import com.ecommerce.backend.dto.ResetPasswordRequest;
+import com.ecommerce.backend.entity.EmailVerification;
+import com.ecommerce.backend.entity.EmailVerification.Reason;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.ExistingUserFoundException;
 import com.ecommerce.backend.exception.InvalidCredentials;
 import com.ecommerce.backend.exception.UserNotFoundException;
+import com.ecommerce.backend.repository.EmailVerificationRepository;
 import com.ecommerce.backend.repository.SessionRepository;
 import com.ecommerce.backend.repository.UserRepository;
+import com.resend.core.exception.ResendException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,39 +38,48 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-	private static final long DAYS = 30;
+	// private static final long DAYS = 30;
 	private final UserRepository userRepository;
+	private final UserService userService;
 	private final SessionRepository sessionRepository;
+	private final PasswordEncoder passwordEncoder;
+	private final SessionService sessionService;
+	private final ResendService resendService;
+	private final EmailVerificationRepository emailVerificationRepository;
+
 
 	/**
-	 * authenticateFromToken checks if the token is valid and returns the user
+	 * Create a new session for a user if one doesn't already exist.
 	 * 
-	 * @param token
-	 * @return
+	 * @return the new session
 	 */
-	public Optional<Authentication> authenticateFromToken(String token) {
-		if (token == null)
-			return Optional.empty();
-		Optional<Sessions> sessionOpt = sessionRepository.findbyTokenWithUser(token);
+	public Sessions resolveSession(String token) throws UserNotFoundException {
+		Sessions session = sessionRepository.findbyTokenWithUser(token).orElse(null);
+		if (session == null) {
+			throw new UserNotFoundException("User not found");
+		}
+		return session;
+	}
 
-		if (sessionOpt.isEmpty()) {
-			log.warn("authenticateFromToken: no session found for token");
-			return Optional.empty();
-		}
-		if (sessionOpt.get().getExpiresAt().isBefore(LocalDateTime.now())) {
-			log.warn("authenticateFromToken: session expired for user {}",
-					sessionOpt.get().getUser().getEmail());
-			return Optional.empty();
-		}
-		Users user = sessionOpt.get().getUser();
+	/**
+	 * Builds the Spring Security Authentication for a resolved session. If
+	 * the session has no user attached yet, the resulting Authentication
+	 * carries no authorities (equivalent to anonymous) until one is.
+	 *
+	 * @param session the current session
+	 * @return the Authentication to set on the SecurityContext
+	 */
+	public Authentication buildAuthentication(Sessions session) {
 		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-		authorities.add(
-				new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name()));
-		if (Boolean.TRUE.equals(user.getIsAdmin())) {
-			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+		Users user = session.getUser();
+		if (user != null) {
+			authorities.add(
+					new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name()));
+			if (Boolean.TRUE.equals(user.getIsAdmin())) {
+				authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+			}
 		}
-		return Optional.of(
-				new UsernamePasswordAuthenticationToken(user, null, authorities));
+		return new UsernamePasswordAuthenticationToken(session, null, authorities);
 	}
 
 	/**
@@ -70,65 +88,157 @@ public class AuthService {
 	 * @param request
 	 * @return 
 	 */
-	public AuthResponse handleLogin(LoginRequest request) {
+	public AuthResponse handleLogin(LoginRequestWithProvider request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(
 						() -> new UserNotFoundException("User does not exist"));
-		Sessions session = sessionCreateWithProvider(user, request);
-		return new AuthResponse(session.getToken(), user.getId());
+		Sessions session = sessionService.sessionCreateWithProvider(user, request);
+		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
 	/**
 	 * handlePasswordLogin handles the login request and returns the session
 	 * token
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
-	public AuthResponse handlePasswordLogin(LoginRequest request) {
+	public AuthResponse handlePasswordLogin(LoginRequestWithProvider request) {
 		Users user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(
 						() -> new UserNotFoundException("User does not exist"));
-		// this exists if the user logged in previously through oauth and hasn't
-		// set a password
-		if (user.getPassword() == null ||
-				!user.getPassword().equals(request.getPassword()))
+		if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword()))
 			throw new InvalidCredentials("Invalid Email Or Password");
-		// TODO: requires email authentication layer ie copy past password
-		// TODO: NEEDS PASSWORD HASHING PROPERLY!!!
 
-		Sessions session = sessionCreateWithProvider(user, request);
-		return new AuthResponse(session.getToken(), user.getId());
+		Sessions session = sessionService.sessionCreateWithProvider(user, request);
+		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
 	/**
-	 * handleOAuthLogin handles the login request and returns the session token
+	 * Account Creation Path
 	 * 
 	 * @param request
 	 * @return
 	 */
-	private Sessions sessionCreateWithProvider(Users user, LoginRequest request) {
-		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
-			Sessions newSession = Sessions.builder().user(user).build();
-			return newSession;
+	public AuthResponse handleAccountCreation(AccountCreationRequest request) throws ResendException {
+		userRepository.findByEmail(request.getEmail()).ifPresent(email -> {
+			throw new ExistingUserFoundException("User already exists");
 		});
-		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
-		session.setProviderAccountID(request.getProviderAccountID());
-		return sessionRepository.save(session);
+		Users user = userService.getUserFromSession();
+		userService.registerUserPassword(user, request)	;
+		Sessions newSession = sessionService.refreshUserToken(user);
+		resendService.sendEmailVerification(user, Reason.CREATE_ACCOUNT);
+		return new AuthResponse(newSession.getToken() , user.getId(), user.getEmail(), user.getPhoneNumber());
+	}
+	
+	/**
+	 * Email verification confirmation route for password logins
+	 * @param user
+	 * @param EmailVerificationRequest
+	 * @return AuthResponse
+	 */
+	public AuthResponse handleEmailVerification(Users user, EmailVerificationRequest request) {
+		verifyCode(user, Reason.CREATE_ACCOUNT, request.getVerificationString());
+		Sessions newSession = sessionService.refreshUserToken(user);
+		return new AuthResponse(newSession.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
 	/**
-	 * handles account session creation for users who have not yet logged in or have an account
-	 * 
-	 * @param request
-	 * @return
+	 * Looks up the user's latest verification code for the given reason and
+	 * checks it against what was submitted, without consuming it.
+	 *
+	 * @param user the user the code belongs to
+	 * @param reason which flow the code was issued for (CREATE_ACCOUNT,
+	 *               RESET_PASSWORD, ...) - codes are scoped per-reason so a
+	 *               code from one flow can't be used to satisfy another
+	 * @param submittedCode the code the user typed in
+	 * @return the matching, still-valid EmailVerification
 	 */
-	public Sessions sessionCreateWithUserOnly(Users user) {
-		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
-			Sessions newSession = Sessions.builder().user(user).build();
-			return newSession;
-		});
-		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
-		return sessionRepository.save(session);
+	private EmailVerification checkCode(Users user, Reason reason, String submittedCode) {
+		EmailVerification emailCode = emailVerificationRepository
+				.findFirstByUserAndReasonOrderByCreatedAtDesc(user, reason);
+		if (emailCode == null
+				|| !emailCode.getCode().equals(submittedCode)
+				|| emailCode.getExpiryDate().isBefore(LocalDateTime.now())) {
+			throw new InvalidCredentials("Invalid or expired verification code");
+		}
+		return emailCode;
 	}
+
+	/**
+	 * Checks the user's latest verification code for the given reason
+	 * against what was submitted, rejecting it if it's wrong or expired.
+	 * On success, the code is burned (its expiry is pulled forward to now)
+	 * so it can't be replayed against a second request.
+	 *
+	 * @param user the user the code belongs to
+	 * @param reason which flow the code was issued for
+	 * @param submittedCode the code the user typed in
+	 */
+	private void verifyCode(Users user, Reason reason, String submittedCode) {
+		EmailVerification emailCode = checkCode(user, reason, submittedCode);
+		emailCode.setExpiryDate(LocalDateTime.now());
+		emailVerificationRepository.save(emailCode);
+	}
+
+	/**
+	 * Reset the password if the user forgot
+	 * @param Users
+	 * @param ResetPasswordRequest
+	 * @return AuthResponse
+	 */
+	public void sendResetPasswordEmail(Users user, ResetPasswordRequest request) throws ResendException {
+		if (user.getUserRole() != Users.Role.REGISTERED) {
+			return;
+		}
+		resendService.sendEmailVerification(user, Reason.RESET_PASSWORD);
+	}
+
+	/**
+	 * Confirms a password reset: checks the code from the reset email
+	 * against the user identified by the email in the request (there's no
+	 * session to fall back on here - the user may be on a device that's
+	 * never had one), then sets the new password and logs them in.
+	 *
+	 * @param request the email, code, and new password
+	 * @return AuthResponse
+	 */
+	/**
+	 * Checks whether a reset-password code is still valid, without
+	 * consuming it, so the confirm form can reject an expired link before
+	 * showing the password fields.
+	 *
+	 * @param email the email from the reset link
+	 * @param code the verification code from the reset link
+	 */
+	public void validateResetCode(String email, String code) {
+		Users user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
+		if (user.getUserRole() != Users.Role.REGISTERED) {
+			throw new UserNotFoundException("User does not exist");
+		}
+		checkCode(user, Reason.RESET_PASSWORD, code);
+	}
+
+	/**
+	 * Confirms a password reset: checks the code from the reset email
+	 * against the user identified by the email in the request (there's no
+	 * session to fall back on here - the user may be on a device that's
+	 * never had one), then sets the new password and logs them in.
+	 *
+	 * @param request the email, code, and new password
+	 * @return AuthResponse
+	 */
+	public AuthResponse confirmResetPassword(ResetPasswordConfirmRequest request) {
+		Users user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
+		if (user.getUserRole() != Users.Role.REGISTERED) {
+			throw new UserNotFoundException("User does not exist");
+		}
+		verifyCode(user, Reason.RESET_PASSWORD, request.getVerificationString());
+		userService.resetPassword(user, request.getPassword());
+		Sessions newSession = sessionService.refreshUserToken(user);
+		return new AuthResponse(newSession.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
+	}
+
 }

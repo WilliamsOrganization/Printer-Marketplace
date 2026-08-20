@@ -28,8 +28,44 @@ public class GlobalExceptionHandler {
 	}
 	
 	/**
+	 * handleExistingUserFound handles the ExistingUserFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(ExistingUserFoundException.class)
+	public ResponseEntity<String> handleExistingUserFound(ExistingUserFoundException ex) {
+		log.warn("ExistingUserFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+	}
+
+	/**
+	 * handleExistingShippingFound handles the ExistingShippingFound
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(ExistingShippingFound.class)
+	public ResponseEntity<String> handleExistingShippingFound(ExistingShippingFound ex) {
+		log.warn("ExistingShippingFound: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+	}
+
+	/**
+	 * handleUnsupportedShippingDestination handles the UnsupportedShippingDestination
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(UnsupportedShippingDestination.class)
+	public ResponseEntity<String> handleUnsupportedShippingDestination(UnsupportedShippingDestination ex) {
+		log.warn("UnsupportedShippingDestination: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
+
+	/**
 	 * handleInvalidCredentials handles the InvalidCredentials
-	 * 
+	 *
 	 * @param ex
 	 * @return
 	 */
@@ -40,8 +76,44 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
+	 * handleForbidden handles the ForbiddenException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(ForbiddenException.class)
+	public ResponseEntity<String> handleForbidden(ForbiddenException ex) {
+		log.warn("ForbiddenException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+	}
+
+	/**
+	 * handleOrderNotFound handles the OrderNotFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(OrderNotFoundException.class)
+	public ResponseEntity<String> handleOrderNotFound(OrderNotFoundException ex) {
+		log.warn("OrderNotFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	/**
+	 * handleNotFound handles the generic NotFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(NotFoundException.class)
+	public ResponseEntity<String> handleNotFound(NotFoundException ex) {
+		log.warn("NotFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	/**
 	 * handleUnexpected handles any other exceptions
-	 * 
+	 *
 	 * @param ex
 	 * @return
 	 */

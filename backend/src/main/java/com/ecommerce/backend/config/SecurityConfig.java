@@ -6,11 +6,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,15 +21,13 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 	private final SessionAuthFilter sessionAuthFilter;
 
+	/**
+	 * Creates a new SecurityFilterChain.
+	 * @return the new SecurityFilterChain
+	 */
 	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 		http.csrf(csrf->csrf.disable()).sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).addFilterBefore(sessionAuthFilter, UsernamePasswordAuthenticationFilter.class).authorizeHttpRequests(auth-> auth.anyRequest().permitAll());
 		return http.build();
 	}
-
-	
 }

@@ -1,8 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { useJsApiLoader } from "@react-google-maps/api";
 import usePlacesAutocomplete, { getGeocode } from "use-places-autocomplete";
-
-const libraries: ("places")[] = ["places"];
+import { GOOGLE_MAPS_LIBRARIES } from "@/lib/google-maps";
 
 interface AddressComponents {
 	street1: string;
@@ -24,7 +23,7 @@ interface AddressInputProps {
 export function AddressInput({ onAddressSelect }: AddressInputProps) {
 	const { isLoaded } = useJsApiLoader({
 		googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
-		libraries,
+		libraries: GOOGLE_MAPS_LIBRARIES,
 	})
 
 	const {
@@ -35,7 +34,7 @@ export function AddressInput({ onAddressSelect }: AddressInputProps) {
 	} = usePlacesAutocomplete({
 		requestOptions: {
 			types: ["address"],
-			componentRestrictions: { country: ["ca", "us"] },
+			componentRestrictions: { country: ["ca"] },
 		},
 		debounce: 300,
 		initOnMount: isLoaded,

@@ -3,6 +3,7 @@ package com.ecommerce.backend.controller;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import com.ecommerce.backend.dto.CheckoutSummary;
 import com.ecommerce.backend.dto.OrderResponse;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.UserNotFoundException;
 import com.ecommerce.backend.repository.OrderRepository;
 import com.ecommerce.backend.service.StripeCatalogService;
 import com.ecommerce.backend.service.UserService;
@@ -40,7 +42,11 @@ public class OrderController {
 	 */
 	@GetMapping("/{orderId}")
 	public OrderResponse getSingleOrder(@PathVariable String orderId) throws StripeException {
+		Users user = userService.getUserFromSession();
 		Orders order = orderRepository.findOrderByStripeSessionId(orderId).orElseThrow();
+		if (!order.getUser().getId().equals(user.getId())) {
+			throw new UserNotFoundException("User not found");
+		}
 		Session session = stripeCatalogService.getCheckoutSession(order.getStripeSessionId());
 		return new OrderResponse(order, toCheckoutSummary(session));
 	}
@@ -61,6 +67,17 @@ public class OrderController {
 			OrderResponse.add(new OrderResponse(Orders, toCheckoutSummary(session)));
 		}
 		return OrderResponse;
+	}
+
+	/**
+	 * Get every order in the system, for the admin dashboard.
+	 *
+	 * @return all orders
+	 */
+	@GetMapping("/admin/all")
+	@PreAuthorize("hasRole('ADMIN')")
+	public List<Orders> getAllOrders() {
+		return orderRepository.findAll();
 	}
 
 	/**

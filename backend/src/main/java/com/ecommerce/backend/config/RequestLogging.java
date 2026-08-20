@@ -9,12 +9,18 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter;
  */
 @Configuration
 public class RequestLogging {
+	private static final int maxPayloadLength = 1024;
+
+	/**
+	 * Creates a new CommonsRequestLoggingFilter.
+	 * @return the new CommonsRequestLoggingFilter
+	 */
 	@Bean
-	public CommonsRequestLoggingFilter requestLoggingFilter(){
+	CommonsRequestLoggingFilter requestLoggingFilter(){
 		CommonsRequestLoggingFilter filter = new CommonsRequestLoggingFilter();
 		filter.setIncludeQueryString(true);
-		filter.setIncludePayload(true);
-		filter.setMaxPayloadLength(1000);
+		filter.setIncludePayload(false);
+		filter.setMaxPayloadLength(maxPayloadLength);
 		filter.setIncludeHeaders(false);
 		filter.setBeforeMessagePrefix("INCOMING REQUEST: ");
 		filter.setAfterMessagePrefix("REQUEST COMPLETE: ");

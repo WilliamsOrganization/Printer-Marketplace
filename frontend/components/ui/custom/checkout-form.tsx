@@ -12,14 +12,16 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import api from "@/lib/api";
+import apiSession from "@/lib/api";
+import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { AddressInput } from "./address-input";
-import { redirect, useSelectedLayoutSegment } from "next/navigation";
 
 const MotionCard = motion(Card);
 
@@ -55,15 +57,37 @@ export function CheckoutForm({
 	const [rates, setRates] = useState<ShippingRate[]>([])
 	const [selectedRate, setSelectedRate] = useState<string | null>(null)
 	const [phone, setPhone] = useState<string | undefined>()
+	const [email, setEmail] = useState<string | undefined>()
+	const { data: session, update } = useSession()
+	const router = useRouter()
+
+	// Prefill from the logged-in user's session once it loads. Guests won't
+	// have these on session.user, so this leaves the fields blank for them
+	// and doesn't clobber anything the user already typed.
+	useEffect(() => {
+		if (session?.user?.email && !email) {
+			setEmail(session.user.email)
+		}
+	}, [session?.user?.email])
+
+	useEffect(() => {
+		if (session?.user?.phoneNumber && !phone) {
+			setPhone(session.user.phoneNumber)
+		}
+	}, [session?.user?.phoneNumber])
 
 	/**
 	 * Fetches shipping rate quotes for the currently selected address.
 	 */
-	const handleCheckout = async function(formData: FormData) {
+	const handleCheckout = async function() {
 		setError(null)
 
 		if (!address) {
 			setError("Please select an address from the suggestions.")
+			return
+		}
+		if (address.country !== "CA") {
+			setError("We currently only ship within Canada.")
 			return
 		}
 		setLoading(true)
@@ -72,9 +96,9 @@ export function CheckoutForm({
 		// See ShippoService.getShipmentRates() - a retry is attempted server-side but may still fail.
 		// If "No shipping options available" appears, the user can retry manually.
 		// TODO: migrate this and all other request over to tanstack query
-		api
-			.post("/shipping/rates/test", {
-				name: "Customer",
+		apiSession
+			.post("/shipping/rates", {
+				email,
 				phone,
 				...address,
 			})
@@ -83,11 +107,20 @@ export function CheckoutForm({
 				setRates(results)
 				if (results.length === 0) {
 					toast.error("No shipping options available for this address")
-					// file number in the section header. time of incident what happened. window things stolen. drivers license. include camera's 
 				}
 			})
-			.catch(() => {
-				toast.error("Failed to get shipping rates")
+			.catch((error) => {
+				if (isAxiosError(error) && error.response?.status === 409) {
+					toast.error(error.response.data ?? "This email/phone is already in use")
+					if (session?.user?.id === "guest") {
+						router.push("/login?callbackUrl=/checkout")
+					}
+					return
+				}
+				const reason = isAxiosError(error) && typeof error.response?.data === "string"
+					? error.response.data
+					: "Failed to get shipping rates"
+				toast.error(reason)
 			})
 			.finally(() => {
 				setLoading(false)
@@ -102,20 +135,25 @@ export function CheckoutForm({
 	const createCheckoutSession = async function(selectedRate: string) {
 		setError(null)
 		setLoading(true)
-		api
+		await update({ email, phoneNumber: phone })
+		apiSession
 			.post("cart/checkout/", {
+				email,
 				selectedShippingID: selectedRate
 			})
 			.then((res) => {
 				const results = res?.data
 				console.log(results)
+				// Leave loading=true: we're navigating away and an order was
+				// already created server-side, so the button should stay
+				// disabled rather than re-enable in the gap before the
+				// browser actually leaves this page.
+				// BUG: this causes a desync with the next.js server. when you are redirected back to the application the wrong cookie is restored for the user. fucking awful and obnoxious
 				window.location.href = results
 			})
 			.catch((error) => {
 				toast.error("Failed to get checkoutsession ")
 				console.log("Failed to get checkoutsession ", error)
-			})
-			.finally(() => {
 				setLoading(false)
 			})
 	}
@@ -132,7 +170,7 @@ export function CheckoutForm({
 					<CardTitle className="text-xl">Checkout</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={(e) => { e.preventDefault(); handleCheckout(new FormData(e.currentTarget)) }}>
+					<form onSubmit={(e) => { e.preventDefault(); handleCheckout() }}>
 						<FieldGroup>
 							{error && (
 								<p className="text-sm text-red-500">{error}</p>
@@ -144,6 +182,8 @@ export function CheckoutForm({
 									name="email"
 									type="email"
 									placeholder="you@example.com"
+									value={email ?? ""}
+									onChange={(e) => setEmail(e.target.value)}
 									required
 								/>
 							</Field>
@@ -220,13 +260,14 @@ export function CheckoutForm({
 							</div>
 							<Button
 								className="mt-4 w-full"
-								disabled={!selectedRate}
+								disabled={!selectedRate || loading}
 								onClick={() => {
+									if (!selectedRate) return
 									createCheckoutSession(selectedRate)
 									console.log("selected rate:", selectedRate)
 								}}
 							>
-								Continue to Payment
+								{loading ? "Redirecting to payment..." : "Continue to Payment"}
 							</Button>
 						</CardContent>
 					</MotionCard>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { FilterSidebar } from "@/components/ui/custom/filter-sidebar";
 import { SortSelect } from "@/components/ui/custom/sort-select";
 import apiServer from "@/lib/api-server";
-import { CategoryLabel, InventoryItem } from "@/lib/types";
+import { InventoryItem } from "@/lib/types";
 import ProductGrid from "@/components/ui/custom/product-card";
 
 // TODO: these button toggles for prices arent working
@@ -14,15 +14,9 @@ const priceRanges = [
 ];
 
 type SearchParams = {
-	category?: string | string[];
 	itemCost?: string | string[];
 	sort?: string;
 };
-
-const categoryOptions = Object.entries(CategoryLabel).map(([id, label]) => ({
-	id,
-	label,
-}));
 
 export default async function ShopPage({
 	searchParams,
@@ -43,11 +37,6 @@ export default async function ShopPage({
 		});
 
 	// Parse params - handle both single values and arrays
-	const selectedCategories = params.category
-		? Array.isArray(params.category)
-			? params.category
-			: [params.category]
-		: [];
 	const selectedPriceRanges = params.itemCost
 		? Array.isArray(params.itemCost)
 			? params.itemCost
@@ -58,9 +47,6 @@ export default async function ShopPage({
 	// Filter products on server
 	const filteredProducts = products
 		.filter((product) => {
-			const categoryMatch =
-				selectedCategories.length === 0 ||
-				selectedCategories.includes(product.category);
 			const priceMatch =
 				selectedPriceRanges.length === 0 ||
 				selectedPriceRanges.some((rangeId) => {
@@ -71,14 +57,14 @@ export default async function ShopPage({
 						product.itemCost < range.max
 					);
 				});
-			return categoryMatch && priceMatch;
+			return priceMatch;
 		})
 		.sort((a, b) => {
 			switch (sortBy) {
 				case "featured":
-					if (a.badge && !b.badge) return -1;
-					if (!a.badge && b.badge) return 1;
 					return a.id - b.id;
+				case "newest":
+					return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 				case "price-asc":
 					return a.itemCost - b.itemCost;
 				case "price-desc":
@@ -105,9 +91,7 @@ export default async function ShopPage({
 			{/* Filter + sort bar */}
 			<div className="flex items-center justify-between gap-4 mb-4">
 				<FilterSidebar
-					categories={categoryOptions}
 					priceRanges={priceRanges}
-					selectedCategories={selectedCategories}
 					selectedPriceRanges={selectedPriceRanges}
 				/>
 				<div className="flex items-center gap-3 ml-auto">

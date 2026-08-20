@@ -7,21 +7,34 @@ import {
 } from "@/components/ui/carousel";
 import { InventoryItem } from "@/lib/types";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
-export function ProductCarousel({ product }: { product: InventoryItem }) {
+export function ProductCarousel({
+	product,
+	layoutId,
+}: {
+	product: InventoryItem;
+	/** Shared layoutId for the first slide, so it morphs from the grid card's image instead of popping in. */
+	layoutId?: string;
+}) {
+	const images = product.imageUrls?.length ? product.imageUrls : ["/stock-1.jpg"];
+
 	return (
 		<Carousel className="w-full h-full">
 			<CarouselContent className="h-full -ml-0">
-				{Array.from({ length: 3 }).map((_, index) => (
+				{images.map((src, index) => (
 					<CarouselItem key={index} className="pl-0">
-						<div className="relative aspect-square w-full">
+						<motion.div
+							layoutId={index === 0 ? layoutId : undefined}
+							className="relative aspect-square w-full"
+						>
 							<Image
-								src={product.imageUrls?.[index] || `/stock-${index + 1}.jpg`}
+								src={src}
 								alt={product.itemTitle}
 								fill
 								className="object-cover"
 							/>
-						</div>
+						</motion.div>
 					</CarouselItem>
 				))}
 			</CarouselContent>

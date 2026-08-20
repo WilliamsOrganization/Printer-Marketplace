@@ -13,6 +13,9 @@ apiServer.interceptors.request.use(async (config) => {
 	const session = await getServerSession(authOptions);
 	if (session?.backendToken) {
 		config.headers.Authorization = `Bearer ${session.backendToken}`;
+		console.log(`[apiServer] ${config.method?.toUpperCase()} ${config.url} -> session token ${session.backendToken}`);
+	} else {
+		console.log(`[apiServer] ${config.method?.toUpperCase()} ${config.url} -> no session/backendToken from getServerSession`);
 	}
 	return config;
 });

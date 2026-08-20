@@ -7,6 +7,8 @@ import z from "zod";
 const AuthResponseSchema = z.object({
 	sessionToken: z.string(),
 	userId: z.number(),
+	email: z.string().nullish(),
+	phoneNumber: z.string().nullish(),
 })
 type AuthResponseSchema = z.infer<typeof AuthResponseSchema>;
 
@@ -37,7 +39,8 @@ export const authOptions: NextAuthOptions = {
 
 				return {
 					id: String(parsed.data.userId),
-					email: credentials.email,
+					email: parsed.data.email ?? credentials.email,
+					phoneNumber: parsed.data.phoneNumber ?? undefined,
 					backendToken: parsed.data.sessionToken,
 				};
 			},
@@ -70,7 +73,7 @@ export const authOptions: NextAuthOptions = {
 		strategy: "jwt", // or "database"
 	},
 	callbacks: {
-		async signIn({ user, account, profile }) {
+		async signIn({ user, account }) {
 			if (account?.provider === "google" || account?.provider === "apple") {
 				// TODO: finish auth login route
 				const res = await fetch(`${BACKEND_URL}/server/auth/login`, {
@@ -92,25 +95,40 @@ export const authOptions: NextAuthOptions = {
 				}
 				user.backendToken = parsed.data.sessionToken;
 				user.id = String( parsed.data.userId );
+				if (parsed.data.phoneNumber) user.phoneNumber = parsed.data.phoneNumber;
 				return true;
 			}
 			if(account?.provider==="guest")return true;
 			if(account?.provider==="credentials")return true;
 			return false;
 		},
-		async jwt({ token, user }) {
+		async jwt({ token, user, trigger, session }) {
 			if (user) {
+				console.log(`[auth] jwt callback: new sign-in, setting backendToken=${user.backendToken} userId=${user.id}`);
 				token.id = user.id
 				token.backendToken = user.backendToken;
 				token.userId = user.id;
+				if (user.phoneNumber) token.phoneNumber = user.phoneNumber;
 			};
+			// Fires when a client component calls useSession().update(...) -
+			// `session` here is whatever was passed to update(), not the
+			// full session object. Merge only what's present so a partial
+			// update (e.g. just phoneNumber) doesn't clobber the other field.
+			if (trigger === "update" && session) {
+				if (session.email !== undefined) token.email = session.email;
+				if (session.phoneNumber !== undefined) token.phoneNumber = session.phoneNumber;
+				if (session.userId !== undefined) token.userId = String(session.userId);
+			}
 			return token;
 		},
 		async session({ session, token }) {
+			console.log(`[auth] session callback: token.backendToken=${token.backendToken} token.userId=${token.userId}`);
+			session.backendToken = token.backendToken as string;
 			if (session.user) {
-				session.backendToken = token.backendToken as string
-				session.user.id = token.userId as string
-			};
+				session.user.id = token.userId as string;
+				if (token.email) session.user.email = token.email as string;
+				if (token.phoneNumber) session.user.phoneNumber = token.phoneNumber as string;
+			}
 			return session;
 		},
 	},

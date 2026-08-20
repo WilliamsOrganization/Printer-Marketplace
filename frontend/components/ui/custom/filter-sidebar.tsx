@@ -13,20 +13,15 @@ import {
 } from "@/components/ui/popover"
 import { ChevronDown } from "lucide-react"
 
-type Category = { id: string; label: string }
 type PriceRange = { id: string; label: string; min: number; max: number }
 
 interface FilterSidebarProps {
-  categories: Category[]
   priceRanges: PriceRange[]
-  selectedCategories: string[]
   selectedPriceRanges: string[]
 }
 
 export function FilterSidebar({
-  categories,
   priceRanges,
-  selectedCategories,
   selectedPriceRanges,
 }: FilterSidebarProps) {
   const router = useRouter()
@@ -49,49 +44,14 @@ export function FilterSidebar({
 
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams.toString())
-    params.delete("category")
     params.delete("itemCost")
     router.push(`/?${params.toString()}`, { scroll: false })
   }
 
-  const hasFilters = selectedCategories.length > 0 || selectedPriceRanges.length > 0
+  const hasFilters = selectedPriceRanges.length > 0
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* Category filter */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1">
-            Category
-            {selectedCategories.length > 0 && (
-              <span className="ml-1 rounded-full bg-primary text-primary-foreground text-xs size-4 flex items-center justify-center">
-                {selectedCategories.length}
-              </span>
-            )}
-            <ChevronDown className="size-3 ml-1" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-3" align="start">
-          <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Category</p>
-          <div className="space-y-2">
-            {categories.map(category => (
-              <div key={category.id} className="flex items-center gap-2">
-                <Checkbox
-                  id={category.id}
-                  checked={selectedCategories.includes(category.id)}
-                  onCheckedChange={(checked) =>
-                    updateParams("category", category.id, checked as boolean)
-                  }
-                />
-                <Label htmlFor={category.id} className="text-sm cursor-pointer">
-                  {category.label}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
-
       {/* Price filter */}
       <Popover>
         <PopoverTrigger asChild>

@@ -1,19 +1,5 @@
 package com.ecommerce.backend.controller;
 
-import com.ecommerce.backend.dto.CheckoutRequest;
-import com.ecommerce.backend.entity.Cart;
-import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.repository.CartRepository;
-import com.ecommerce.backend.repository.UserRepository;
-import com.ecommerce.backend.service.CartService;
-import com.ecommerce.backend.service.StripeCatalogService;
-
-import lombok.RequiredArgsConstructor;
-
-import java.util.List;
-
-import org.apache.catalina.User;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,15 +8,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ecommerce.backend.dto.CheckoutRequest;
+import com.ecommerce.backend.dto.UpdateContactRequest;
+import com.ecommerce.backend.entity.Cart;
+import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.repository.CartRepository;
+import com.ecommerce.backend.service.CartService;
+import com.ecommerce.backend.service.StripeCatalogService;
+import com.ecommerce.backend.service.UserService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * REST controller for shopping cart operations.
  */
+@Slf4j
 @RestController
 @RequestMapping("/server/cart")
 @RequiredArgsConstructor
 public class CartController {
     private final CartRepository cartRepository;
     private final CartService cartService;
+	private final UserService userService;
 	private final StripeCatalogService stripeCatalogService;
 
     // @GetMapping
@@ -44,9 +44,9 @@ public class CartController {
      * @return the current user's cart
      */
     @GetMapping
-	@PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
     public Cart getOne() {
-		return cartService.getCartItems();
+		Users user = userService.getUserFromSession();
+		return cartService.getCartItems(user);
     }
 
     /**
@@ -79,6 +79,9 @@ public class CartController {
 	 */
 	@PostMapping("/checkout")
 	public String getCheckoutUrl(@RequestBody CheckoutRequest request) throws Exception {
-		return stripeCatalogService.createCheckoutSession(request.selectedShippingID());
+		Users user = userService.getUserFromSession();
+		UpdateContactRequest contactInfo = UpdateContactRequest.builder().email(request.email()).phoneNumber(request.phoneNumber()).build();
+		userService.updateContactInfo(user, contactInfo);
+		return stripeCatalogService.createCheckoutSession(request.email(), request.selectedShippingID());
 	}
 }

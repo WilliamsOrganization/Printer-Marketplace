@@ -1,6 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import apiServer from "@/lib/api-server";
+
+// This page's data depends on the caller's session (via apiServer's
+// Authorization header). Without forcing dynamic rendering, Next.js can
+// treat this route as static (no top-level dynamic API usage) and keep
+// serving one cached render to every visitor/refresh regardless of session.
+export const dynamic = "force-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,8 +26,10 @@ const STATUS_VARIANT: Record<
 	"default" | "secondary" | "destructive"
 > = {
 	[OrderStatus.PENDING]: "secondary",
+	[OrderStatus.PAID]: "default",
 	[OrderStatus.COMPLETED]: "default",
-	[OrderStatus.CANCELLED]: "destructive",
+	[OrderStatus.EXPIRED]: "destructive",
+	[OrderStatus.FAILED]: "destructive",
 };
 
 export default async function OrdersPage() {
@@ -154,7 +162,7 @@ export default async function OrdersPage() {
 										</p>
 										<Button variant="outline" size="sm" asChild>
 											<Link
-												href={`/success?session_id=${order.stripeSessionId}`}
+												href={`/order-status?session_id=${order.stripeSessionId}`}
 											>
 												View details
 												<Receipt className="ml-2 size-4" />

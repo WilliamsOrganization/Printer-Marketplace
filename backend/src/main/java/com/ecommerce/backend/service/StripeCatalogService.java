@@ -14,7 +14,6 @@ import com.ecommerce.backend.dto.ShippingQuote;
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.InventoryItem;
-import com.ecommerce.backend.entity.Orders;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.stripe.exception.StripeException;
@@ -42,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class StripeCatalogService {
-	private static final String SUCCESS_URL = "http://www.localhost:3000/success?session_id={CHECKOUT_SESSION_ID}";
-	private static final String CANCEL_URL = "http://www.localhost:3000/";
+	private static final String SUCCESS_URL = "http://localhost:3000/order-status?session_id={CHECKOUT_SESSION_ID}";
+	private static final String CANCEL_URL = "http://localhost:3000/";
 
 	private static final Long DOLLAR = 100L;
 	private static final Long PAGE_SIZE = 100L;
@@ -51,6 +50,7 @@ public class StripeCatalogService {
 	private final ShippoService shippoService;
 	private final CartService cartService;
 	private final OrderService orderService;
+	private final UserService userService;
 
 	/**
 	 * This method is used to map the cart items to line items.
@@ -143,12 +143,24 @@ public class StripeCatalogService {
 
 	/**
 	 * This method is used to activate a product that has been archived.
-	 * 
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void activateProduct(String id) throws StripeException {
 		Product resource = Product.retrieve(id);
 		resource.update(ProductUpdateParams.builder().setActive(true).build());
+	}
+
+	/**
+	 * Archives a product without deleting it (setting active=false) - the
+	 * same fallback deleteProduct uses when Stripe refuses a real delete,
+	 * exposed on its own so an item can be archived directly.
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void deactivateProduct(String id) throws StripeException {
+		Product resource = Product.retrieve(id);
+		resource.update(ProductUpdateParams.builder().setActive(false).build());
 	}
 
 	/**
@@ -172,8 +184,9 @@ public class StripeCatalogService {
 		if (req.getImageUrls() != null)
 			updateBuilder.addAllImage(req.getImageUrls());
 
+		String oldPriceId = null;
 		if (req.getUnitAmount() != null) {
-			String oldPriceId = resource.getDefaultPrice();
+			oldPriceId = resource.getDefaultPrice();
 			String currency = req.getCurrency() != null
 					? req.getCurrency().toLowerCase()
 					: "cad";
@@ -183,15 +196,19 @@ public class StripeCatalogService {
 					.setCurrency(currency)
 					.build());
 			updateBuilder.setDefaultPrice(newPrice.getId());
-
-			if (oldPriceId != null) {
-				Price.retrieve(oldPriceId)
-						.update(
-								PriceUpdateParams.builder().setActive(false).build());
-			}
 		}
 
-		return resource.update(updateBuilder.build());
+		// Apply the product update (which switches the default price over
+		// to the new one) before touching the old price - Stripe refuses to
+		// archive a price that's still the product's active default.
+		Product updated = resource.update(updateBuilder.build());
+
+		if (oldPriceId != null) {
+			Price.retrieve(oldPriceId)
+					.update(PriceUpdateParams.builder().setActive(false).build());
+		}
+
+		return updated;
 	}
 
 	/**
@@ -200,9 +217,9 @@ public class StripeCatalogService {
 	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	public String createCheckoutSession(String selectedShippingID)
+	public String createCheckoutSession(String email, String selectedShippingID)
 			throws Exception {
-		Cart cart = cartService.getCartItems();
+		Cart cart = cartService.getCartItems(userService.getUserFromSession());
 		List<LineItem> lineItems = mapCartItemstoLineItems(cart);
 		// get quoted price from shippo service.
 		GetRateResponse rate = shippoService.getShipmentRateById(selectedShippingID);
@@ -212,6 +229,7 @@ public class StripeCatalogService {
 		SessionCreateParams params = SessionCreateParams.builder()
 				.setSuccessUrl(SUCCESS_URL)
 				.setCancelUrl(CANCEL_URL)
+				.setCustomerEmail(email)
 				.addAllLineItem(lineItems)
 				.addShippingOption(SessionCreateParams.ShippingOption.builder()
 						.setShippingRateData(ShippingRateData.builder()
@@ -226,7 +244,8 @@ public class StripeCatalogService {
 				.setMode(SessionCreateParams.Mode.PAYMENT)
 				.build();
 		Session session = Session.create(params, null);
-		Orders order = orderService.createPendingOrder(session, shipment, quote, cart);
+		orderService.createPendingOrder(session, shipment, quote, cart, selectedShippingID);
+
 		return session.getUrl();
 	}
 	
@@ -241,19 +260,52 @@ public class StripeCatalogService {
 		return Product.list(productListParams);
 	}
 	
+	/**
+	 * This is intended for managing seed data.
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 * @return a list of ids that can be used to populate seed data.
+	 */
 	public Session getCheckoutSession(String sessionId) throws StripeException {
 		return Session.retrieve(sessionId);
 	}
-	
+
 	/**
-	 * This is the webhook endpoint for stripe checkout events. 
+	 * This is the handler for complted checkout events.
 	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	public void handleSuccessfulCheckoutEvent(String payload) {
-		// TODO: handle successful checkout event
-		// TODO: register ShippingRate with shippo maybe preallocate then link after with order
-		// TODO: Create and ORder Object with shipping id
-		// TODO: Get shipping Label from Shippo. 
+	public void handleCompletedCheckoutEvent(Session session) {
+		orderService.applyCompletedCheckout(session);
+	}
+	
+	/**
+	 * This is the handler for expired checkout events.
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void handleExpiredCheckoutEvent(Session session) {
+		orderService.applyExpiredCheckout(session.getId());
+	}
+
+	/**
+	 * This is the handler for failed checkout events.
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void handleFailedCheckoutEvent(Session session) {
+		orderService.applyFailedCheckout(session.getId());
+	}
+
+	/**
+	 * This is the handler for successful checkout events. creates a shipping label and genereates the pdf and adds it to the shipping table url for the dashboard view
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public void handleSuccessCheckoutEvent(Session deserializeSession) {
+		orderService.applySuccessfulCheckout(deserializeSession);
+		// TODO: generate shipping label
+		// update the shipping table with metadata and url for the pdf.
+		// FIX: Shitty blob storage implementation is shitty. fix it.
 	}
 }

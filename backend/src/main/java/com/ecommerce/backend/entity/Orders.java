@@ -3,10 +3,6 @@ package com.ecommerce.backend.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,6 +17,11 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,6 +52,7 @@ public class Orders {
 	@NotNull
 	@NonNull
 	private Users user;
+
 	
 	// TODO: consider @OrderBy("id ASC") (or createdAt, if OrderItem gets one) to
 	// guarantee items are fetched in creation order rather than undefined order
@@ -63,6 +65,12 @@ public class Orders {
 	@JsonManagedReference
 	private Shipping shipping;
 
+	@OneToOne(mappedBy = "order")
+	@JsonManagedReference("order-returns")
+	private Returns returns;
+
+	private String stripeEmail;
+
 	private String stripeSessionId;
 	// TODO: consider @Email (jakarta.validation)
 	private String email;
@@ -74,6 +82,8 @@ public class Orders {
 	private Long total;
 	private String currency;
 
+	private String cardholderName;
+
 	@NotNull
 	@NonNull
 	@Column(nullable = false)
@@ -84,6 +94,6 @@ public class Orders {
 	 * Order status.
 	 */
 	public enum Status {
-		PENDING, COMPLETED, CANCELLED
+		COMPLETED, EXPIRED, FAILED, PENDING, PAID, RETURNED
 	}
 }
