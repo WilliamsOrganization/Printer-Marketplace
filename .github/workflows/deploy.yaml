@@ -59,11 +59,12 @@ jobs:
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: ENV_FILE
           script: |
-            echo "$ENV_FILE" > /app/.env
-            cd /app
-            git pull
-            docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
-            # TODO: unimporant. maybe create backups later if this breaks 
-            docker image prune -f
+            arp -a
+            # echo "$ENV_FILE" > /app/.env
+            # cd /app
+            # git pull
+            # docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
+            # # TODO: unimporant. maybe create backups later if this breaks 
+            # docker image prune -f
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
