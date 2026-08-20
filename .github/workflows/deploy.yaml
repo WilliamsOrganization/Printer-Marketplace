@@ -36,7 +36,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           echo "${{ secrets.CONTAINER_SSH_KEY }}" > ~/.ssh/popos_desktop
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/popos_desktop
-          ssh-keyscan -p 2222 23.17.81.63 >> ~/.ssh/known_hosts
+          ssh-keyscan -p 2222 23.17.80.65 >> ~/.ssh/known_hosts
       - name: Run Ansible
         run: ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
         env:
