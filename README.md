@@ -86,7 +86,7 @@ docker compose exec postgres psql -U $DB_USER -d $DB_NAME
 
 ## TODOs
 - finish configuring a secondary staging environment before deploying to production.  (Main is done)
-- finish tls certs, do some ip white listing on cloudflare. 
+- do some ip white listing on cloudflare. 
 - eventually transfer from manual deploy scripts to pushed images. less failover between deployments (bug in git pull)
 - remember to secure cloudflare traffic (non-flexible)
 - split environment variables properly. 
