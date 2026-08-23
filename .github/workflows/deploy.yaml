@@ -8,63 +8,31 @@ on:
 
 jobs:
   terraform:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
+      - uses: actions/checkout@v4
       - name: Terraform Apply
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DESKTOP_IP }}
-          port: 2222
-          username: ${{ secrets.DESKTOP_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ~/Projects/Ecommerce/my-app/terraform
-            TF_VAR_virtual_environment_endpoint="${{ secrets.TF_ENDPOINT }}" \
-            TF_VAR_virtual_environment_secret="${{ secrets.TF_SECRET }}" \
-            terraform apply -auto-approve
+        run: |
+          cd terraform
+          TF_VAR_proxmox_host_endpoint="${{ secrets.TF_ENDPOINT }}" \
+          TF_VAR_proxmox_environment_secret="${{ secrets.TF_SECRET }}" \
+          terraform apply -auto-approve
 
   provision:
     needs: terraform
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - name: Install Ansible
-        run: pip install ansible
       - name: Setup SSH Keys
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           echo "${{ secrets.CONTAINER_SSH_KEY }}" > ~/.ssh/popos_desktop
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/popos_desktop
-          ssh-keyscan -p 2222 23.17.80.65 >> ~/.ssh/known_hosts
+          ssh-keyscan "${{ secrets.VM_TAILNET_IP }}" >> ~/.ssh/known_hosts
       - name: Run Ansible
-        run: ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+        run: ansible-playbook -i "${{ secrets.VM_TAILNET_IP }}," ansible/playbook.yml
         env:
           ANSIBLE_PRIVATE_KEY_FILE: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
-
-  deploy:
-    needs: provision
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DESKTOP_IP }}
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          proxy_host: ${{ secrets.DESKTOP_IP }}
-          proxy_port: 2222
-          proxy_username: ${{ secrets.DESKTOP_USER }}
-          proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: ENV_FILE
-          script: |
-            arp -a
-            # echo "$ENV_FILE" > /app/.env
-            # cd /app
-            # git pull
-            # docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
-            # # TODO: unimporant. maybe create backups later if this breaks 
-            # docker image prune -f
-        env:
           ENV_FILE: ${{ secrets.ENV_FILE }}

@@ -1,5 +1,5 @@
 # deploy with
 ``` bash
-ansible-playbook -i ./inventory.ini ./playbook.yml
+ansible-playbook -i "<vm-tailnet-ip>," ./playbook.yml
 
 ```

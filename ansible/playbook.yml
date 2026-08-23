@@ -22,20 +22,16 @@
       ansible.builtin.command: ssh-add {{ github_ssh_key_path }} # popos_desktop GitHub account key - forwarded to the target host below, never copied there
       changed_when: false
 
-- name: Clone a repository onto the target host
-  hosts: repo_target
+- name: Clone/pull the repository and deploy it onto the target host
+  hosts: all
   become: false
 
   vars:
-    image_user: "{{ lookup('ansible.builtin.env', 'TF_VAR_image_user') }}"
-    image_home: "/home/{{ image_user }}"
-
-    ansible_host: "{{ lookup('ansible.builtin.env', 'TF_VAR_vm_ip') }}"
-    ansible_user: "{{ image_user }}"
     ansible_ssh_common_args: "-o ForwardAgent=yes" # forwards the local agent (holding both keys loaded above) so GitHub auth over SSH works on the target host too, without ever copying a private key there
 
     git_repo_url: "{{ lookup('ansible.builtin.env', 'GIT_REPO_URL') }}"
     git_repo_dest: "{{ lookup('ansible.builtin.env', 'GIT_REPO_DEST') }}"
+    env_file_content: "{{ lookup('ansible.builtin.env', 'ENV_FILE') }}"
 
     # "Ephemeral" is a property of the auth key itself (generated in the
     # Tailscale admin console with the "Ephemeral" option checked), not
@@ -45,7 +41,7 @@
     tailscale_hostname: "{{ lookup('ansible.builtin.env', 'TF_VAR_vm_name') }}"
 
   tasks:
-    - name: Clone repository from GIT_REPO_URL
+    - name: Clone or update repository from GIT_REPO_URL
       ansible.builtin.git:
         repo: "{{ git_repo_url }}"
         dest: "{{ git_repo_dest }}"
@@ -60,5 +56,22 @@
         --authkey={{ tailscale_auth_key }}
         --hostname={{ tailscale_hostname }}
       no_log: true # the auth key would otherwise be printed in task output/logs
+      changed_when: true
+
+    - name: Write production .env file
+      ansible.builtin.copy:
+        content: "{{ env_file_content }}"
+        dest: "{{ git_repo_dest }}/.env"
+        mode: "0600"
+      no_log: true # env_file_content holds real secrets (DB password, Stripe keys, etc.)
+
+    - name: Bring up the application stack
+      ansible.builtin.command:
+        cmd: docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
+        chdir: "{{ git_repo_dest }}"
+      changed_when: true
+
+    - name: Prune dangling images
+      ansible.builtin.command: docker image prune -f
       changed_when: true
 
