@@ -47,14 +47,24 @@ jobs:
         run: echo "$ENV_FILE" > .env
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
+      # A freshly-created VM isn't on the tailnet yet - that only happens
+      # inside the ansible run below (the "Register the VM on Tailscale"
+      # task), which needs a working connection to get there in the first
+      # place. So this first connection has to go over the LAN IP
+      # (TF_VAR_vm_ip) that Terraform's cloud-init assigns immediately -
+      # the runner is on the same Proxmox bridge as the app VM, so this is
+      # directly reachable without Tailscale.
       - name: Setup SSH Keys
         run: |
+          set -a
+          source .env
+          set +a
           set -x
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           echo "${{ secrets.CONTAINER_SSH_KEY }}" > ~/.ssh/popos_desktop
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/popos_desktop
-          ssh-keyscan -T 5 "${{ secrets.VM_TAILNET_IP }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 5 "$TF_VAR_vm_ip" >> ~/.ssh/known_hosts
       - name: Run Ansible
         run: |
           set -a
@@ -64,7 +74,7 @@ jobs:
           # ansible_user - without it ansible defaults to whatever OS user
           # the runner's systemd service runs as, not the account
           # Terraform actually authorized on the target VM.
-          ansible-playbook -i "${{ secrets.VM_TAILNET_IP }}," -u "$TF_VAR_image_user" ansible/playbook.yml
+          ansible-playbook -i "$TF_VAR_vm_ip," -u "$TF_VAR_image_user" ansible/playbook.yml
         env:
           ANSIBLE_PRIVATE_KEY_FILE: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
