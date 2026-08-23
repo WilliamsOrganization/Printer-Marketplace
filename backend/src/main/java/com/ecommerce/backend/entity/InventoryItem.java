@@ -107,7 +107,7 @@ public class InventoryItem {
     // TODO: consider @Pattern/@Size(min = 3, max = 3) to validate ISO currency
     // code
     @NonNull
-    @Column(nullable = false, columnDefinition = "boolean default CAD")
+    @Column(nullable = false, columnDefinition = "varchar(3) default 'CAD'")
     private String currency;
 
     private Boolean sale;
