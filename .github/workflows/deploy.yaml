@@ -11,12 +11,21 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - name: Terraform Apply
-        run: |
-          cd terraform
-          terraform apply -auto-approve
+      # This runner has no persistent .env of its own (it's a fresh VM/
+      # checkout every time, and .env is gitignored so checkout never
+      # brings one in) - ENV_FILE is the same blob written onto the app VM
+      # elsewhere, reused here as the source of every TF_VAR_* this needs.
+      - name: Write .env
+        run: echo "$ENV_FILE" > .env
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
+      - name: Terraform Apply
+        run: |
+          set -a
+          source .env
+          set +a
+          cd terraform
+          terraform apply -auto-approve
 
   provision:
     needs: terraform
