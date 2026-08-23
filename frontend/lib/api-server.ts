@@ -20,8 +20,4 @@ apiServer.interceptors.request.use(async (config) => {
 	return config;
 });
 
-export function getSessionToken() {
-	return getServerSession(authOptions)?.backendToken;
-}
-
 export default apiServer;
