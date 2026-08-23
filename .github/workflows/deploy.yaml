@@ -70,11 +70,19 @@ jobs:
           set -a
           source .env
           set +a
+
+          # playbook.yml's first play ssh-adds keys into the local agent
+          # for forwarding - nothing starts one in a fresh Actions shell by
+          # default, so ssh-add has nothing to connect to without this.
+          eval "$(ssh-agent -s)"
+
           # -u is required now that there's no inventory.ini setting
           # ansible_user - without it ansible defaults to whatever OS user
           # the runner's systemd service runs as, not the account
           # Terraform actually authorized on the target VM.
           ansible-playbook -i "$TF_VAR_vm_ip," -u "$TF_VAR_image_user" ansible/playbook.yml
+
+          kill "$SSH_AGENT_PID"
         env:
           ANSIBLE_PRIVATE_KEY_FILE: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
