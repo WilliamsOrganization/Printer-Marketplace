@@ -25,6 +25,7 @@ jobs:
           source .env
           set +a
           cd terraform
+          terraform init
           terraform apply -auto-approve
 
   provision:

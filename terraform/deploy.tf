@@ -6,6 +6,15 @@ terraform {
       version = "~> 0.73"
     }
   }
+
+  # State has to live outside the CI workspace - actions/checkout cleans
+  # (git clean -ffdx) before every run, which would otherwise wipe
+  # terraform.tfstate along with everything else untracked/gitignored.
+  # This NFS mount persists across runs and across which VM the runner
+  # happens to be.
+  backend "local" {
+    path = "/mnt/ecommerce/terraform/terraform.tfstate"
+  }
 }
 
 variable "proxmox_host_endpoint" { type = string }
