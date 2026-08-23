@@ -67,7 +67,7 @@
 
     - name: Bring up the application stack
       ansible.builtin.command:
-        cmd: docker-compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
+        cmd: docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
         chdir: "{{ git_repo_dest }}"
       changed_when: true
 
