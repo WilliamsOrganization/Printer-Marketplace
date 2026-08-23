@@ -73,9 +73,21 @@
         dest: "{{ git_repo_dest }}/.env"
         mode: "0600"
 
+    - name: Build the application stack
+      # --no-cache: `docker compose up --build` alone was reusing a stale
+      # RUN npm install layer across deploys despite package.json actually
+      # changing content between them, leaving a dependency missing from
+      # the built image. Rebuilding from scratch every deploy costs time
+      # but guarantees this can't recur regardless of the exact caching
+      # mechanism at fault.
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.yaml -f docker-compose.prod.yaml build --no-cache
+        chdir: "{{ git_repo_dest }}"
+      changed_when: true
+
     - name: Bring up the application stack
       ansible.builtin.command:
-        cmd: docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d --build
+        cmd: docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d
         chdir: "{{ git_repo_dest }}"
       changed_when: true
 
