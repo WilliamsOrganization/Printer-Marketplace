@@ -31,7 +31,6 @@
 
     git_repo_url: "{{ lookup('ansible.builtin.env', 'GIT_REPO_URL') }}"
     git_repo_dest: "{{ lookup('ansible.builtin.env', 'GIT_REPO_DEST') }}"
-    env_file_content: "{{ lookup('ansible.builtin.env', 'ENV_FILE') }}"
 
     # "Ephemeral" is a property of the auth key itself (generated in the
     # Tailscale admin console with the "Ephemeral" option checked), not
@@ -59,11 +58,14 @@
       changed_when: true
 
     - name: Write production .env file
+      # src, not content: - the secret text stays out of ansible's logged
+      # module args this way, so this task doesn't need no_log: true.
+      # ENV_FILE is already sitting on disk here (the GH Actions "Write
+      # .env" step wrote it into the workspace before this playbook ran).
       ansible.builtin.copy:
-        content: "{{ env_file_content }}"
+        src: "{{ playbook_dir }}/../.env"
         dest: "{{ git_repo_dest }}/.env"
         mode: "0600"
-      no_log: true # env_file_content holds real secrets (DB password, Stripe keys, etc.)
 
     - name: Bring up the application stack
       ansible.builtin.command:
