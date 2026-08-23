@@ -1,7 +1,5 @@
 package com.ecommerce.backend.controller;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +14,7 @@ import com.ecommerce.backend.dto.AddCartItemResponse;
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.Users;
+import com.ecommerce.backend.exception.UserNotFoundException;
 import com.ecommerce.backend.repository.CartItemRepository;
 import com.ecommerce.backend.service.CartService;
 import com.ecommerce.backend.service.UserService;
@@ -36,16 +35,6 @@ public class CartItemController {
 	private final UserService userService;
 
 	/**
-	 * getAll returns all cart items
-	 * 
-	 * @return
-	 */
-	@GetMapping
-	public List<CartItem> getAll() {
-		return cartItemRepository.findAll();
-	}
-
-	/**
 	 * getOne returns a cart item by id
 	 * 
 	 * @param id
@@ -53,7 +42,12 @@ public class CartItemController {
 	 */
 	@GetMapping("/{id}")
 	public CartItem getOne(@PathVariable Long id) {
-		return cartItemRepository.findById(id).orElseThrow();
+		Users user = userService.getUserFromSession();
+		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
+		if (!cartItem.getCart().getUser().getId().equals(user.getId())) {
+			throw new UserNotFoundException("User not found");
+		}
+		return cartItem;
 	}
 
 	/**
@@ -80,7 +74,11 @@ public class CartItemController {
 	@PutMapping("/quantity/{id}")
 	public CartItem updateCartItemQuantity(@PathVariable Long id,
 			@RequestBody Integer quantity) {
+		Users user = userService.getUserFromSession();
 		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
+		if (!cartItem.getCart().getUser().getId().equals(user.getId())) {
+			throw new UserNotFoundException("User not found");
+		}
 		cartItem.setQuantity(quantity);
 		return cartItemRepository.save(cartItem);
 	}

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +45,7 @@ public class SessionController {
 	 * @return the stats
 	 */
 	@GetMapping("/stats")
+	@PreAuthorize("hasRole('ADMIN')")
 	public Map<String, Long> getStats() {
 		return Map.of(
 			"totalSessions", repository.count(),
@@ -57,6 +59,7 @@ public class SessionController {
 	 * @return the dates
 	 */
 	@GetMapping("/dates")
+	@PreAuthorize("hasRole('ADMIN')")
 	public List<LocalDateTime> getDates() {
 		return repository.findAll().stream()
 				.map(Sessions::getCreatedAt)

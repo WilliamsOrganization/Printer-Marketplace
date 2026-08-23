@@ -121,6 +121,7 @@ public class InventoryItemController {
 	 * @return the S3 URLs
 	 */
 	@PostMapping("/images")
+	@PreAuthorize("hasRole('ADMIN')")
 	public List<String> uploadImages(@RequestParam("images") List<MultipartFile> files) {
 		return inventoryItemService.uploadImages(files);
 	}

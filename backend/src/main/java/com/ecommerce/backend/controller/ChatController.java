@@ -1,21 +1,16 @@
 package com.ecommerce.backend.controller;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
 
-// import com.ecommerce.backend.dto.ChatMessageRequest;
-import com.ecommerce.backend.dto.ChatRequest;
-import com.ecommerce.backend.dto.ChatResponse;
-import com.ecommerce.backend.entity.Chat;
+import com.ecommerce.backend.dto.ChatMessage;
+import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
-import com.ecommerce.backend.service.ChatService;
-import com.ecommerce.backend.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,55 +19,30 @@ import lombok.extern.slf4j.Slf4j;
  * ChatController
  */
 @Slf4j
-@RestController
+@Controller
 @RequiredArgsConstructor
-@RequestMapping("/server/chats")
 public class ChatController {
-	private final ChatService chatService;
-	private final UserService userService;
 
 	/**
-	 * Creates a chat between two users
-	 * @param request
-	 * @return
+	 * The Authentication param is resolved from the STOMP session's
+	 * Principal - set on CONNECT by StompAuthChannelInterceptor, not from
+	 * SecurityContextHolder (that's per-HTTP-request and isn't populated
+	 * for STOMP message handling, which runs on the broker's own threads).
+	 * Its principal is the Sessions entity, same object
+	 * AuthService.buildAuthentication wraps for HTTP requests.
 	 */
-	@PostMapping("/create")
-	public Chat createChat(@RequestBody ChatRequest request) {
-		Users user = userService.getUserFromSession();
-		return chatService.createChat(user, request.getAdminId(), request.getCustomerId());
-	}
-
-	//
-	// /**
-	//  * Sends a message to a chat
-	//  * @param request
-	//  * @return
-	//  */
-	// @PostMapping("/message")
-	// public Chat sendMessage(@RequestBody ChatMessageRequest request) {
-	// 	Users user = userService.getUserFromSession();
-	// 	return chatService.sendMessage(user, request.getChatId(), request.getMessage());
-	// }
-
-
-	/**
-	 * Gets all chats for a user
-	 * @return
-	 */
-	@GetMapping("/")
-	public List<ChatResponse> getUserChats() {
-		Users user = userService.getUserFromSession();
-		return chatService.getChatResponsesByUser(user);
-	}
-
-	/**
-	 * Gets all chats for a user, mapped to the flattened response shape list
-	 * endpoints send to the frontend.
-	 * @return
-	 */
-	@GetMapping("/all")
-	@PreAuthorize("hasRole('ADMIN')")
-	public List<ChatResponse> getAllChats() {
-		return chatService.getAllChatResponses();
+	@MessageMapping("/chat.message")
+	@SendTo("/topic/chat")
+	public ChatMessage chatMessage(ChatMessage message) {
+		// Sessions session = (Sessions) authentication.getPrincipal();
+		// Users user = session.getUser();
+		ChatMessage chatMessage = ChatMessage.builder()
+				.messageType(ChatMessage.MessageType.CHAT)
+				.content("Hello from the backend you seem like a fun peron")
+				.sender(false)
+				.createdAt(LocalDateTime.now())
+				.id(UUID.randomUUID().toString())
+				.build();
+		return chatMessage;
 	}
 }

@@ -198,16 +198,21 @@ export interface Chat {
 	updatedAt: string;
 	admin: User;
 	customer: User;
-	messages: Message[];
+	messages: ChatMessage[];
 }
 
-export interface Message {
-	id: number;
-	createdAt: string;
-	updatedAt: string;
-	chat: Chat;
-	sender: User;
+export enum ChatMessageType {
+	CHAT = "CHAT",
+	JOIN = "JOIN",
+	LEAVE = "LEAVE",
+}
+
+export interface ChatMessage {
+	type: ChatMessageType;
 	content: string;
+	createdAt: string;
+	sender: boolean;
+	id: string;
 }
 
 export interface CheckoutSummary {

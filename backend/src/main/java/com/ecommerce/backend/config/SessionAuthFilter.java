@@ -37,6 +37,11 @@ import lombok.extern.slf4j.Slf4j;
  *    no session token at all. It authenticates via the Stripe-Signature
  *    header instead (see StripeController), verified independently of this
  *    filter.
+ * 4. The STOMP/WebSocket endpoint (/chat/**) - the browser's native
+ *    WebSocket API can't attach an Authorization header to the handshake
+ *    request itself, so this filter has nothing to check there. Auth for
+ *    this endpoint happens one layer up, on the STOMP CONNECT frame - see
+ *    StompAuthChannelInterceptor.
  *
  * Every other route is expected to already carry a token from the bootstrap
  * call; a missing or invalid one there is treated as a hard failure, not
@@ -52,6 +57,7 @@ public class SessionAuthFilter extends OncePerRequestFilter {
     private static final String STRIPE_WEBHOOK_PATH = "/stripe/webhook";
     private static final String SHIPPING_WEBHOOK_PATH = "/server/shipping/webhook";
     private static final String AUTH_LOGIN_PATH = "/server/auth/login";
+    private static final String CHAT_WEBSOCKET_PATH_PREFIX = "/chat";
 	private static final int bearerSubstring = 7;
 
     // GET-only, unauthenticated-friendly routes - no @PreAuthorize guards
@@ -77,6 +83,9 @@ public class SessionAuthFilter extends OncePerRequestFilter {
 		if (AUTH_LOGIN_PATH.equals(request.getRequestURI())) {
 			return true;
 		}
+        if (request.getRequestURI().startsWith(CHAT_WEBSOCKET_PATH_PREFIX)) {
+            return true;
+        }
         return HttpMethod.GET.matches(request.getMethod())
             && PUBLIC_GET_PATHS.contains(request.getRequestURI());
     }
