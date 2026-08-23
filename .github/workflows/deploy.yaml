@@ -36,7 +36,12 @@ jobs:
           set +a
           cd terraform
           terraform init
-          terraform apply -auto-approve
+          # -lock=false: the local backend's flock()-based locking doesn't
+          # reliably work against this NFS-mounted state file (truncate
+          # fails with "bad file descriptor" mid-write) - safe to skip here
+          # since this pipeline only ever runs one terraform operation at a
+          # time, not multiple concurrent applies.
+          terraform apply -auto-approve -lock=false
 
   provision:
     needs: terraform
