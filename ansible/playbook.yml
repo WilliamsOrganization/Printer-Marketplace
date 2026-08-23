@@ -1,35 +1,64 @@
-- hosts: app
-  become: true
+---
+- name: Load connection and GitHub SSH keys into local agent
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    connection_ssh_key_path: "{{ lookup('ansible.builtin.env', 'SSH_PRIVATE_KEY_PATH') }}"
+    github_ssh_key_path: "{{ lookup('ansible.builtin.env', 'GITHUB_SSH_KEY_PATH') }}"
+
   tasks:
-    - name: install packages
-      apt:
-        name:
-          - git
-          - openssh-server
-          - curl
-          - vim
-          - docker.io
-          - docker-compose
-          - htop
-        state: present
-        update_cache: true
+    - name: Drop any stale copy of the connection key from the local agent
+      ansible.builtin.command: ssh-add -d {{ connection_ssh_key_path }} # control node only - clears a previously-loaded (possibly rotated) identity for this key path, never touches the target host
+      changed_when: false
+      failed_when: false
 
-    - name: copy public key
-      authorized_key:
-        user: root
-        key: "{{ lookup('env', 'SSH_PUBLIC_KEY') }}"
-        state: present
+    - name: Load connection key into local agent
+      ansible.builtin.command: ssh-add {{ connection_ssh_key_path }} # control node only - the next play's SSH connection to the target host authenticates via this agent-loaded key, never a copied file
+      changed_when: false
 
-    - name: clone repo
-      git:
-        repo: https://github.com/ewanchukwilliam/Printer-Marketplace.git
-        dest: /app
+    - name: Load GitHub key into local agent for forwarding
+      ansible.builtin.command: ssh-add {{ github_ssh_key_path }} # popos_desktop GitHub account key - forwarded to the target host below, never copied there
+      changed_when: false
+
+- name: Clone a repository onto the target host
+  hosts: repo_target
+  become: false
+
+  vars:
+    image_user: "{{ lookup('ansible.builtin.env', 'TF_VAR_image_user') }}"
+    image_home: "/home/{{ image_user }}"
+
+    ansible_host: "{{ lookup('ansible.builtin.env', 'TF_VAR_vm_ip') }}"
+    ansible_user: "{{ image_user }}"
+    ansible_ssh_common_args: "-o ForwardAgent=yes" # forwards the local agent (holding both keys loaded above) so GitHub auth over SSH works on the target host too, without ever copying a private key there
+
+    git_repo_url: "{{ lookup('ansible.builtin.env', 'GIT_REPO_URL') }}"
+    git_repo_dest: "{{ lookup('ansible.builtin.env', 'GIT_REPO_DEST') }}"
+
+    # "Ephemeral" is a property of the auth key itself (generated in the
+    # Tailscale admin console with the "Ephemeral" option checked), not
+    # something this task controls - a node registered with an ephemeral
+    # key auto-removes from the tailnet once it disconnects.
+    tailscale_auth_key: "{{ lookup('ansible.builtin.env', 'TAILSCALE_AUTH_KEY') }}"
+    tailscale_hostname: "{{ lookup('ansible.builtin.env', 'TF_VAR_vm_name') }}"
+
+  tasks:
+    - name: Clone repository from GIT_REPO_URL
+      ansible.builtin.git:
+        repo: "{{ git_repo_url }}"
+        dest: "{{ git_repo_dest }}"
         version: main
-        force: yes
+        update: true
+        accept_hostkey: true
 
-    - name: install lazydocker
-      shell: |
-        curl -Lo /tmp/lazydocker.tar.gz "https://github.com/jesseduffield/lazydocker/releases/download/v0.23.3/lazydocker_0.23.3_Linux_x86_64.tar.gz"
-        tar -xf /tmp/lazydocker.tar.gz -C /usr/local/bin lazydocker
-      args:
-        creates: /usr/local/bin/lazydocker
+    - name: Register the VM on Tailscale
+      become: true # tailscale up needs root to configure the tailscale0 interface, unlike the clone task above
+      ansible.builtin.command: >
+        tailscale up
+        --authkey={{ tailscale_auth_key }}
+        --hostname={{ tailscale_hostname }}
+      no_log: true # the auth key would otherwise be printed in task output/logs
+      changed_when: true
+
