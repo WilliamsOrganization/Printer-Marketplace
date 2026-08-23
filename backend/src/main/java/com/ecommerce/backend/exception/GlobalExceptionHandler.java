@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import com.stripe.exception.SignatureVerificationException;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -109,6 +111,20 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<String> handleNotFound(NotFoundException ex) {
 		log.warn("NotFoundException: {}", ex.getMessage());
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	/**
+	 * handleSignatureVerification handles a Stripe webhook request whose
+	 * signature doesn't match - a forged/misconfigured request, not a
+	 * server-side bug, so this shouldn't surface as a 500.
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(SignatureVerificationException.class)
+	public ResponseEntity<String> handleSignatureVerification(SignatureVerificationException ex) {
+		log.warn("SignatureVerificationException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
 	}
 
 	/**
