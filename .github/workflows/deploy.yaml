@@ -61,9 +61,14 @@ jobs:
           set +a
           set -x
           mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           echo "${{ secrets.CONTAINER_SSH_KEY }}" > ~/.ssh/popos_desktop
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/popos_desktop
+          # A recreated VM gets a fresh host key, so the old entry (if any)
+          # would otherwise trip a REMOTE HOST IDENTIFICATION HAS CHANGED
+          # failure - drop it before scanning the current one.
+          ssh-keygen -f ~/.ssh/known_hosts -R "$TF_VAR_vm_ip" || true
           ssh-keyscan -T 5 "$TF_VAR_vm_ip" >> ~/.ssh/known_hosts
       - name: Run Ansible
         run: |
