@@ -14,9 +14,9 @@ jobs:
       - name: Terraform Apply
         run: |
           cd terraform
-          TF_VAR_proxmox_host_endpoint="${{ secrets.TF_ENDPOINT }}" \
-          TF_VAR_proxmox_environment_secret="${{ secrets.TF_SECRET }}" \
           terraform apply -auto-approve
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
 
   provision:
     needs: terraform
