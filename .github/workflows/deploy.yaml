@@ -49,11 +49,12 @@ jobs:
           ENV_FILE: ${{ secrets.ENV_FILE }}
       - name: Setup SSH Keys
         run: |
+          set -x
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           echo "${{ secrets.CONTAINER_SSH_KEY }}" > ~/.ssh/popos_desktop
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/popos_desktop
-          ssh-keyscan "${{ secrets.VM_TAILNET_IP }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 5 "${{ secrets.VM_TAILNET_IP }}" >> ~/.ssh/known_hosts
       - name: Run Ansible
         run: |
           set -a
