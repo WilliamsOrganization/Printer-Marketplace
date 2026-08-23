@@ -47,6 +47,12 @@
         version: main
         update: true
         accept_hostkey: true
+        # This clone is purely a deploy target, nobody's meant to be
+        # hand-editing it - "local modifications" here are just leftover
+        # noise from the previous deploy (e.g. docker compose build
+        # writing back into bind-mounted paths as root, changing file
+        # ownership on tracked files), not state worth preserving.
+        force: true
 
     - name: Register the VM on Tailscale
       become: true # tailscale up needs root to configure the tailscale0 interface, unlike the clone task above
