@@ -32,6 +32,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+      - name: Write .env
+        run: echo "$ENV_FILE" > .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
       - name: Setup SSH Keys
         run: |
           mkdir -p ~/.ssh
@@ -40,7 +44,15 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/popos_desktop
           ssh-keyscan "${{ secrets.VM_TAILNET_IP }}" >> ~/.ssh/known_hosts
       - name: Run Ansible
-        run: ansible-playbook -i "${{ secrets.VM_TAILNET_IP }}," ansible/playbook.yml
+        run: |
+          set -a
+          source .env
+          set +a
+          # -u is required now that there's no inventory.ini setting
+          # ansible_user - without it ansible defaults to whatever OS user
+          # the runner's systemd service runs as, not the account
+          # Terraform actually authorized on the target VM.
+          ansible-playbook -i "${{ secrets.VM_TAILNET_IP }}," -u "$TF_VAR_image_user" ansible/playbook.yml
         env:
           ANSIBLE_PRIVATE_KEY_FILE: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
