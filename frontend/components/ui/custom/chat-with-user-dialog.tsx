@@ -19,10 +19,6 @@ import { Chat, ChatMessage, ChatMessageType, User, UserRole } from "@/lib/types"
 import { Input } from "../input";
 import { useEffect, useRef, useState } from "react";
 import { getSession } from "next-auth/react";
-import apiServer, { getSessionToken } from "@/lib/api-server";
-import { getServerSession } from "next-auth";
-import { randomUUID } from "crypto";
-import { uuidv4 } from "zod";
 
 export function ChatWithUserDialog({ chat }: { chat: Chat | null }) {
 	const startOrContinueConversation = !chat ? "Start A Conversation!" : "Send a Message";
