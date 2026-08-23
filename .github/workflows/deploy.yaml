@@ -19,6 +19,16 @@ jobs:
         run: echo "$ENV_FILE" > .env
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
+      # deploy.tf's proxmox provider block reads TF_VAR_proxmox_ssh_key_path
+      # (~/.ssh/id_ed25519) directly off disk for its own SSH connection to
+      # the Proxmox host (snippet uploads) - it's not just ansible that
+      # needs this key.
+      - name: Setup SSH Keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.CONTAINER_SSH_KEY }}" > ~/.ssh/popos_desktop
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/popos_desktop
       - name: Terraform Apply
         run: |
           set -a
