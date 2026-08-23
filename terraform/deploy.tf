@@ -82,7 +82,7 @@ resource "proxmox_virtual_environment_vm" "ecommerce_environment" {
   }
 
   memory {
-    dedicated = 2048
+    dedicated = 2048 * 8
   }
 
   agent {
