@@ -85,48 +85,13 @@ docker compose exec postgres psql -U $DB_USER -d $DB_NAME
 ---
 
 ## TODOs
+- finish configuring a secondary staging environment before deploying to production.  (Main is done)
+- finish tls certs, do some ip white listing on cloudflare. 
+- eventually transfer from manual deploy scripts to pushed images. less failover between deployments (bug in git pull)
+- remember to secure cloudflare traffic (non-flexible)
+- split environment variables properly. 
+- second pipeline for dev (goes hand in hand for other 3 deploy scripts)
 
-### Stripe Refactor (Priority)
-- Move Stripe checkout session creation from frontend (checkout_sessions/route.ts) to Spring backend
-- Spring already owns cart, inventory, and shipping — it should own Stripe session creation too
-- Frontend sends only `{ rateId }` (Shippo rate object_id) to backend, backend builds line items from DB cart, creates Stripe session, returns URL
-- Success page (success/page.jsx) can stay on frontend for now — it's read-only (stripe.checkout.sessions.retrieve)
-- Long term: move success page retrieval to Spring endpoint (GET /orders/confirm?session_id=xxx) and remove frontend Stripe SDK entirely
-- See route.ts TODO comment for full architectural notes
-
-### Shipping (Shippo)
-- Shippo rates are ephemeral — don't persist to DB, use Shippo as source of truth
-- Store addresses, shipments, and transactions in DB (immutable once created, needed for order history/fulfillment)
-- Refactor Shipping.java entity to match Shippo API documentation
-- Known bug: Shippo intermittently returns empty rates on first request for new addresses (see ShippoService.java)
-- Wire up "Continue to Payment" button to pass selected rate through to Stripe checkout
-
-### Frontend
-- Product pages need server component wrapper for SEO indexing (product-card.tsx, product/page.tsx)
-- Success page needs product image URLs instead of generic quantity badge
-- Price filter toggles not working on shop page
-- Support multiple pricing tiers for products (create-inventory-item-form.tsx, InventoryItem.java)
-- Add color configuration for items
-
-### Auth/Security
-- Password hashing (AuthService.java, DataInitializer.java)
-- Email authentication layer for account verification
-- Proper account creation process for order updates (UserService.java)
-- Pre-checkout email gateway (not a hard login unless email exists)
-
-### Email (Resend)
-- Order confirmation emails
-- Account recovery
-- Customer support notifications
-- EmailService.java wired up, test endpoint working, printmarket.ca verified
-
-### Infrastructure
-- Partition Proxmox server into staging and production environments
-- Configure production Nginx reverse proxy with firewall rules
-- Auto-generate long-term backups via cron jobs to HD drives
-- Open outward-facing port and configure DNS
-- Product pages (dream: STL support for different color previews)
-- Customer support contact (websocket or direct email)
 
 ## License
 
