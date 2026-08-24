@@ -99,6 +99,7 @@ docker compose exec postgres psql -U $DB_USER -d $DB_NAME
 - adding images is busted. some checkout items are busted (maybe related that they arent being generated with images) something for sure to do with stripe
 - backend ip addresses and checkout redirect urls arent pointing to an actual address in the "prod"
 - create shipping label broke (again likely shippo webhook misconfiguration)
+- the shipping list breaks on mobile view. same with some tables in the admin dashboard. 
 
 ## License
 
