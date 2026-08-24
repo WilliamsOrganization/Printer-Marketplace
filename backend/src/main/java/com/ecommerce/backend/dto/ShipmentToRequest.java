@@ -28,7 +28,6 @@ public class ShipmentToRequest {
 	private String state;
 	@Nonnull
 	private String country;
-	@Nonnull
 	private String phone;
 	@Nonnull
 	private String email;
