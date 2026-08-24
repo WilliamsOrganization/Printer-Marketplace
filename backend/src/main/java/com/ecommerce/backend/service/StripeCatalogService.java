@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.backend.dto.CreateCatalogRequest;
@@ -41,8 +42,10 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class StripeCatalogService {
-	private static final String SUCCESS_URL = "http://localhost:3000/order-status?session_id={CHECKOUT_SESSION_ID}";
-	private static final String CANCEL_URL = "http://localhost:3000/";
+	@Value("${frontend.url}")
+	private static String FRONTEND_URL;
+
+	private static final String SUCCESS_URL = "/order-status?session_id={CHECKOUT_SESSION_ID}";
 
 	private static final Long DOLLAR = 100L;
 	private static final Long PAGE_SIZE = 100L;
@@ -227,8 +230,8 @@ public class StripeCatalogService {
 		ShippingQuote quote = toShippingQuote(rate);
 
 		SessionCreateParams params = SessionCreateParams.builder()
-				.setSuccessUrl(SUCCESS_URL)
-				.setCancelUrl(CANCEL_URL)
+				.setSuccessUrl( FRONTEND_URL + SUCCESS_URL)
+				.setCancelUrl( FRONTEND_URL )
 				.setCustomerEmail(email)
 				.addAllLineItem(lineItems)
 				.addShippingOption(SessionCreateParams.ShippingOption.builder()

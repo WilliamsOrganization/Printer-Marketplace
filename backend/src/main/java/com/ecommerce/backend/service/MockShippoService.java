@@ -31,6 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MockShippoService {
 
+	@Value("${frontend.url}")
+	private static String FRONTEND_URL;
 	public static final int notFound = 404;
 	private static final List<TrackingStatusEnum> MOCK_TRACKING_CYCLE =
 			List.of(TrackingStatusEnum.PRE_TRANSIT, TrackingStatusEnum.TRANSIT, TrackingStatusEnum.DELIVERED);
@@ -106,7 +108,7 @@ public class MockShippoService {
 				location.getCity(), location.getState(), location.getCountry());
 
 		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create("http://localhost:" + serverPort + "/server/shipping/webhook"))
+				.uri(URI.create(FRONTEND_URL + "/server/shipping/webhook"))
 				.header("Content-Type", "application/json")
 				.POST(HttpRequest.BodyPublishers.ofString(payload))
 				.build();

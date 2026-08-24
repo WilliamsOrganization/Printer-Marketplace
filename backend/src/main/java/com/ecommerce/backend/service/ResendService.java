@@ -36,7 +36,8 @@ public class ResendService {
 	// TODO: pull from the same env-configurable base url as
 	// StripeCatalogService's SUCCESS_URL/CANCEL_URL once that's made configurable
 	public static final int aMillion = 1_000_000;
-	private static final String STORE_URL = "http://localhost:3000";
+	@Value("${frontend.url}")
+	private static String FRONTEND_URL;
 	private static final Long DOLLAR = 100L;
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -123,9 +124,9 @@ public class ResendService {
 				+ order.getCurrency() + "</span></td></tr>"
 				+ "</table>"
 				+ "<div style=\"text-align:center;margin-top:32px;\">"
-				+ "<a href=\"" + STORE_URL + "/order-status?session_id=" + order.getStripeSessionId() + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">View Order</a>"
+				+ "<a href=\"" + FRONTEND_URL + "/order-status?session_id=" + order.getStripeSessionId() + "\" style=\"font-family:Arial,sans-serif;display:inline-block;background:#111;color:#fff;text-decoration:none;font-size:13px;padding:10px 24px;border-radius:6px;\">View Order</a>"
 				+ "&nbsp;&nbsp;"
-				+ "<a href=\"" + STORE_URL + "\" style=\"font-family:Arial,sans-serif;display:inline-block;color:#555;text-decoration:none;font-size:13px;padding:10px 24px;\">Continue Shopping</a>"
+				+ "<a href=\"" + FRONTEND_URL + "\" style=\"font-family:Arial,sans-serif;display:inline-block;color:#555;text-decoration:none;font-size:13px;padding:10px 24px;\">Continue Shopping</a>"
 				+ "</div>"
 				+ "</div>";
 	}
@@ -172,7 +173,7 @@ public class ResendService {
 	private String buildTrackingHtml(Orders order, Shipping shipping) {
 		String trackingNumber = shipping.getTrackingNumber() != null ? shipping.getTrackingNumber() : "N/A";
 		String trackingUrl = shipping.getTrackingUrl();
-		String orderUrl = STORE_URL + "/order-status?session_id=" + order.getStripeSessionId();
+		String orderUrl = FRONTEND_URL + "/order-status?session_id=" + order.getStripeSessionId();
 
 		String destination = shipping.getAddressTo() != null
 				? "<div style=\"border:1px solid #e5e5e5;border-radius:8px;padding:16px;margin:0 0 24px;font-family:Arial,sans-serif;\">"
@@ -238,7 +239,7 @@ public class ResendService {
 	 * @return the email's HTML body
 	 */
 	private String buildVerificationHtml(Users user, String code) {
-		String verifyUrl = STORE_URL + "/verify-email?email="
+		String verifyUrl = FRONTEND_URL + "/verify-email?email="
 				+ URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8);
 
 		return "<div style=\"font-family:Georgia,'Times New Roman',serif;max-width:480px;margin:0 auto;color:#111;\">"
@@ -271,7 +272,7 @@ public class ResendService {
 	 * @return the email's HTML body
 	 */
 	private String buildResetPasswordHtml(Users user, String code) {
-		String resetUrl = STORE_URL + "/reset-password?email="
+		String resetUrl = FRONTEND_URL + "/reset-password?email="
 				+ URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8)
 				+ "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8);
 

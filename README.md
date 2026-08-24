@@ -91,7 +91,14 @@ docker compose exec postgres psql -U $DB_USER -d $DB_NAME
 - remember to secure cloudflare traffic (non-flexible)
 - split environment variables properly. 
 - second pipeline for dev (goes hand in hand for other 3 deploy scripts)
+- finish designing the chat with user feature for returns. 
+- review what was requesting/logging ids so much
+- make sure that the nginx internet facing port has NO leaks at all. tightest restrictions possible on ingress communication
 
+# Broken
+- adding images is busted. some checkout items are busted (maybe related that they arent being generated with images) something for sure to do with stripe
+- backend ip addresses and checkout redirect urls arent pointing to an actual address in the "prod"
+- create shipping label broke (again likely shippo webhook misconfiguration)
 
 ## License
 
