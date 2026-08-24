@@ -37,7 +37,7 @@ public class ResendService {
 	// StripeCatalogService's SUCCESS_URL/CANCEL_URL once that's made configurable
 	public static final int aMillion = 1_000_000;
 	@Value("${frontend.url}")
-	private static String FRONTEND_URL;
+	private String FRONTEND_URL;
 	private static final Long DOLLAR = 100L;
 	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 

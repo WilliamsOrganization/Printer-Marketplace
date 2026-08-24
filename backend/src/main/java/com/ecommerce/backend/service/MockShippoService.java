@@ -31,8 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MockShippoService {
 
-	@Value("${frontend.url}")
-	private static String FRONTEND_URL;
 	public static final int notFound = 404;
 	private static final List<TrackingStatusEnum> MOCK_TRACKING_CYCLE =
 			List.of(TrackingStatusEnum.PRE_TRANSIT, TrackingStatusEnum.TRANSIT, TrackingStatusEnum.DELIVERED);
@@ -47,6 +45,8 @@ public class MockShippoService {
 	private final ShippingService shippingService;
 	private final HttpClient httpClient = HttpClient.newHttpClient();
 
+	@Value("${frontend.url}")
+	private String FRONTEND_URL;
 	@Value("${server.port:8080}")
 	private int serverPort;
 

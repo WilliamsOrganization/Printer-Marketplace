@@ -232,7 +232,7 @@ public class StripeCatalogService {
 		ShippingQuote quote = toShippingQuote(rate);
 
 		SessionCreateParams params = SessionCreateParams.builder()
-				.setSuccessUrl( FRONTEND_URL + "/" + SUCCESS_URL)
+				.setSuccessUrl(FRONTEND_URL + "/" + SUCCESS_URL)
 				.setCancelUrl( FRONTEND_URL )
 				.setCustomerEmail(email)
 				.addAllLineItem(lineItems)
