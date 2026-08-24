@@ -137,7 +137,7 @@ export function CheckoutForm({
 		setLoading(true)
 		await update({ email, phoneNumber: phone })
 		apiSession
-			.post("cart/checkout/", {
+			.post("cart/checkout", {
 				email,
 				selectedShippingID: selectedRate
 			})
