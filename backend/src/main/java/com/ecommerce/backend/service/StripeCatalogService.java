@@ -42,19 +42,20 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class StripeCatalogService {
-	@Value("${frontend.url}")
-	private static String FRONTEND_URL;
-
-	private static final String SUCCESS_URL = "/order-status?session_id={CHECKOUT_SESSION_ID}";
+	private static final String SUCCESS_URL = "order-status?session_id={CHECKOUT_SESSION_ID}";
 
 	private static final Long DOLLAR = 100L;
+
 	private static final Long PAGE_SIZE = 100L;
 
 	private final ShippoService shippoService;
 	private final CartService cartService;
+
 	private final OrderService orderService;
 	private final UserService userService;
 
+	@Value("${frontend.url}")
+	private String FRONTEND_URL;
 	/**
 	 * This method is used to map the cart items to line items.
 	 * 
@@ -74,6 +75,7 @@ public class StripeCatalogService {
 		}
 		return lineItems;
 	}
+
 	/**
 	 * Extracts the display name, price in cents, and currency from a Shippo
 	 * rate quote.
@@ -230,7 +232,7 @@ public class StripeCatalogService {
 		ShippingQuote quote = toShippingQuote(rate);
 
 		SessionCreateParams params = SessionCreateParams.builder()
-				.setSuccessUrl( FRONTEND_URL + SUCCESS_URL)
+				.setSuccessUrl( FRONTEND_URL + "/" + SUCCESS_URL)
 				.setCancelUrl( FRONTEND_URL )
 				.setCustomerEmail(email)
 				.addAllLineItem(lineItems)
