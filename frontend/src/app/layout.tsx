@@ -20,10 +20,10 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-	title: "PrintMarket Shop",
+	title: "LittleBrick3DPrinting",
 	description: "Find new printables market",
 	icons: {
-		icon: "/logo-icon.svg",
+		icon: "/amys-logo-final.png",
 	},
 };
 

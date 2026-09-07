@@ -81,7 +81,7 @@ export default async function ShopPage({
 			{/* Page header */}
 			<div className="border-b mb-4">
 				<h1 className="text-3xl font-serif">
-					The <span className="italic">Shop</span>
+					Next Production Batch: <span className="italic">Spring 2027</span>
 				</h1>
 				<p className="text-sm text-muted-foreground my-2 leading-relaxed">
 					Browse, filter, and find what your looking for.

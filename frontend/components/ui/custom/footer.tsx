@@ -34,7 +34,7 @@ export function Footer() {
 					{/* Brand + Newsletter */}
 					<div className="col-span-2 flex flex-col gap-5">
 						<div>
-							<Image src="/logo.svg" alt="PrintMarket" width={450} height={150} className="mb-2" />
+							<Image src="/amys-logo-text-final.png" alt="LittleBrick3DPrinting" width={450} height={150} className="mb-2" />
 						</div>
 
 						{false ?
@@ -119,7 +119,7 @@ export function Footer() {
 
 				<div className="flex items-center justify-between">
 					<p className="text-xs text-muted-foreground">
-						&copy; {new Date().getFullYear()} PrintMarket. All rights reserved.
+						&copy; {new Date().getFullYear()} LittleBrick3DPrinting. All rights reserved.
 					</p>
 
 					<div className="flex gap-2">

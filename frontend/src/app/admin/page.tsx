@@ -8,8 +8,8 @@ export default function LoginPage() {
 		<div className="bg-muted flex min-h-[100vh] flex-col items-center justify-center gap-6 p-6 md:p-10">
 			<div className="flex w-full max-w-sm flex-col gap-6">
 				<a href="#" className="flex items-center gap-2 self-center font-medium">
-					<Image src="/logo-icon.svg" width={30} height={30} alt="PrintMarket logo" />
-					PrintMarket Inc.
+					<Image src="/amys-logo-final.png" width={30} height={30} alt="LittleBrick3DPrinting logo" />
+					LittleBrick3DPrinting Inc.
 				</a>
 				<LoginForm />
 				<button

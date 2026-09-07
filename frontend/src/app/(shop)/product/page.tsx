@@ -10,7 +10,7 @@ export default async function ShopPage() {
 					TODO: all page links to me must be wrapped in server component for SEO indexing
 				</p>
 
-				<Image src="/logo.svg" alt="PrintMarket" width={860} height={220} />
+				<Image src="/amys-logo-final.png" alt="LittleBrick3DPrinting" width={220} height={220} />
 				<p>
 					Testing build pipeline
 				</p>

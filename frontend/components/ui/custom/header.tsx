@@ -1,18 +1,50 @@
 "use client";
 
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CartSidebarDrawer } from "./cart-sidebar-drawer";
 import { HeaderAccountMenu } from "./header-account-menu";
 import Link from "next/link";
+import Image from "next/image";
 import TypeIt from "typeit-react";
 
+const navLinks = [
+	{ label: "Orders", href: "/orders" },
+	{ label: "Returns", href: "/returns" },
+	{ label: "Shop", href: "/" },
+];
+
 export function Header() {
+	const [menuOpen, setMenuOpen] = useState(false);
+
 	return (
-		<div className="sticky top-0 w-full z-30 border-b bg-background/95 backdrop-blur-sm">
-			<div className="mx-auto max-w-7xl grid grid-cols-3 items-center px-6 py-3 border-b bg-background/95 backdrop-blur-sm">
-				{/* Logo */}
-				<Link href="/" className="flex items-center">
-					<span className="font-serif italic text-xl leading-none">
+		<header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm">
+			<div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-6">
+				{/* Hamburger - mobile only */}
+				<Button
+					variant="ghost"
+					size="icon"
+					className="shrink-0 md:hidden"
+					aria-label="Menu"
+					aria-expanded={menuOpen}
+					onClick={() => setMenuOpen((o) => !o)}
+				>
+					{menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+				</Button>
+
+				{/* Brand - takes remaining width, animated text truncates rather than pushing the row */}
+				<Link href="/" className="flex min-w-0 flex-1 items-center gap-2">
+					<Image
+						src="/amys-logo-final.png"
+						alt="LittleBrick3DPrinting"
+						width={56}
+						height={56}
+						priority
+						className="size-11 shrink-0 md:size-14"
+					/>
+					<span className="truncate font-serif text-base italic leading-none md:text-xl">
 						<TypeIt
 							options={{
 								loop: true,
@@ -22,7 +54,7 @@ export function Header() {
 							}}
 							getBeforeInit={(instance) => {
 								instance
-									.type("PrintMarket")
+									.type("LittleBrick3DPrinting")
 									.pause(3000)
 									.delete()
 									.type("Made to Order")
@@ -40,28 +72,65 @@ export function Header() {
 					</span>
 				</Link>
 
-				{/* Account */}
-				<div className="flex items-center justify-center">
-					<HeaderAccountMenu />
-				</div>
+				{/* Desktop nav */}
+				<nav className="hidden items-center gap-1 md:flex">
+					{navLinks.map((link) => (
+						<Button key={link.label} variant="ghost" size="sm" asChild>
+							<Link
+								href={link.href}
+								className="text-sm text-muted-foreground hover:text-foreground"
+							>
+								{link.label}
+							</Link>
+						</Button>
+					))}
+				</nav>
 
-				{/* Nav + cart */}
-				<div className="flex items-center justify-end gap-1">
-					<Button variant="ghost" size="sm" asChild>
-						<Link href="/orders" className="text-sm text-muted-foreground hover:text-foreground">Orders</Link>
-					</Button>
-					<Button variant="ghost" size="sm" asChild>
-						<Link href="/returns" className="text-sm text-muted-foreground hover:text-foreground">Returns</Link>
-					</Button>
-					<Button variant="ghost" size="sm" asChild>
-						<Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-							Shop
-						</Link>
-					</Button>
+				{/* Account + cart - always visible */}
+				<div className="flex shrink-0 items-center gap-1">
+					<HeaderAccountMenu />
 					<CartSidebarDrawer />
 				</div>
 			</div>
-		</div>
+
+			{/* Mobile menu - drops down under the header */}
+			<AnimatePresence>
+				{menuOpen && (
+					<>
+						<motion.div
+							className="fixed inset-0 z-10 bg-black/20 md:hidden"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							onClick={() => setMenuOpen(false)}
+						/>
+						<motion.nav
+							key="mobile-menu"
+							initial={{ height: 0 }}
+							animate={{ height: "auto" }}
+							exit={{ height: 0 }}
+							transition={{ duration: 0.2, ease: "easeOut" }}
+							className="absolute inset-x-0 top-full z-20 overflow-hidden border-t bg-background shadow-lg md:hidden"
+						>
+							<div className="flex flex-col p-2">
+								{navLinks.map((link) => (
+									<Button
+										key={link.label}
+										variant="ghost"
+										className="justify-start text-muted-foreground hover:text-foreground"
+										asChild
+									>
+										<Link href={link.href} onClick={() => setMenuOpen(false)}>
+											{link.label}
+										</Link>
+									</Button>
+								))}
+							</div>
+						</motion.nav>
+					</>
+				)}
+			</AnimatePresence>
+		</header>
 	);
 }
 

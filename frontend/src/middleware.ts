@@ -27,6 +27,7 @@ export async function middleware(req: NextRequest) {
 		}
 	}
 
+	// TODO: this needs refactoring. which means rewriting the application to use tanstack query instead. they offer the ability to wrap 401 and 403 to handle default redirects. 
 	if (isProtectedAdminRoute) {
 		if (!(await isVerifiedAdmin(token?.backendToken as string))) {
 			return NextResponse.redirect(new URL("/admin", req.url));

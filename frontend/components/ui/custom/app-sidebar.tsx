@@ -170,7 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <Layers className="!size-5" />
-                <span className="text-base font-semibold">PrintMarket</span>
+                <span className="text-base font-semibold">LittleBrick3DPrinting</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -100,7 +100,7 @@ function ProductCard({
 						{/* Expanded card */}
 						<motion.div
 							layoutId={`card-${selected.id}`}
-							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-background rounded-2xl shadow-2xl overflow-hidden w-[1100px] max-w-[90vw] max-h-[90vh] flex"
+							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-background rounded-2xl shadow-2xl overflow-hidden w-[1100px] max-w-[90vw] max-h-[90vh] flex flex-col md:flex-row"
 						>
 							{/* Close button */}
 							<Button
@@ -112,13 +112,14 @@ function ProductCard({
 								<X className="size-4" />
 							</Button>
 
-							{/* Left — Carousel */}
-							<div className="w-1/2 shrink-0 bg-muted self-stretch flex items-center">
+							{/* Left — Carousel. Stacks on top below md; capped height so the
+							    square image doesn't fill a phone screen (center-cropped). */}
+							<div className="w-full md:w-1/2 md:shrink-0 bg-muted self-stretch flex items-center justify-center overflow-hidden max-h-[45vh] md:max-h-none">
 								<ProductCarousel product={selected} layoutId={`image-${selected.id}`} />
 							</div>
 
 							{/* Right — Product info */}
-							<div className="flex flex-col flex-1 p-8 overflow-y-auto">
+							<div className="flex flex-col flex-1 min-h-0 p-6 md:p-8 overflow-y-auto">
 								{/* Title */}
 								<div className="flex flex-col gap-2 mb-2 pr-10">
 									<motion.h2
