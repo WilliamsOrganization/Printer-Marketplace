@@ -4,12 +4,20 @@ import { cn } from "@/lib/utils";
 
 /**
  * Stacked brand lockup - large logo above the company name.
- * Sits above the card on the login / checkout flows.
+ * Used above the card on the login / checkout flows and in the admin
+ * sidebar header.
  */
-export function BrandMark({ className }: { className?: string }) {
+export function BrandMark({
+	href = "/",
+	className,
+}: {
+	/** Where the lockup links to. Defaults to the storefront home. */
+	href?: string;
+	className?: string;
+}) {
 	return (
 		<Link
-			href="/"
+			href={href}
 			className={cn(
 				"flex flex-col items-center gap-3 self-center font-medium",
 				className,
