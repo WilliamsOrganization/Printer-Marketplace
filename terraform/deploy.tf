@@ -25,6 +25,7 @@ variable "vm_name" { type = string }
 variable "vm_ip" { type = string }
 variable "vm_gateway" { type = string }
 variable "vm_cidr" { type = string }
+variable "vm_dns" { type = list(string) } # cloud-init sets no resolver with a static ip_config and there's no DHCP to supply one - without this the VM can't resolve github.com etc.
 variable "image_user" { type = string }
 
 variable "proxmox_datastore_id" { type = string }
@@ -118,6 +119,10 @@ resource "proxmox_virtual_environment_vm" "ecommerce_environment" {
         address = "${var.vm_ip}/${var.vm_cidr}"
         gateway = var.vm_gateway
       }
+    }
+
+    dns {
+      servers = var.vm_dns
     }
   }
 }
