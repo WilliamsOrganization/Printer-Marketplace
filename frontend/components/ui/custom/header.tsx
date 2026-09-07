@@ -20,7 +20,7 @@ export function Header() {
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	return (
-		<header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm">
+		<header className="sticky top-0 z-30 w-full border-b bg-muted/95 backdrop-blur-sm">
 			<div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 md:px-6">
 				{/* Hamburger - mobile only */}
 				<Button
@@ -112,7 +112,7 @@ export function Header() {
 							animate={{ height: "auto" }}
 							exit={{ height: 0 }}
 							transition={{ duration: 0.2, ease: "easeOut" }}
-							className="absolute inset-x-0 top-full z-20 overflow-hidden border-t bg-background shadow-lg md:hidden"
+							className="absolute inset-x-0 top-full z-20 overflow-hidden border-t bg-muted shadow-lg md:hidden"
 						>
 							<div className="flex flex-col p-2">
 								{navLinks.map((link) => (

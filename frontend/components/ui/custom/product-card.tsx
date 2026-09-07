@@ -88,9 +88,10 @@ function ProductCard({
 			<AnimatePresence>
 				{selected && (
 					<>
-						{/* Backdrop */}
+						{/* Backdrop - above the sticky site header (z-30) so it dims it
+						    too and clicking anywhere closes the modal */}
 						<motion.div
-							className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10"
+							className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0 }}
@@ -100,7 +101,7 @@ function ProductCard({
 						{/* Expanded card */}
 						<motion.div
 							layoutId={`card-${selected.id}`}
-							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-background rounded-2xl shadow-2xl overflow-hidden w-[1100px] max-w-[90vw] max-h-[90vh] flex flex-col md:flex-row"
+							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-background rounded-2xl shadow-2xl overflow-hidden w-[1100px] max-w-[95vw] max-h-[90dvh] flex flex-col md:flex-row"
 						>
 							{/* Close button */}
 							<Button
@@ -114,14 +115,15 @@ function ProductCard({
 
 							{/* Left — Carousel. Stacks on top below md; capped height so the
 							    square image doesn't fill a phone screen (center-cropped). */}
-							<div className="w-full md:w-1/2 md:shrink-0 bg-muted self-stretch flex items-center justify-center overflow-hidden max-h-[45vh] md:max-h-none">
+							<div className="w-full shrink-0 md:w-1/2 bg-muted self-stretch flex items-center justify-center overflow-hidden max-h-[38dvh] md:max-h-none">
 								<ProductCarousel product={selected} layoutId={`image-${selected.id}`} />
 							</div>
 
-							{/* Right — Product info */}
-							<div className="flex flex-col flex-1 min-h-0 p-6 md:p-8 overflow-y-auto">
+							{/* Right — Product info. Title + price + CTA stay fixed;
+							    only the description scrolls. */}
+							<div className="flex flex-col flex-1 min-h-0 p-6 md:p-8">
 								{/* Title */}
-								<div className="flex flex-col gap-2 mb-2 pr-10">
+								<div className="shrink-0 flex flex-col gap-2 mb-2 pr-10">
 									<motion.h2
 										layoutId={`title-${selected.id}`}
 										className="text-3xl font-serif leading-tight"
@@ -131,7 +133,7 @@ function ProductCard({
 								</div>
 
 								{/* Price */}
-								<div className="flex items-baseline gap-1.5 my-5">
+								<div className="shrink-0 flex items-baseline gap-1.5 my-5">
 									<span className="text-3xl font-serif">
 										${selected.itemCost.toFixed(2)}
 									</span>
@@ -140,20 +142,22 @@ function ProductCard({
 									</span>
 								</div>
 
-								<div className="w-full h-px bg-border mb-5" />
+								<div className="shrink-0 w-full h-px bg-border mb-5" />
 
-								{/* Description */}
-								<motion.p
+								{/* Description — the only scrollable region */}
+								<motion.div
 									initial={{ opacity: 0, y: 8 }}
 									animate={{ opacity: 1, y: 0 }}
 									exit={{ opacity: 0, y: 8 }}
-									className="text-sm text-muted-foreground leading-relaxed flex-1"
+									className="flex-1 min-h-0 overflow-y-auto"
 								>
-									{selected.itemDescription}
-								</motion.p>
+									<p className="text-sm text-muted-foreground leading-relaxed">
+										{selected.itemDescription}
+									</p>
+								</motion.div>
 
 								{/* CTA */}
-								<div className="mt-8 pt-4 border-t">
+								<div className="shrink-0 mt-6 pt-4 border-t">
 									<AddToCartButton item={selected} quantity={1} />
 								</div>
 							</div>
