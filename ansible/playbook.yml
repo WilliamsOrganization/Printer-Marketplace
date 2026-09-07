@@ -40,6 +40,25 @@
     tailscale_hostname: "{{ lookup('ansible.builtin.env', 'TF_VAR_vm_name') }}"
 
   tasks:
+    # Runs before the clone: tailscaled with the default --accept-dns=yes
+    # rewrites /etc/resolv.conf to point only at MagicDNS (100.100.100.100),
+    # but this tailnet has no global/split resolver for non-ts.net names, so
+    # its "system default" fallback is whatever resolv.conf held when
+    # tailscaled first started - empty on a fresh boot before cloud-init
+    # populated eth0's nameservers. Net result: github.com stops resolving
+    # entirely. --accept-dns=false leaves resolv.conf alone (systemd-resolved
+    # -> the eth0 nameservers from the terraform `dns` block); nothing here
+    # reaches the VM over a *.ts.net name anyway, it's all the LAN IP.
+    - name: Register the VM on Tailscale
+      become: true # tailscale up needs root to configure the tailscale0 interface, unlike the clone task below
+      ansible.builtin.command: >
+        tailscale up
+        --authkey={{ tailscale_auth_key }}
+        --hostname={{ tailscale_hostname }}
+        --accept-dns=false
+      no_log: true # the auth key would otherwise be printed in task output/logs
+      changed_when: true
+
     - name: Clone or update repository from GIT_REPO_URL
       ansible.builtin.git:
         repo: "{{ git_repo_url }}"
@@ -53,15 +72,6 @@
         # writing back into bind-mounted paths as root, changing file
         # ownership on tracked files), not state worth preserving.
         force: true
-
-    - name: Register the VM on Tailscale
-      become: true # tailscale up needs root to configure the tailscale0 interface, unlike the clone task above
-      ansible.builtin.command: >
-        tailscale up
-        --authkey={{ tailscale_auth_key }}
-        --hostname={{ tailscale_hostname }}
-      no_log: true # the auth key would otherwise be printed in task output/logs
-      changed_when: true
 
     - name: Write production .env file
       # src, not content: - the secret text stays out of ansible's logged
