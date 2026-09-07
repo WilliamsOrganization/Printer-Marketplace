@@ -40,15 +40,16 @@
     tailscale_hostname: "{{ lookup('ansible.builtin.env', 'TF_VAR_vm_name') }}"
 
   tasks:
-    # Runs before the clone: tailscaled with the default --accept-dns=yes
-    # rewrites /etc/resolv.conf to point only at MagicDNS (100.100.100.100),
-    # but this tailnet has no global/split resolver for non-ts.net names, so
-    # its "system default" fallback is whatever resolv.conf held when
-    # tailscaled first started - empty on a fresh boot before cloud-init
-    # populated eth0's nameservers. Net result: github.com stops resolving
-    # entirely. --accept-dns=false leaves resolv.conf alone (systemd-resolved
-    # -> the eth0 nameservers from the terraform `dns` block); nothing here
-    # reaches the VM over a *.ts.net name anyway, it's all the LAN IP.
+    # Both of the next two tasks run before the clone so github.com resolves.
+    #
+    # tailscaled can't use the systemd-resolved integration on this image
+    # ("Access denied: dns-osconfig dump" in `tailscale dns status`), so with
+    # the default --accept-dns=yes it falls back to its "direct" manager and
+    # overwrites /etc/resolv.conf as a plain file pointing only at MagicDNS
+    # (100.100.100.100). This tailnet has no global resolver for non-ts.net
+    # names and tailscaled can't read the system's real ones either, so every
+    # public lookup then fails - and disabling it later doesn't restore the
+    # file, it has no saved original. --accept-dns=false stops it recurring.
     - name: Register the VM on Tailscale
       become: true # tailscale up needs root to configure the tailscale0 interface, unlike the clone task below
       ansible.builtin.command: >
@@ -58,6 +59,17 @@
         --accept-dns=false
       no_log: true # the auth key would otherwise be printed in task output/logs
       changed_when: true
+
+    # Undo any earlier clobbering: point /etc/resolv.conf back at the
+    # systemd-resolved stub (127.0.0.53), which forwards to the eth0
+    # nameservers set by the terraform `dns` block.
+    - name: Restore the systemd-resolved resolv.conf symlink
+      become: true
+      ansible.builtin.file:
+        src: /run/systemd/resolve/stub-resolv.conf
+        dest: /etc/resolv.conf
+        state: link
+        force: true
 
     - name: Clone or update repository from GIT_REPO_URL
       ansible.builtin.git:
