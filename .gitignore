@@ -89,3 +89,4 @@ deployment/terraform/.terraform/providers/registry.terraform.io/bpg/proxmox/0.98
 deployment/terraform/.terraform.lock.hcl
 deployment/terraform/terraform.tfstate
 deployment/terraform/terraform.tfstate.backup
+/.claude

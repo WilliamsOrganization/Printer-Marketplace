@@ -50,7 +50,6 @@ apiSession.interceptors.request.use(async (config) => {
 	const session = await getSession();
 	if (session?.backendToken) {
 		config.headers.Authorization = `Bearer ${session.backendToken}`;
-		console.log(`[api] ${config.method?.toUpperCase()} ${config.url} -> session token ${session.backendToken}`);
 	} else {
 		console.log(`[api] ${config.method?.toUpperCase()} ${config.url} -> no token available`);
 	}
