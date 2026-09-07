@@ -43,6 +43,7 @@ import {
 	WeightCategoryLabel,
 } from "@/lib/types";
 import api from "@/lib/api";
+import { uploadInventoryImages } from "@/lib/s3-upload";
 import { useDashboard } from "@/src/context/dashboard-context";
 import { NumericFormat } from "react-number-format";
 
@@ -107,41 +108,46 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 	// TODO: needs to support the ability to create multiple pricing tiers for the product. (expensive vs non expensive)
 	async function onSubmit(data: FormValues) {
 		let imageUrls = existingImageUrls;
+		let freshUploads: string[] = [];
+
+		// Images go straight from the browser to S3 on submit (presign ->
+		// PUT in order -> roll back the batch on any failure). Only once
+		// every upload succeeds do we send the URLs on to the item save.
 		if (data.image.length > 0) {
-			const multiFormData = new FormData();
-			data.image.forEach((file) => multiFormData.append("images", file));
-			const uploadRes = await api
-				.post<string[]>("/inventoryitem/images", multiFormData, {
-					headers: { "Content-Type": "multipart/form-data" },
-				})
-				.catch((err) => {
-					toast.error("Error Uploading Images: " + err.message);
-					return null;
-				});
-			if (!uploadRes) return;
-			imageUrls = uploadRes.data;
+			try {
+				freshUploads = await uploadInventoryImages(data.image);
+				imageUrls = freshUploads;
+			} catch (err) {
+				toast.error("Error uploading images: " + (err as Error).message);
+				return;
+			}
 		}
 
-		api
-			.post<InventoryItem>("/inventoryitem", {
+		try {
+			const res = await api.post<InventoryItem>("/inventoryitem", {
 				...(isEditing ? { id: item.id } : {}),
 				...data,
 				imageUrls,
 				image: undefined,
-			})
-			.then((res) => {
-				toast.success(isEditing ? "Inventory Item Updated" : "Inventory Item Created");
-				setInventory((prev) =>
-					isEditing
-						? prev.map((i) => (i.id === item.id ? res.data : i))
-						: [...prev, res.data],
-				);
-				setOpen(false);
-				form.reset();
-			})
-			.catch(() => {
-				toast.error(isEditing ? "Failed to update item" : "Inventory Item Not Created");
 			});
+			toast.success(isEditing ? "Inventory Item Updated" : "Inventory Item Created");
+			setInventory((prev) =>
+				isEditing
+					? prev.map((i) => (i.id === item.id ? res.data : i))
+					: [...prev, res.data],
+			);
+			setOpen(false);
+			form.reset();
+		} catch {
+			// The item never saved - don't leave the images we just
+			// uploaded for it orphaned in the bucket.
+			if (freshUploads.length > 0) {
+				await api
+					.post("/inventoryitem/images/delete", freshUploads)
+					.catch(() => undefined);
+			}
+			toast.error(isEditing ? "Failed to update item" : "Inventory Item Not Created");
+		}
 	}
 
 	return (
@@ -361,8 +367,18 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 					<DialogClose asChild>
 						<Button variant="outline">Cancel</Button>
 					</DialogClose>
-					<Button type="submit" form="inventory-item-form">
-						{isEditing ? "Save Changes" : "Create Item"}
+					<Button
+						type="submit"
+						form="inventory-item-form"
+						disabled={form.formState.isSubmitting}
+					>
+						{form.formState.isSubmitting
+							? isEditing
+								? "Saving…"
+								: "Creating…"
+							: isEditing
+								? "Save Changes"
+								: "Create Item"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

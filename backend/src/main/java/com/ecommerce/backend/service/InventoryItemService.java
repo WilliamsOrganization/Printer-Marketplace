@@ -3,6 +3,8 @@ package com.ecommerce.backend.service;
 import com.ecommerce.backend.dto.CreateCatalogRequest;
 import com.ecommerce.backend.dto.CreateCatalogResponse;
 import com.ecommerce.backend.dto.EditCatalogRequest;
+import com.ecommerce.backend.dto.PresignImageUploadRequest;
+import com.ecommerce.backend.dto.PresignedImageUpload;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.stripe.exception.StripeException;
@@ -207,5 +209,27 @@ public class InventoryItemService {
      */
     public List<String> uploadImages(List<MultipartFile> files) {
         return s3Service.uploadImages(files);
+    }
+
+    /**
+     * Signs presigned PUT URLs so the browser can upload product images
+     * directly to S3 instead of streaming them through this service.
+     *
+     * @param requests the files the client intends to upload
+     * @return a presigned upload slot per request, in order
+     */
+    public List<PresignedImageUpload> presignImageUploads(List<PresignImageUploadRequest> requests) {
+        return s3Service.presignUploads(requests);
+    }
+
+    /**
+     * Removes images the client uploaded directly to S3 - used to roll back
+     * a partially-completed multi-image upload when a later file in the
+     * batch fails.
+     *
+     * @param urls the publicUrls to delete
+     */
+    public void deleteUploadedImages(List<String> urls) {
+        s3Service.deleteObjects(urls);
     }
 }

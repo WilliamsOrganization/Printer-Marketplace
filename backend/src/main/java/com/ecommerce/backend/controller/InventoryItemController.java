@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ecommerce.backend.dto.PresignImageUploadRequest;
+import com.ecommerce.backend.dto.PresignedImageUpload;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.service.InventoryItemService;
 import com.ecommerce.backend.service.InventoryItemService.DeleteOutcome;
@@ -113,9 +115,10 @@ public class InventoryItemController {
 		};
 	}
 
-	// TODO: Consider making this a frontend-direct upload, not a backend-direct upload.
 	/**
-	 * Uploads images to S3 and returns the S3 URLs.
+	 * Legacy path: streams the image bytes through this service on their way
+	 * to S3. Kept for now; new clients should presign and upload directly
+	 * (see below) so large multi-image submits don't bottleneck here.
 	 *
 	 * @param files the images to upload
 	 * @return the S3 URLs
@@ -124,5 +127,32 @@ public class InventoryItemController {
 	@PreAuthorize("hasRole('ADMIN')")
 	public List<String> uploadImages(@RequestParam("images") List<MultipartFile> files) {
 		return inventoryItemService.uploadImages(files);
+	}
+
+	/**
+	 * Signs one short-lived S3 PUT URL per file so the browser uploads image
+	 * bytes straight to the bucket. The client then hands the resulting
+	 * public URLs to {@link #save} once every upload in the batch succeeds.
+	 *
+	 * @param requests the files the client intends to upload
+	 * @return a presigned upload slot per request, in order
+	 */
+	@PostMapping("/images/presign")
+	@PreAuthorize("hasRole('ADMIN')")
+	public List<PresignedImageUpload> presignImageUploads(@RequestBody List<PresignImageUploadRequest> requests) {
+		return inventoryItemService.presignImageUploads(requests);
+	}
+
+	/**
+	 * Rolls back objects the client already uploaded directly to S3 when a
+	 * later file in the same batch fails, so a half-finished submit doesn't
+	 * leave orphans in the bucket.
+	 *
+	 * @param urls the public URLs to delete
+	 */
+	@PostMapping("/images/delete")
+	@PreAuthorize("hasRole('ADMIN')")
+	public void deleteUploadedImages(@RequestBody List<String> urls) {
+		inventoryItemService.deleteUploadedImages(urls);
 	}
 }
