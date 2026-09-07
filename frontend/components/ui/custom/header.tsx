@@ -34,8 +34,10 @@ export function Header() {
 					{menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
 				</Button>
 
-				{/* Brand - takes remaining width, animated text truncates rather than pushing the row */}
-				<Link href="/" className="flex min-w-0 flex-1 items-center gap-2">
+				{/* Brand - flex-1 pushes the account/cart cluster right. The animated
+				    wordmark is decorative, so it's hidden on the narrowest screens
+				    (where it wouldn't fit) rather than truncated. */}
+				<Link href="/" className="flex flex-1 items-center gap-2">
 					<Image
 						src="/amys-logo-final.png"
 						alt="LittleBrick3DPrinting"
@@ -44,7 +46,7 @@ export function Header() {
 						priority
 						className="size-11 shrink-0 md:size-14"
 					/>
-					<span className="truncate font-serif text-base italic leading-none md:text-xl">
+					<span className="hidden shrink-0 font-serif text-lg italic leading-none whitespace-nowrap sm:inline md:text-xl">
 						<TypeIt
 							options={{
 								loop: true,
