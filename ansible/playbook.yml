@@ -112,6 +112,21 @@
     # whatever value the .env just landed with, before the stack comes up.
     # ------------------------------------------------------------------
 
+    - name: Remove any pre-existing Stripe CLI apt config
+      # A hand-run install left an entry keyed to /usr/share/keyrings/stripe.gpg;
+      # adding a second one for the same repo with a different key path makes
+      # apt refuse to read its whole sources list ("Conflicting values ...
+      # Signed-By"). Wipe it and lay down exactly one source, every run.
+      become: true
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/stripe.list
+        - /etc/apt/sources.list.d/stripe.sources
+        - /usr/share/keyrings/stripe.gpg
+      when: stripe_secret_key | length > 0
+
     - name: Ensure the apt keyrings directory exists
       become: true
       ansible.builtin.file:
@@ -126,14 +141,15 @@
         url: https://packages.stripe.dev/api/security/keypair/stripe-cli-gpg/public
         dest: /etc/apt/keyrings/stripe.asc
         mode: "0644"
+        force: true
       when: stripe_secret_key | length > 0
 
     - name: Add the Stripe CLI apt source
       become: true
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/stripe.asc] https://packages.stripe.dev/stripe-cli-debian-local stable main"
-        filename: stripe
-        state: present
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/stripe.list
+        mode: "0644"
+        content: "deb [signed-by=/etc/apt/keyrings/stripe.asc] https://packages.stripe.dev/stripe-cli-debian-local stable main\n"
       when: stripe_secret_key | length > 0
 
     - name: Install the Stripe CLI
