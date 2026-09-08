@@ -31,7 +31,7 @@ export function BrandMark({
 				priority
 				className="size-28"
 			/>
-			LittleBrick3DPrinting Inc.
+			Little Brick 3D Printing
 		</Link>
 	);
 }

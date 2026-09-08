@@ -9,7 +9,7 @@ export default function LoginPage() {
 			<div className="flex w-full max-w-sm flex-col gap-6">
 				<a href="/" className="flex items-center gap-2 self-center font-medium">
 					<Image src="/amys-logo-final.png" width={30} height={30} alt="LittleBrick3DPrinting logo" />
-					LittleBrick3DPrinting Inc.
+					Little Brick 3D Printing
 				</a>
 				<LoginForm />
 				<button
