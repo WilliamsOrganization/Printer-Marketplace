@@ -25,173 +25,179 @@ export default async function OrderStatus({ searchParams }) {
 			redirect('/');
 		});
 
-	if (session.status === "open") {
+	// "open" means checkout was never finished - nothing to show. A missing
+	// session (Stripe couldn't return it) is treated the same way.
+	if (!session || session.status === "open") {
 		return redirect("/");
 	}
 
-	if (session.status === "complete") {
-		const items = order?.items ?? [];
-		const shipping = order?.shipping;
-		const customerEmail = session.customerEmail;
+	// Anything else ("complete", or "expired" once Stripe ages the session
+	// out 24h after checkout) still maps to a real order in our DB, so
+	// render it - falling back to the order's own fields where the Stripe
+	// session no longer carries them.
+	const items = order?.items ?? [];
+	const shipping = order?.shipping;
+	const customerEmail = session.customerEmail || "your email";
+	const amountTotal = session.amountTotal ?? order?.total ?? 0;
+	const currency = session.currency ?? order?.currency ?? "";
 
-		const statusDisplay = shipping
-			? getShipmentStatusDisplay(shipping, customerEmail)
-			: {
-					eyebrow: "Order confirmed",
-					heading: "Thank you for your order.",
-					description: `A confirmation will be sent to ${customerEmail}.`,
-					addressLabel: null,
-					address: null,
-					markers: [],
-				};
+	const statusDisplay = shipping
+		? getShipmentStatusDisplay(shipping, customerEmail)
+		: {
+				eyebrow: "Order confirmed",
+				heading: "Thank you for your order.",
+				description: `A confirmation will be sent to ${customerEmail}.`,
+				addressLabel: null,
+				address: null,
+				markers: [],
+			};
 
-		return (
-			<div className="flex flex-col">
-				{(!shipping || shipping.status === "PENDING") && <OrderConfetti />}
-				<section className="min-h-[60vh] flex items-center justify-center px-6 py-20">
-					<div className="flex flex-col items-center text-center gap-8 w-full max-w-3xl">
-						<div className="size-16 rounded-full bg-muted flex items-center justify-center">
-							<PackageCheck className="size-7 text-muted-foreground" />
-						</div>
+	return (
+		<div className="flex flex-col">
+			{(!shipping || shipping.status === "PENDING") && <OrderConfetti />}
+			<section className="min-h-[60vh] flex items-center justify-center px-6 py-20">
+				<div className="flex flex-col items-center text-center gap-8 w-full max-w-3xl">
+					<div className="size-16 rounded-full bg-muted flex items-center justify-center">
+						<PackageCheck className="size-7 text-muted-foreground" />
+					</div>
 
-						<div className="flex flex-col gap-3 max-w-md">
-							<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground">
-								{statusDisplay.eyebrow}
-							</p>
-							<h1 className="text-4xl font-serif leading-snug">
-								{statusDisplay.heading}
-							</h1>
-							<p className="text-muted-foreground leading-relaxed">
-								{statusDisplay.description}
-							</p>
-						</div>
+					<div className="flex flex-col gap-3 max-w-md">
+						<p className="text-xs tracking-[0.25em] uppercase text-muted-foreground">
+							{statusDisplay.eyebrow}
+						</p>
+						<h1 className="text-4xl font-serif leading-snug">
+							{statusDisplay.heading}
+						</h1>
+						<p className="text-muted-foreground leading-relaxed">
+							{statusDisplay.description}
+						</p>
+					</div>
 
-						{(items.length > 0 || shipping) && (
-							<>
-								<Separator />
-								<div className="w-full flex flex-col md:flex-row gap-8">
-									{items.length > 0 && (
-										<div className="flex-1 flex flex-col gap-3">
-											<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground text-left">
-												Your items
-											</p>
-											<ul className="flex flex-col gap-3">
-												{items.map((orderItem) => {
-													const imageSrc =
-														orderItem.item?.imageUrls?.[0] ??
-														`/stock-${(orderItem.item?.id % 18) + 1}.jpg`;
-													return (
-														<li
-															key={orderItem.id}
-															className="flex items-center gap-3 rounded-xl border bg-card p-3"
-														>
-															{/* Thumbnail */}
-															<div className="relative size-16 rounded-lg overflow-hidden shrink-0 bg-muted">
-																<Image
-																	src={imageSrc}
-																	alt={orderItem.itemTitle}
-																	fill
-																	className="object-cover"
-																/>
-															</div>
+					{(items.length > 0 || shipping) && (
+						<>
+							<Separator />
+							<div className="w-full flex flex-col md:flex-row gap-8">
+								{items.length > 0 && (
+									<div className="flex-1 flex flex-col gap-3">
+										<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground text-left">
+											Your items
+										</p>
+										<ul className="flex flex-col gap-3">
+											{items.map((orderItem) => {
+												const imageSrc =
+													orderItem.item?.imageUrls?.[0] ??
+													`/stock-${(orderItem.item?.id % 18) + 1}.jpg`;
+												return (
+													<li
+														key={orderItem.id}
+														className="flex items-center gap-3 rounded-xl border bg-card p-3"
+													>
+														{/* Thumbnail */}
+														<div className="relative size-16 rounded-lg overflow-hidden shrink-0 bg-muted">
+															<Image
+																src={imageSrc}
+																alt={orderItem.itemTitle}
+																fill
+																className="object-cover"
+															/>
+														</div>
 
-															{/* Info */}
-															<div className="flex flex-col flex-1 min-w-0 gap-1">
-																<p className="font-serif leading-snug line-clamp-1 text-sm text-left">
-																	{orderItem.itemTitle}
+														{/* Info */}
+														<div className="flex flex-col flex-1 min-w-0 gap-1">
+															<p className="font-serif leading-snug line-clamp-1 text-sm text-left">
+																{orderItem.itemTitle}
+															</p>
+															<p className="text-xs text-muted-foreground text-left">
+																${(orderItem.unitPrice / 100).toFixed(2)} each
+															</p>
+															<div className="flex items-center justify-between mt-auto pt-1">
+																<p className="text-xs text-muted-foreground">
+																	Qty {orderItem.quantity}
 																</p>
-																<p className="text-xs text-muted-foreground text-left">
-																	${(orderItem.unitPrice / 100).toFixed(2)} each
+																<p className="text-sm font-semibold">
+																	$
+																	{(
+																		(orderItem.unitPrice * orderItem.quantity) /
+																		100
+																	).toFixed(2)}
 																</p>
-																<div className="flex items-center justify-between mt-auto pt-1">
-																	<p className="text-xs text-muted-foreground">
-																		Qty {orderItem.quantity}
-																	</p>
-																	<p className="text-sm font-semibold">
-																		$
-																		{(
-																			(orderItem.unitPrice * orderItem.quantity) /
-																			100
-																		).toFixed(2)}
-																	</p>
-																</div>
 															</div>
-														</li>
-													);
-												})}
-											</ul>
+														</div>
+													</li>
+												);
+											})}
+										</ul>
 
-											<div className="flex justify-between font-semibold text-sm pt-1 border-t">
-												<span>Total</span>
-												<span>
-													${(session.amountTotal / 100).toFixed(2)}{" "}
-													<span className="text-xs font-normal text-muted-foreground uppercase">
-														{session.currency}
-													</span>
+										<div className="flex justify-between font-semibold text-sm pt-1 border-t">
+											<span>Total</span>
+											<span>
+												${(amountTotal / 100).toFixed(2)}{" "}
+												<span className="text-xs font-normal text-muted-foreground uppercase">
+													{currency}
 												</span>
-											</div>
+											</span>
 										</div>
-									)}
+									</div>
+								)}
 
-									{shipping && (
-										<div className="flex-1 flex flex-col gap-3">
-											<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground text-left">
-												{statusDisplay.addressLabel}
+								{shipping && (
+									<div className="flex-1 flex flex-col gap-3">
+										<p className="text-xs tracking-[0.2em] uppercase text-muted-foreground text-left">
+											{statusDisplay.addressLabel}
+										</p>
+										<p className="text-sm text-left">
+											{statusDisplay.address.street1}
+											{statusDisplay.address.street2 ? ` ${statusDisplay.address.street2}` : ""}
+											<br />
+											{statusDisplay.address.city}, {statusDisplay.address.state}{" "}
+											{statusDisplay.address.zip}
+										</p>
+										{shipping.trackingNumber && (
+											<p className="text-xs text-muted-foreground text-left">
+												Tracking:{" "}
+												{shipping.trackingUrl ? (
+													<a
+														href={shipping.trackingUrl}
+														target="_blank"
+														rel="noreferrer"
+														className="underline underline-offset-2"
+													>
+														{shipping.trackingNumber}
+													</a>
+												) : (
+													shipping.trackingNumber
+												)}
 											</p>
-											<p className="text-sm text-left">
-												{statusDisplay.address.street1}
-												{statusDisplay.address.street2 ? ` ${statusDisplay.address.street2}` : ""}
-												<br />
-												{statusDisplay.address.city}, {statusDisplay.address.state}{" "}
-												{statusDisplay.address.zip}
-											</p>
-											{shipping.trackingNumber && (
-												<p className="text-xs text-muted-foreground text-left">
-													Tracking:{" "}
-													{shipping.trackingUrl ? (
-														<a
-															href={shipping.trackingUrl}
-															target="_blank"
-															rel="noreferrer"
-															className="underline underline-offset-2"
-														>
-															{shipping.trackingNumber}
-														</a>
-													) : (
-														shipping.trackingNumber
-													)}
-												</p>
-											)}
-											<ShipmentTrackingMap markers={statusDisplay.markers} />
-										</div>
-									)}
-								</div>
-							</>
-						)}
+										)}
+										<ShipmentTrackingMap markers={statusDisplay.markers} />
+									</div>
+								)}
+							</div>
+						</>
+					)}
 
-						<Separator className="w-16" />
+					<Separator className="w-16" />
 
-						<div className="flex flex-col sm:flex-row items-center gap-4">
-							<Button asChild>
-								<Link href="/">
-									Continue Shopping
-									<ArrowRight className="ml-2 size-4" />
+					<div className="flex flex-col sm:flex-row items-center gap-4">
+						<Button asChild>
+							<Link href="/">
+								Continue Shopping
+								<ArrowRight className="ml-2 size-4" />
+							</Link>
+						</Button>
+						<Button variant="outline" asChild>
+							<Link href="/orders">Return to orders</Link>
+						</Button>
+						{shipping?.status === "DELIVERED" && (
+							<Button variant="outline" asChild>
+								<Link href={`/order-status/return?session_id=${session_id}`}>
+									Start a return
 								</Link>
 							</Button>
-							<Button variant="outline" asChild>
-								<Link href="/orders">Return to orders</Link>
-							</Button>
-							{shipping?.status === "DELIVERED" && (
-								<Button variant="outline" asChild>
-									<Link href={`/order-status/return?session_id=${session_id}`}>
-										Start a return
-									</Link>
-								</Button>
-							)}
-						</div>
+						)}
 					</div>
-				</section>
-			</div>
-		);
-	}
+				</div>
+			</section>
+		</div>
+	);
 }
