@@ -39,6 +39,13 @@
     tailscale_auth_key: "{{ lookup('ansible.builtin.env', 'TAILSCALE_AUTH_KEY') }}"
     tailscale_hostname: "{{ lookup('ansible.builtin.env', 'TF_VAR_vm_name') }}"
 
+    # Same key the backend uses (STRIPE_SECRET_KEY) - passing it to the CLI
+    # explicitly pins `stripe listen` to that account. A bare `stripe login`
+    # can end up authed to a different account/sandbox, in which case real
+    # checkout events never reach the forwarder.
+    stripe_secret_key: "{{ lookup('ansible.builtin.env', 'STRIPE_SECRET_KEY') }}"
+    stripe_forward_to: "localhost:8080/stripe/webhook"
+
   tasks:
     # Both of the next two tasks run before the clone so github.com resolves.
     #
@@ -95,6 +102,65 @@
         dest: "{{ git_repo_dest }}/.env"
         mode: "0600"
 
+    # ------------------------------------------------------------------
+    # Stripe CLI webhook forwarder.
+    #
+    # This host has no dashboard-registered Stripe webhook endpoint, so a
+    # long-lived `stripe listen` (systemd unit, further down) forwards
+    # checkout events to the backend. Its signing secret has to match the
+    # backend's STRIPE_WEBHOOK_SECRET, so we resolve it here and overwrite
+    # whatever value the .env just landed with, before the stack comes up.
+    # ------------------------------------------------------------------
+
+    - name: Ensure the apt keyrings directory exists
+      become: true
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+      when: stripe_secret_key | length > 0
+
+    - name: Add the Stripe CLI signing key
+      become: true
+      ansible.builtin.get_url:
+        url: https://packages.stripe.dev/api/security/keypair/stripe-cli-gpg/public
+        dest: /etc/apt/keyrings/stripe.asc
+        mode: "0644"
+      when: stripe_secret_key | length > 0
+
+    - name: Add the Stripe CLI apt source
+      become: true
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/stripe.asc] https://packages.stripe.dev/stripe-cli-debian-local stable main"
+        filename: stripe
+        state: present
+      when: stripe_secret_key | length > 0
+
+    - name: Install the Stripe CLI
+      become: true
+      ansible.builtin.apt:
+        name: stripe
+        state: present
+        update_cache: true
+      when: stripe_secret_key | length > 0
+
+    - name: Resolve the webhook signing secret for this account
+      # --print-secret returns the same secret the running listener uses, so
+      # the backend can verify signatures. Tied to the api key we pass.
+      ansible.builtin.command: stripe listen --api-key {{ stripe_secret_key }} --print-secret
+      register: stripe_webhook_secret
+      changed_when: false
+      no_log: true
+      when: stripe_secret_key | length > 0
+
+    - name: Point the backend's .env at that webhook secret
+      ansible.builtin.lineinfile:
+        path: "{{ git_repo_dest }}/.env"
+        regexp: '^STRIPE_WEBHOOK_SECRET='
+        line: "STRIPE_WEBHOOK_SECRET={{ stripe_webhook_secret.stdout | trim }}"
+      no_log: true
+      when: stripe_secret_key | length > 0
+
     - name: Build the application stack
       # --no-cache: `docker compose up --build` alone was reusing a stale
       # RUN npm install layer across deploys despite package.json actually
@@ -112,6 +178,41 @@
         cmd: docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d
         chdir: "{{ git_repo_dest }}"
       changed_when: true
+
+    # Started after the stack is up so forwarded events don't hit a
+    # backend that isn't listening yet. Restart=always keeps it alive
+    # across crashes; it's re-'restarted' every deploy to pick up a
+    # rotated key.
+    - name: Install the stripe-listen systemd unit
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/stripe-listen.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Stripe CLI webhook forwarder
+          After=network-online.target docker.service
+          Wants=network-online.target
+
+          [Service]
+          Environment=STRIPE_API_KEY={{ stripe_secret_key }}
+          ExecStart=/usr/bin/stripe listen --forward-to {{ stripe_forward_to }}
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+      no_log: true # the api key is in the unit body
+      when: stripe_secret_key | length > 0
+
+    - name: Enable and (re)start stripe-listen
+      become: true
+      ansible.builtin.systemd:
+        name: stripe-listen
+        enabled: true
+        state: restarted
+        daemon_reload: true
+      when: stripe_secret_key | length > 0
 
     - name: Prune dangling images
       ansible.builtin.command: docker image prune -f
