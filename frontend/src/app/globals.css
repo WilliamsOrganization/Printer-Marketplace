@@ -133,6 +133,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    /* No rubber-band: you can't drag past the header/footer to reveal
+       empty space behind them. */
+    overscroll-behavior: none;
+  }
   body {
     @apply bg-background text-foreground;
   }
