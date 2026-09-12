@@ -11,7 +11,27 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import PreviewRoom from "./preview-room";
 
-
+// Hoisted to module scope — a fresh array/objects on every render would give
+// PreviewRoom's SphereBody a new `chunks` reference each time, forcing its
+// useMemo to redundantly re-merge the STL geometry and rebuild materials on
+// any unrelated re-render of this carousel (e.g. hover state elsewhere).
+const ALL_SPHERE_COLORS: StlChunk[] = [
+	{
+		url: "/sphere_thirds_stl/sphere_top_third.stl",
+		color: COLOR_VARIANTS.red,
+		position: [0, 0, 0],
+	},
+	{
+		url: "/sphere_thirds_stl/sphere_middle_third.stl",
+		color: COLOR_VARIANTS.green,
+		position: [0, 0, 0],
+	},
+	{
+		url: "/sphere_thirds_stl/sphere_bottom_third.stl",
+		color: COLOR_VARIANTS.blue,
+		position: [0, 0, 0],
+	}
+];
 
 export function ProductCarousel({
 	product,
@@ -22,29 +42,12 @@ export function ProductCarousel({
 	layoutId?: string;
 }) {
 	const [showPreview, setShowPreview] = useState(false);
-	const allSphereColors: StlChunk[] = [
-		{
-			url: "/sphere_thirds_stl/sphere_top_third.stl",
-			color: COLOR_VARIANTS.red,
-			position: [0, 0, 0],
-		},
-		{
-			url: "/sphere_thirds_stl/sphere_middle_third.stl",
-			color: COLOR_VARIANTS.green,
-			position: [0, 0, 0],
-		},
-		{
-			url: "/sphere_thirds_stl/sphere_bottom_third.stl",
-			color: COLOR_VARIANTS.blue,
-			position: [0, 0, 0],
-		}
-	]
 	const images = product.imageUrls?.length ? product.imageUrls : ["/stock-1.jpg"];
 
 	return (
 		<motion.div layoutId={layoutId} className="relative aspect-square w-full overflow-hidden rounded-2xl">
 			<AnimatePresence>
-				{showPreview && allSphereColors ? (
+				{showPreview && ALL_SPHERE_COLORS ? (
 					<motion.div
 						key="preview"
 						initial={{ opacity: 0 }}
@@ -53,7 +56,7 @@ export function ProductCarousel({
 						transition={{ duration: 0.3 }}
 						className="absolute inset-0"
 					>
-						<PreviewRoom chunks={allSphereColors} />
+						<PreviewRoom chunks={ALL_SPHERE_COLORS} />
 						<button
 							onClick={() => setShowPreview(false)}
 							className="absolute bottom-4 left-1/2 -translate-x-1/2 font-serif italic text-white text-sm bg-black/40 backdrop-blur-sm px-4 py-1.5 rounded"
