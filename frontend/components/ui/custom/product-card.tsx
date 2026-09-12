@@ -101,7 +101,7 @@ function ProductCard({
 						{/* Expanded card */}
 						<motion.div
 							layoutId={`card-${selected.id}`}
-							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-background rounded-2xl shadow-2xl overflow-hidden w-[1100px] max-w-[95vw] max-h-[90dvh] flex flex-col md:flex-row"
+							className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-background rounded-2xl shadow-2xl overflow-hidden w-[85vw] max-w-[95vw] max-h-[90dvh] flex flex-col md:flex-row"
 						>
 							{/* Close button */}
 							<Button

@@ -2,6 +2,28 @@ export interface AuthResponse {
 	sessionToken: string;
 	userId: number;
 }
+
+export type StlChunk = {
+  url: string;
+  color: string;
+  position: [number, number, number];
+}
+
+export const COLOR_VARIANTS: Record<string, string> = {
+  red: "#e63946",
+  green: "#2a9d8f",
+  blue: "#457b9d",
+  yellow: "#e9b456",
+  orange: "#f48024",
+  purple: "#a855f7",
+  pink: "#f66d9b",
+  gray: "#6e6e6e",
+  brown: "#9c8866",
+  cyan: "#5fb3b3",
+  magenta: "#d16d9e",
+  indigo: "#4f46e5",
+  violet: "#a946f6",
+};
 // Values must match InventoryItem.SizeCategory's Java constant names exactly
 // (Jackson serializes enums by .name()) - backend is the source of truth.
 export enum SizeCategory {
