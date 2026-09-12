@@ -13,7 +13,7 @@ import { StlChunk } from '@/lib/types';
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const REST_EPSILON = 0.001; // below this, treat velocity/spin as "at rest"
 
-const SPAWN_POSITION: [number, number, number] = [0, 1, 0];
+const SPAWN_POSITION: [number, number, number] = [0, 0, 0.3];
 const MOVE_SPEED = 0.576; // world units/sec, capped regardless of frame rate or key-repeat rate
 const MOVE_DAMPING = 8; // higher = snappier accel/decel toward the target velocity
 const CAMERA_DAMPING = 8; // same damping function/feel, reused for the orbit target
@@ -31,6 +31,8 @@ const TABLE_BOUNDS = { minX: -0.79, maxX: 0.83, minZ: -0.85, maxZ: 1.74, topY: -
 // floor_floor_0: x:[-6.69,3.15] y:-0.987 z:[-3.77,4.16]
 const FLOOR_Y = -0.987;
 const COLLIDER_THICKNESS = 0.03; // half-height of the flat table/floor slabs
+const TABLE_LIP_HALF_HEIGHT = 0.05; // low invisible rim so the ball can't roll straight off the table edge
+const TABLE_LIP_HALF_THICKNESS = 0.02;
 
 // The baked room's mesh went through simplification during compression,
 // which can shift a surface slightly from where it visually renders — fine
@@ -38,6 +40,13 @@ const COLLIDER_THICKNESS = 0.03; // half-height of the flat table/floor slabs
 // sink partway into the table before resting). Flat boxes have no curvature
 // to approximate, so hand-placing them from the real geometry's bounding
 // boxes gives accurate, stable landing surfaces instead.
+//
+// Per-item auto-generated trimesh colliders for every other object (walls,
+// chairs, shelves, etc.) were tried and reverted — one of them reintroduced
+// the same chaotic-jitter instability the table/floor fix was solving in the
+// first place, most likely the large "house" shell mesh. If that's worth
+// pursuing again, do it per-object (one at a time, verified) rather than
+// blanket-generating from everything at once.
 //
 // Memoized: takes no props, so it should never re-render after its initial
 // mount — without memo it would re-render every time a sibling's state
@@ -62,6 +71,25 @@ const Room = memo(function Room() {
         />
         {/* floor_floor_0: x:[-6.69,3.15] z:[-3.77,4.16] */}
         <CuboidCollider args={[4.92, COLLIDER_THICKNESS, 3.97]} position={[-1.77, FLOOR_Y - COLLIDER_THICKNESS, 0.2]} />
+
+        {/* Low invisible rim around the table's four edges, sitting on top of
+            the table surface, so the ball can't roll straight off it. */}
+        <CuboidCollider
+          args={[(TABLE_BOUNDS.maxX - TABLE_BOUNDS.minX) / 2, TABLE_LIP_HALF_HEIGHT, TABLE_LIP_HALF_THICKNESS]}
+          position={[(TABLE_BOUNDS.maxX + TABLE_BOUNDS.minX) / 2, TABLE_BOUNDS.topY + TABLE_LIP_HALF_HEIGHT, TABLE_BOUNDS.minZ]}
+        />
+        <CuboidCollider
+          args={[(TABLE_BOUNDS.maxX - TABLE_BOUNDS.minX) / 2, TABLE_LIP_HALF_HEIGHT, TABLE_LIP_HALF_THICKNESS]}
+          position={[(TABLE_BOUNDS.maxX + TABLE_BOUNDS.minX) / 2, TABLE_BOUNDS.topY + TABLE_LIP_HALF_HEIGHT, TABLE_BOUNDS.maxZ]}
+        />
+        <CuboidCollider
+          args={[TABLE_LIP_HALF_THICKNESS, TABLE_LIP_HALF_HEIGHT, (TABLE_BOUNDS.maxZ - TABLE_BOUNDS.minZ) / 2]}
+          position={[TABLE_BOUNDS.minX, TABLE_BOUNDS.topY + TABLE_LIP_HALF_HEIGHT, (TABLE_BOUNDS.maxZ + TABLE_BOUNDS.minZ) / 2]}
+        />
+        <CuboidCollider
+          args={[TABLE_LIP_HALF_THICKNESS, TABLE_LIP_HALF_HEIGHT, (TABLE_BOUNDS.maxZ - TABLE_BOUNDS.minZ) / 2]}
+          position={[TABLE_BOUNDS.maxX, TABLE_BOUNDS.topY + TABLE_LIP_HALF_HEIGHT, (TABLE_BOUNDS.maxZ + TABLE_BOUNDS.minZ) / 2]}
+        />
       </RigidBody>
     </>
   );
@@ -351,12 +379,12 @@ export default function PreviewRoom({ chunks }: { chunks: StlChunk[] }) {
   return (
     <div className="relative w-full h-full">
       <Canvas
-        camera={{ position: [-1, 1.2, -0.5], fov: 40 }}
+        camera={{ position: [-1, 0.2, -0.5], fov: 40 }}
         shadows
         onPointerDown={() => setInteracted(true)}
       >
         <ambientLight intensity={0.6} />
-        <directionalLight position={[0, 2, -5]} intensity={3} castShadow />
+        <directionalLight position={[0, 5, -5]} intensity={2}  />
         <Suspense fallback={null}>
           <Physics>
             <Room />
