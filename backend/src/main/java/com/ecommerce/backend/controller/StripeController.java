@@ -44,6 +44,9 @@ public class StripeController {
 	 * to initialize this endpoitn you need stripe-cli installed and listening to your local server. 
 	 *
 	 * stripe listen --forward-to localhost:8080/stripe/webhook
+     * BUG: this webhook needs to be exposed to the internet so the orders can process and return emails. 
+     * BUG: nginx needs to allow passthrough events from the actual stripe service. so port 8080 needs to be open to nginx on protected routes no matter what preferrably with route protections. 
+     * BUG: thats why your confirmation states are not sending or are exposed anywhere. you could just expose with the local ports for now since this is a testing environment
 	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */

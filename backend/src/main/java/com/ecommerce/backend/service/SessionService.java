@@ -76,10 +76,11 @@ public class SessionService {
 		});
 		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		session.setProviderAccountID(request.getProviderAccountID());
+		updateLastLogin(user);
 		return sessionRepository.save(session);
 	}
 	/**
-	 * Creates a new refreshed session token for a returning user
+	 * Creates a new refreshed session token for a returning user. do not call this if the request is not authenticated.
 	 *
 	 */
 	public Sessions refreshUserToken(Users user) {
@@ -88,10 +89,12 @@ public class SessionService {
 			return newSession;
 		});
 		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
+		updateLastLogin(user);
 		return sessionRepository.save(session);
+	}
 
-
-
-
+	private void updateLastLogin(Users user) {
+		user.setLastLogin(LocalDateTime.now());
+		userRepository.save(user);
 	}
 }

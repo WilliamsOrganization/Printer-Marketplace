@@ -41,6 +41,8 @@ public class Users {
 	private LocalDateTime updatedAt;
 	@Column(unique = true)
 	private String email;
+	@UpdateTimestamp
+	private LocalDateTime lastLogin;
 	// TODO: consider @Pattern for phone number format
 	private String phoneNumber; // completes to phone_number in the table
 	// TODO: consider @Size(min = ...) minimum length - confirm this stores a hash, not raw password

@@ -2,6 +2,7 @@ package com.ecommerce.backend.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -108,13 +109,16 @@ public class OrderService {
 	}
 
 	/**
-	 * Gets an order by its Stripe session id.
+	 * Looks up the order a Stripe checkout session belongs to. Empty when
+	 * there's no match - which is expected for webhook events fired against
+	 * a Stripe account or session this instance never created an order for,
+	 * so callers must handle it rather than let it 500 (Stripe retries 5xx).
 	 *
 	 * @param id the Stripe session id
-	 * @return the order, or null if not found
-	 */	
-	public Orders getOrderByStripeSessionId(String id) {
-		return orderRepository.findOrderByStripeSessionId(id).orElseThrow();
+	 * @return the order if this instance owns it
+	 */
+	public Optional<Orders> getOrderByStripeSessionId(String id) {
+		return orderRepository.findOrderByStripeSessionId(id);
 	}
 
 	/**
@@ -150,9 +154,14 @@ public class OrderService {
 	 * @return the updated order, or null if there was nothing to apply
 	 */
 	public void applyCompletedCheckout(Session session) {
-		Orders order = getOrderByStripeSessionId(session.getId());
-		if (order.getStatus() == Orders.Status.COMPLETED || order.getStatus() != Orders.Status.PENDING) {
-			log.info("Skipping completed order {}", order.getId());
+		Orders order = getOrderByStripeSessionId(session.getId()).orElse(null);
+		if (order == null) {
+			log.warn("checkout.session.completed for unknown session {} - no local order, acknowledging", session.getId());
+			return;
+		}
+		if (order.getStatus() != Orders.Status.PENDING) {
+			log.info("Skipping order {} - already {}", order.getId(), order.getStatus());
+			return;
 		}
 		if ("paid".equals(session.getPaymentStatus())) {
 			order.setStatus(Orders.Status.PAID);
@@ -169,6 +178,7 @@ public class OrderService {
 			order.setShippingCost(session.getShippingCost().getAmountTotal());
 		}
 
+		orderRepository.save(order);
 		log.info("Order Status Updated to {}", order.getStatus());
 		resendService.sendConfirmationEmail(user, order);
 		log.info("Email sent to this email: {}", user.getEmail());
@@ -181,8 +191,12 @@ public class OrderService {
 	 * @param stripeSessionId the expired Stripe checkout session's id
 	 */
 	public void applyExpiredCheckout(String stripeSessionId) {
-		Orders order = getOrderByStripeSessionId(stripeSessionId);
-		if (order.getStatus() == Orders.Status.EXPIRED || order.getStatus() != Orders.Status.PENDING) {
+		Orders order = getOrderByStripeSessionId(stripeSessionId).orElse(null);
+		if (order == null) {
+			log.warn("checkout.session.expired for unknown session {} - acknowledging", stripeSessionId);
+			return;
+		}
+		if (order.getStatus() != Orders.Status.PENDING) {
 			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
 			return;
 		}
@@ -201,7 +215,11 @@ public class OrderService {
 	 * @param stripeSessionId the failed Stripe checkout session's id
 	 */
 	public void applyFailedCheckout(String stripeSessionId) {
-		Orders order = getOrderByStripeSessionId(stripeSessionId);
+		Orders order = getOrderByStripeSessionId(stripeSessionId).orElse(null);
+		if (order == null) {
+			log.warn("checkout.session.async_payment_failed for unknown session {} - acknowledging", stripeSessionId);
+			return;
+		}
 		if (order.getStatus() != Orders.Status.COMPLETED) {
 			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
 			return;
@@ -219,7 +237,11 @@ public class OrderService {
 	 * @param stripeSessionId the successful Stripe checkout session's id
 	 */
 	public void applySuccessfulCheckout(Session session) {
-		Orders order = getOrderByStripeSessionId(session.getId());
+		Orders order = getOrderByStripeSessionId(session.getId()).orElse(null);
+		if (order == null) {
+			log.warn("checkout.session.async_payment_succeeded for unknown session {} - acknowledging", session.getId());
+			return;
+		}
 		String customerName = session.getCustomerDetails() != null ? session.getCustomerDetails().getName() : null;
 
 		if (order.getStatus() != Orders.Status.COMPLETED) {
