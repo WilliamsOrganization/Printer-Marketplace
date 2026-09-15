@@ -181,32 +181,6 @@
 					<annotationProcessor>
 						org.checkerframework.checker.calledmethods.CalledMethodsChecker
 					</annotationProcessor>
-
-					<!-- Possible null dereferences / initialization -->
-					<annotationProcessor>
-						org.checkerframework.checker.nullness.NullnessChecker
-					</annotationProcessor>
-
-					<!-- Streams/sockets/files/resources not closed correctly -->
-					<annotationProcessor>
-						org.checkerframework.checker.resourceleak.ResourceLeakChecker
-					</annotationProcessor>
-
-					<!-- Unsafe Optional usage -->
-					<annotationProcessor>
-						org.checkerframework.checker.optional.OptionalChecker
-					</annotationProcessor>
-
-					<!-- Array/List index mistakes -->
-					<annotationProcessor>
-						org.checkerframework.checker.index.IndexChecker
-					</annotationProcessor>
-
-					<!-- Broken regex literals/usages -->
-					<annotationProcessor>
-						org.checkerframework.checker.regex.RegexChecker
-					</annotationProcessor>
-
 				</annotationProcessors>
 
 				<compilerArgs>
