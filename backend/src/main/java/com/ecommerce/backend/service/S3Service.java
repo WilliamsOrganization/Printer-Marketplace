@@ -3,6 +3,9 @@ package com.ecommerce.backend.service;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -141,7 +144,13 @@ public class S3Service {
 	}
 
 	private String publicUrl(String key) {
-		return "https://" + bucket + ".s3.amazonaws.com/" + key;
+		// Encode each path segment so special characters (spaces, etc.) are
+		// percent-encoded. Slashes are re-inserted between segments.
+		String encoded = Arrays.stream(key.split("/"))
+				.map(seg -> URLEncoder.encode(seg, StandardCharsets.UTF_8).replace("+", "%20"))
+				.reduce((a, b) -> a + "/" + b)
+				.orElse(key);
+		return "https://" + bucket + ".s3.amazonaws.com/" + encoded;
 	}
 
 	/**
@@ -193,7 +202,12 @@ public class S3Service {
 	}
 
 	private String keyFromUrl(String url) {
-		String path = URI.create(url).getPath();
-		return path.startsWith("/") ? path.substring(1) : path;
+		// Handle URLs that may contain raw spaces or other non-ASCII chars
+		// by percent-encoding them before parsing as a URI.
+		String safe = url.replace(" ", "%20");
+		String path = URI.create(safe).getPath();
+		// Decode back so the key matches what S3 actually stores
+		String decoded = URLDecoder.decode(path, StandardCharsets.UTF_8);
+		return decoded.startsWith("/") ? decoded.substring(1) : decoded;
 	}
 }

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { ProductCarousel } from "./product-carousel";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FieldSelector } from "./field-selector";
 
 const MotionCard = motion(Card);
 
@@ -23,6 +24,23 @@ function ProductCard({
 	gridClassName?: string;
 }) {
 	const [selected, setSelected] = useState<InventoryItem | null>(null);
+	// Track chosen options per field: fieldId -> set of selected option ids
+	const [fieldSelections, setFieldSelections] = useState<Record<number, Set<number>>>({});
+	const [showPreview, setShowPreview] = useState(false);
+
+	// Reset selections when a different product is opened
+	useEffect(() => {
+		if (selected?.fields?.length) {
+			const initial: Record<number, Set<number>> = {};
+			for (const f of selected.fields) {
+				initial[f.id] = new Set();
+			}
+			setFieldSelections(initial);
+		} else {
+			setFieldSelections({});
+		}
+		setShowPreview(false);
+	}, [selected]);
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -116,7 +134,7 @@ function ProductCard({
 							{/* Left — Carousel. Stacks on top below md; capped height so the
 							    square image doesn't fill a phone screen (center-cropped). */}
 							<div className="w-full shrink-0 md:w-1/2 bg-muted self-stretch flex items-center justify-center overflow-hidden max-h-[38dvh] md:max-h-none">
-								<ProductCarousel product={selected} layoutId={`image-${selected.id}`} />
+								<ProductCarousel product={selected} layoutId={`image-${selected.id}`} fieldSelections={fieldSelections} showPreview={showPreview} onShowPreviewChange={setShowPreview} />
 							</div>
 
 							{/* Right — Product info. Title + price + CTA stay fixed;
@@ -144,7 +162,7 @@ function ProductCard({
 
 								<div className="shrink-0 w-full h-px bg-border mb-5" />
 
-								{/* Description — the only scrollable region */}
+								{/* Description + fields — scrollable region */}
 								<motion.div
 									initial={{ opacity: 0, y: 8 }}
 									animate={{ opacity: 1, y: 0 }}
@@ -154,6 +172,26 @@ function ProductCard({
 									<p className="text-sm text-muted-foreground leading-relaxed">
 										{selected.itemDescription}
 									</p>
+
+									{/* Field selectors */}
+									{selected.fields && selected.fields.length > 0 && (
+										<div className="mt-5 flex flex-col gap-5">
+											{selected.fields.map((field) => (
+												<FieldSelector
+													key={field.id}
+													field={field}
+													selected={fieldSelections[field.id] ?? new Set()}
+													onChange={(next) =>
+														setFieldSelections((prev) => ({
+															...prev,
+															[field.id]: next,
+														}))
+													}
+													onColorSelected={() => setShowPreview(true)}
+												/>
+											))}
+										</div>
+									)}
 								</motion.div>
 
 								{/* CTA */}

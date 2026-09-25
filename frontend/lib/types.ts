@@ -60,6 +60,59 @@ export const WeightCategoryLabel: Record<WeightCategory, string> = {
 	[WeightCategory.EXTRA_HEAVY]: "Extra Heavy (~2kg)",
 };
 
+// ── Inventory Item Field types ──────────────────────────────────────────
+// Mirrors the backend single-table inheritance hierarchy for
+// InventoryItemField / InventoryItemFieldOptions.
+
+export enum StlColor {
+	BLACK = "BLACK",
+	BLUE = "BLUE",
+	BROWN = "BROWN",
+	GREEN = "GREEN",
+	GREY = "GREY",
+	ORANGE = "ORANGE",
+	PINK = "PINK",
+	PURPLE = "PURPLE",
+	RED = "RED",
+	WHITE = "WHITE",
+	YELLOW = "YELLOW",
+}
+
+export const StlColorHex: Record<StlColor, string> = {
+	[StlColor.BLACK]: "#000000",
+	[StlColor.BLUE]: "#0000FF",
+	[StlColor.BROWN]: "#A52A2A",
+	[StlColor.GREEN]: "#008000",
+	[StlColor.GREY]: "#808080",
+	[StlColor.ORANGE]: "#FFA500",
+	[StlColor.PINK]: "#FFC0CB",
+	[StlColor.PURPLE]: "#800080",
+	[StlColor.RED]: "#FF0000",
+	[StlColor.WHITE]: "#FFFFFF",
+	[StlColor.YELLOW]: "#FFFF00",
+};
+
+export interface InventoryItemFieldOption {
+	id: number;
+	label: string;
+	price: number;
+}
+
+export interface InventoryItemFieldStlOption extends InventoryItemFieldOption {
+	selectedColor: StlColor;
+}
+
+export type FieldType = "checklist" | "radio_group" | "color_picker";
+
+export interface InventoryItemField {
+	id: number;
+	label: string;
+	description: string;
+	field_type: FieldType;
+	stlUrl?: string;
+	options: InventoryItemFieldOption[] | InventoryItemFieldStlOption[];
+}
+
 export interface InventoryItem {
 	id: number;
 	createdAt: string;
@@ -75,6 +128,7 @@ export interface InventoryItem {
 	isArchived: boolean;
 	sizeCategory: SizeCategory;
 	weightCategory: WeightCategory;
+	fields: InventoryItemField[] | null;
 }
 export interface CartItem {
 	id: number;

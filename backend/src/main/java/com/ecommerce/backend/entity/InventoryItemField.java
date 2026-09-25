@@ -1,16 +1,24 @@
 package com.ecommerce.backend.entity;
 
-import java.beans.Transient;
+import jakarta.persistence.Transient;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
@@ -22,8 +30,8 @@ import lombok.experimental.SuperBuilder;
 
 
 /**
- * An inventory item field contains a list of configurabel options that always contain a price.
- *
+ * An inventory item field contains a list of configurable options that always contain a price.
+ * Each field belongs to exactly one InventoryItem.
  */
 @Data
 @Entity
@@ -32,11 +40,26 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorColumn(name = "field_type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "field_type", visible = true)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = InventoryItemFieldRadioGroup.class, name = "radio_group"),
+    @JsonSubTypes.Type(value = InventoryItemFieldChecklist.class, name = "checklist"),
+    @JsonSubTypes.Type(value = InventoryItemFieldColorPicker.class, name = "color_picker"),
+})
 public abstract class InventoryItemField {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
+
+    @JsonProperty("field_type")
+    @Column(name = "field_type", insertable = false, updatable = false)
+    private String fieldType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inventory_item_id")
+    @JsonIgnore
+    private InventoryItem inventoryItem;
 
     @NonNull
     @NotNull
@@ -48,18 +71,14 @@ public abstract class InventoryItemField {
     @Column(nullable=false)
     private String description;
 
-    /**
-     * The price of the field in cents.
-     */
     @Transient
     public abstract List<? extends InventoryItemFieldOptions> getOptions();
 
-    /**
-     * The price of the field in cents.
-     */
     public long tallyOptionsPrice() {
-        return getOptions().stream()
-                .mapToLong(InventoryItemFieldOptions::getPrice)
-                .sum();
+        long total = 0;
+        for (InventoryItemFieldOptions opt : getOptions()) {
+            total += opt.getPrice();
+        }
+        return total;
     }
 }

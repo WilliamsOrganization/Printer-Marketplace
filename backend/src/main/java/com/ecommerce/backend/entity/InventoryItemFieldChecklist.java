@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -31,9 +32,9 @@ import lombok.experimental.SuperBuilder;
 public class InventoryItemFieldChecklist extends InventoryItemField {
 
     
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
-        name = "checklist_options",
+        name = "inventory_checklist_options",
         joinColumns = @JoinColumn(name = "checklist_id"),
         inverseJoinColumns = @JoinColumn(name = "options_id")
     )

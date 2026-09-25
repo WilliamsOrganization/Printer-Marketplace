@@ -1,5 +1,7 @@
 package com.ecommerce.backend.entity;
 
+import java.net.URL;
+
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotNull;
@@ -12,8 +14,8 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * InventoryItemFieldOptionsDropdown is a collection of options for a group of
- * InventoryItemFields, such as a size or weight category.
+ * OrderItemFieldOptionsDropdown is a collection of options for a group of
+ * OrderItemFields, such as a size or weight category.
  *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
@@ -23,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("stl_color")
-public class InventoryItemFieldOptionsStlColor extends InventoryItemFieldOptions {
+public class OrderItemFieldOptionsStlColor extends OrderItemFieldOptions {
 
     /**
      * These are the available colors for the STL file to print via (best guess as to what amy actually has)
@@ -70,4 +72,8 @@ public class InventoryItemFieldOptionsStlColor extends InventoryItemFieldOptions
     @NonNull
     @NotNull
     private Color selectedColor;
+
+    @NonNull
+    @NotNull
+    private URL stlUrl;
 }

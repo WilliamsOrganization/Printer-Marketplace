@@ -6,6 +6,7 @@ import com.ecommerce.backend.dto.EditCatalogRequest;
 import com.ecommerce.backend.dto.PresignImageUploadRequest;
 import com.ecommerce.backend.dto.PresignedImageUpload;
 import com.ecommerce.backend.entity.InventoryItem;
+import com.ecommerce.backend.entity.InventoryItemField;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Product;
@@ -102,6 +103,11 @@ public class InventoryItemService {
             stripeCatalogService.createProductAndPrice(createCatalogRequest);
         submitted.setStripePriceId(stripeResponse.stripePriceId());
         submitted.setStripeProductId(stripeResponse.stripeProductId());
+        if (submitted.getFields() != null) {
+            for (InventoryItemField field : submitted.getFields()) {
+                field.setInventoryItem(submitted);
+            }
+        }
         log.info("Stripe Item was created");
         return inventoryItemRepository.save(submitted);
     }
@@ -134,6 +140,14 @@ public class InventoryItemService {
         existing.setSizeCategory(submitted.getSizeCategory());
         existing.setWeightCategory(submitted.getWeightCategory());
         existing.setSale(submitted.getSale());
+
+        existing.getFields().clear();
+        if (submitted.getFields() != null) {
+            for (InventoryItemField field : submitted.getFields()) {
+                field.setInventoryItem(existing);
+                existing.getFields().add(field);
+            }
+        }
 
         return inventoryItemRepository.save(existing);
     }

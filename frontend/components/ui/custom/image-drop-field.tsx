@@ -1,8 +1,9 @@
 "use client"
 
-import { useRef, useCallback } from "react"
+import { useRef, useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
-import { Upload, X, FileImage } from "lucide-react"
+import heic2any from "heic2any"
+import { Upload, X, FileImage, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -12,7 +13,7 @@ import { ImageDropFieldProps } from "@/lib/types"
 export function ImageDropField({
   name,
   required = false,
-  accept = { "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] },
+  accept = { "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic", ".heif"] },
   maxFiles = 1,
   maxSize = 5 * 1024 * 1024,
   value = [],
@@ -21,17 +22,39 @@ export function ImageDropField({
   disabled = false,
 }: ImageDropFieldProps) {
   const hiddenInputRef = useRef<HTMLInputElement>(null)
+  const [converting, setConverting] = useState(false)
+
+  const isHeic = (file: File) =>
+    file.type === "image/heic" || file.type === "image/heif" ||
+    /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name)
+
+  const convertHeic = async (file: File): Promise<File> => {
+    const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 }) as Blob
+    const jpgName = file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg")
+    return new File([blob], jpgName, { type: "image/jpeg" })
+  }
 
   const onDrop = useCallback(
-    (incomingFiles: File[]) => {
+    async (incomingFiles: File[]) => {
+      setConverting(true)
+      const converted: File[] = []
+      for (const file of incomingFiles) {
+        if (isHeic(file)) {
+          converted.push(await convertHeic(file))
+        } else {
+          converted.push(file)
+        }
+      }
+      setConverting(false)
+
       if (hiddenInputRef.current) {
         const dataTransfer = new DataTransfer()
-        incomingFiles.forEach((file) => {
+        converted.forEach((file) => {
           dataTransfer.items.add(file)
         })
         hiddenInputRef.current.files = dataTransfer.files
       }
-      onChange?.(incomingFiles)
+      onChange?.(converted)
     },
     [onChange]
   )
@@ -100,7 +123,12 @@ export function ImageDropField({
 
           <div className="space-y-1">
             <p className="text-sm font-medium">
-              {isDragActive ? "Drop files here" : "Drag & drop files"}
+              {converting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Converting HEIC…
+                </span>
+              ) : isDragActive ? "Drop files here" : "Drag & drop files"}
             </p>
             <p className="text-xs text-muted-foreground">
               or click the button below

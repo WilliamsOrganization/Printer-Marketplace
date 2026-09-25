@@ -35,8 +35,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { ImageDropField } from "@/components/ui/custom/image-drop-field";
+import { InventoryItemFieldDialog } from "@/components/ui/custom/inventory-item-field-dialog";
 import {
 	InventoryItem,
+	InventoryItemField,
 	SizeCategory,
 	SizeCategoryLabel,
 	WeightCategory,
@@ -89,6 +91,8 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 	const open = controlledOpen ?? uncontrolledOpen;
 	const setOpen = onOpenChange ?? setUncontrolledOpen;
 	const [existingImageUrls, setExistingImageUrls] = useState<string[]>(item?.imageUrls ?? []);
+	type FieldWithFile = InventoryItemField & { _stlFile?: File };
+	const [fields, setFields] = useState<FieldWithFile[]>(item?.fields ?? []);
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
@@ -123,12 +127,35 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 			}
 		}
 
+		// Upload STL files for color picker fields, same presign flow.
+		const fieldsWithUrls: FieldWithFile[] = [...fields];
+		const stlUploads: string[] = [];
+		for (let i = 0; i < fieldsWithUrls.length; i++) {
+			const f = fieldsWithUrls[i];
+			if (f._stlFile) {
+				try {
+					const [url] = await uploadInventoryImages([f._stlFile]);
+					stlUploads.push(url);
+					fieldsWithUrls[i] = { ...f, stlUrl: url, _stlFile: undefined };
+				} catch (err) {
+					// Roll back any STL uploads already done + product images
+					const allUploaded = [...freshUploads, ...stlUploads];
+					if (allUploaded.length > 0) {
+						await api.post("/inventoryitem/images/delete", allUploaded).catch(() => undefined);
+					}
+					toast.error("Error uploading STL file: " + (err as Error).message);
+					return;
+				}
+			}
+		}
+
 		try {
 			const res = await api.post<InventoryItem>("/inventoryitem", {
 				...(isEditing ? { id: item.id } : {}),
 				...data,
 				imageUrls,
 				image: undefined,
+				fields: fieldsWithUrls.map(({ _stlFile, ...rest }) => rest),
 			});
 			toast.success(isEditing ? "Inventory Item Updated" : "Inventory Item Created");
 			setInventory((prev) =>
@@ -139,11 +166,11 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 			setOpen(false);
 			form.reset();
 		} catch {
-			// The item never saved - don't leave the images we just
-			// uploaded for it orphaned in the bucket.
-			if (freshUploads.length > 0) {
+			// The item never saved - don't leave uploads orphaned in S3.
+			const allUploaded = [...freshUploads, ...stlUploads];
+			if (allUploaded.length > 0) {
 				await api
-					.post("/inventoryitem/images/delete", freshUploads)
+					.post("/inventoryitem/images/delete", allUploaded)
 					.catch(() => undefined);
 			}
 			toast.error(isEditing ? "Failed to update item" : "Inventory Item Not Created");
@@ -153,7 +180,7 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			{trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-			<DialogContent className="sm:max-w-2xl" onKeyDown={(e) => e.stopPropagation()}>
+			<DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto" onKeyDown={(e) => e.stopPropagation()}>
 				<DialogHeader>
 					<DialogTitle>{isEditing ? "Edit Inventory Item" : "Create Inventory Item"}</DialogTitle>
 					<DialogDescription>
@@ -315,6 +342,43 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 										</Field>
 									)}
 								/>
+
+								{/* ── Custom Fields ──────────────────────────── */}
+								<Field>
+									<FieldLabel>Custom Fields</FieldLabel>
+									<FieldDescription>
+										Add configurable options customers can choose from.
+									</FieldDescription>
+									{fields.length > 0 && (
+										<div className="flex flex-col gap-2">
+											{fields.map((f, i) => (
+												<div
+													key={f.id ?? i}
+													className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+												>
+													<div>
+														<span className="font-medium">{f.label}</span>
+														<span className="ml-2 text-muted-foreground">
+															({f.options?.length ?? 0} option{f.options?.length === 1 ? "" : "s"})
+														</span>
+													</div>
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														onClick={() => setFields((prev) => prev.filter((_, j) => j !== i))}
+													>
+														Remove
+													</Button>
+												</div>
+											))}
+										</div>
+									)}
+									<InventoryItemFieldDialog
+										trigger={<Button type="button" variant="outline" size="sm">+ Create Field</Button>}
+										onFieldCreated={(field) => setFields((prev) => [...prev, field])}
+									/>
+								</Field>
 							</FieldGroup>
 						</div>
 						<FieldGroup>

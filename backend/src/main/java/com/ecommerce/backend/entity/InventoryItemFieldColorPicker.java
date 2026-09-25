@@ -1,9 +1,11 @@
 package com.ecommerce.backend.entity;
 
+import java.net.URL;
 import java.util.List;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -30,9 +32,13 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("color_picker")
 public class InventoryItemFieldColorPicker extends InventoryItemField {
 
-    @ManyToMany
+    @NonNull
+    @NotNull
+    private URL stlUrl;
+
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
-        name = "color_picker_options",
+        name = "inventory_color_picker_options",
         joinColumns = @JoinColumn(name = "color_picker_id"),
         inverseJoinColumns = @JoinColumn(name = "options_id")
     )

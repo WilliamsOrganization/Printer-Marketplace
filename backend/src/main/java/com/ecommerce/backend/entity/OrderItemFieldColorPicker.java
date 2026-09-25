@@ -4,7 +4,6 @@ import java.util.List;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -18,8 +17,8 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * InventoryItemFieldOptionsDropdown is a collection of options for a group of
- * InventoryItemFields, such as a size or weight category.
+ * OrderItemFieldOptionsDropdown is a collection of options for a group of
+ * OrderItemFields, such as a size or weight category.
  *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
@@ -28,20 +27,21 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@DiscriminatorValue("radio_group")
-public class InventoryItemFieldRadioGroup extends InventoryItemField {
-    @ManyToMany(cascade = CascadeType.ALL)
+@DiscriminatorValue("color_picker")
+public class OrderItemFieldColorPicker extends OrderItemField {
+
+    @ManyToMany
     @JoinTable(
-        name = "inventory_radio_group_options",
-        joinColumns = @JoinColumn(name = "radio_group_id"),
+        name = "order_color_picker_options",
+        joinColumns = @JoinColumn(name = "color_picker_id"),
         inverseJoinColumns = @JoinColumn(name = "options_id")
     )
-    @NonNull @NotNull private List<InventoryItemFieldOptionsDropdown> options;
+    @NonNull @NotNull private List<OrderItemFieldOptionsStlColor> options;
 
     /**
      * Returns the options for this field.
      */
-    public List<InventoryItemFieldOptionsDropdown> getOptions(){
+    public List<OrderItemFieldOptionsStlColor> getOptions(){
         return options;
     };
 

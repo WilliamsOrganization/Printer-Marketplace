@@ -1,16 +1,22 @@
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -107,7 +113,8 @@ public class InventoryItem {
     // TODO: consider @Pattern/@Size(min = 3, max = 3) to validate ISO currency
     // code
     @NonNull
-    @Column(nullable = false, columnDefinition = "varchar(3) default 'CAD'")
+    @Column(nullable = false, length = 3)
+    @ColumnDefault("'CAD'")
     private String currency;
 
     private Boolean sale;
@@ -116,7 +123,8 @@ public class InventoryItem {
     // which trips @NonNull the moment .build() is called without
     // .isArchived(...)
     @NonNull
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false)
+    @ColumnDefault("false")
     @Builder.Default
     private Boolean isArchived = false;
 
@@ -124,6 +132,9 @@ public class InventoryItem {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "varchar(255) default 'SIZE_4X5'")
     private SizeCategory sizeCategory;
+
+    @OneToMany(mappedBy = "inventoryItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<InventoryItemField> fields;
 
     @NonNull
     @Enumerated(EnumType.STRING)
