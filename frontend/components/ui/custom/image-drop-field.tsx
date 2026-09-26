@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
-import heic2any from "heic2any"
+const heic2any = typeof window !== "undefined" ? require("heic2any") : null
 import { Upload, X, FileImage, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
