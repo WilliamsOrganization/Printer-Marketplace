@@ -3,6 +3,7 @@ FROM node:22-alpine
 # deprecated upstream. Keep this version in sync with package.json's
 # "packageManager" field.
 RUN npm install -g pnpm@10.33.0
+ENV CI=true
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
