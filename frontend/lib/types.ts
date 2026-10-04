@@ -123,7 +123,6 @@ export interface InventoryItem {
 	currency: string;
 	imageUrls: string[];
 	stripeProductId: string;
-	stripePriceId: string;
 	sale: boolean;
 	isArchived: boolean;
 	sizeCategory: SizeCategory;

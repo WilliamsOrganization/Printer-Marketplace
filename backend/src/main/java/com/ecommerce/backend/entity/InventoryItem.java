@@ -100,9 +100,6 @@ public class InventoryItem {
     @NonNull @Column(nullable = false) private Long itemCost;
     @Column(columnDefinition = "text[]") private String[] imageUrls;
 
-    // TODO: needs to support multiple priceIds for tiered products eventually
-    @NonNull @Column(nullable = false) private String stripePriceId; // TODO: remove this field and go with inline pricing.
-
     @NonNull @Column(nullable = false) private String stripeProductId; // TODO: remove this field and go with inline pricing. 
 
     // TODO: consider @PositiveOrZero (stock can be 0, not negative)

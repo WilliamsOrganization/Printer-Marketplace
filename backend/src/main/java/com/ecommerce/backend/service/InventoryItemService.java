@@ -1,21 +1,23 @@
 package com.ecommerce.backend.service;
 
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.ecommerce.backend.dto.CreateCatalogRequest;
 import com.ecommerce.backend.dto.CreateCatalogResponse;
-import com.ecommerce.backend.dto.EditCatalogRequest;
 import com.ecommerce.backend.dto.PresignImageUploadRequest;
 import com.ecommerce.backend.dto.PresignedImageUpload;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.entity.InventoryItemField;
 import com.ecommerce.backend.repository.InventoryItemRepository;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Product;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+
 import software.amazon.awssdk.core.exception.SdkException;
 
 /**
@@ -101,7 +103,6 @@ public class InventoryItemService {
 
         CreateCatalogResponse stripeResponse =
             stripeCatalogService.createProductAndPrice(createCatalogRequest);
-        submitted.setStripePriceId(stripeResponse.stripePriceId());
         submitted.setStripeProductId(stripeResponse.stripeProductId());
         if (submitted.getFields() != null) {
             for (InventoryItemField field : submitted.getFields()) {
@@ -116,15 +117,6 @@ public class InventoryItemService {
         throws StripeException {
         InventoryItem existing =
             inventoryItemRepository.findById(submitted.getId()).orElseThrow();
-
-        EditCatalogRequest editReq = new EditCatalogRequest(
-            submitted.getItemTitle(), submitted.getItemDescription(),
-            submitted.getImageUrls() != null ? List.of(submitted.getImageUrls())
-                                             : null,
-            submitted.getItemCost(), submitted.getCurrency());
-        Product stripeProduct = stripeCatalogService.editProduct(
-            existing.getStripeProductId(), editReq);
-        existing.setStripePriceId(stripeProduct.getDefaultPrice());
 
         // Diff against existing's still-current imageUrls before it gets
         // overwritten below, so whatever the admin removed in this edit

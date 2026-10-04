@@ -1,7 +1,10 @@
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -35,8 +39,7 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "cartItem", uniqueConstraints = @UniqueConstraint(
-                              columnNames = {"cart_id", "item_id"}))
+@Table(name = "cartItem", uniqueConstraints = @UniqueConstraint( columnNames = {"cart_id", "item_id"}))
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -63,6 +66,13 @@ public class CartItem {
     @JoinColumn(name = "item_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private InventoryItem item;
+
+    
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "cart_item_id")
+    @Builder.Default
+    @ToString.Exclude
+    private List<OrderItemField> orderItemFields = new ArrayList<>();
 
     // TODO: consider @Positive (jakarta.validation) - can't add zero/negative
     // quantity to a cart

@@ -5,7 +5,6 @@ package com.ecommerce.backend.dto;
  */
 public record CreateCatalogResponse (
 	String stripeProductId,
-	String stripePriceId,
 	String name,
 	Long unitAmount,
 	String currency

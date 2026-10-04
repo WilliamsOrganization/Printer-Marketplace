@@ -1,20 +1,12 @@
 package com.ecommerce.backend.service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import com.ecommerce.backend.dto.CreateCatalogRequest;
 import com.ecommerce.backend.dto.CreateCatalogResponse;
 import com.ecommerce.backend.dto.EditCatalogRequest;
 import com.ecommerce.backend.dto.ShippingQuote;
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
-import com.ecommerce.backend.entity.InventoryItem;
+import com.ecommerce.backend.entity.OrderItemField;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.stripe.exception.StripeException;
@@ -29,10 +21,16 @@ import com.stripe.param.ProductListParams;
 import com.stripe.param.ProductUpdateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.checkout.SessionCreateParams.LineItem;
+import com.stripe.param.checkout.SessionCreateParams.LineItem.PriceData;
 import com.stripe.param.checkout.SessionCreateParams.ShippingOption.ShippingRateData;
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 /**
  * Manages Stripe product/price catalog entries and builds checkout sessions
@@ -56,19 +54,30 @@ public class StripeCatalogService {
 
 	@Value("${frontend.url}")
 	private String FRONTEND_URL;
+
 	/**
 	 * This method is used to map the cart items to line items.
-	 * 
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	public static List<LineItem> mapCartItemstoLineItems(Cart cart){
+	public static List<LineItem> mapCartItemstoLineItems(Cart cart) {
 		List<LineItem> lineItems = new ArrayList<>();
 		List<CartItem> cartItems = cart.getItems();
 		for (CartItem cartItem : cartItems) {
 			Long quantity = Long.valueOf(cartItem.getQuantity());
-			InventoryItem item = cartItem.getItem();
+			Long customizationsCost = cartItem.getOrderItemFields()
+					.stream()
+					.mapToLong(OrderItemField::tallyOptionsPrice)
+					.sum();
+
 			LineItem lineItem = LineItem.builder()
-					.setPrice(item.getStripePriceId())
+					.setPriceData(
+							PriceData.builder()
+									.setCurrency("CAD")
+									.setUnitAmount(cartItem.getItem().getItemCost() +
+											customizationsCost)
+									.setProduct(cartItem.getItem().getStripeProductId())
+									.build())
 					.setQuantity(quantity)
 					.build();
 			lineItems.add(lineItem);
@@ -93,8 +102,7 @@ public class StripeCatalogService {
 	}
 
 	/**
-	 * Creates a new Product item with a single Price. 
-	 * TODO: return price info for call site to be aware of
+	 * Creates a new Product item with a single Price.
 	 *
 	 * @param request the request
 	 * @return the response
@@ -119,9 +127,9 @@ public class StripeCatalogService {
 
 		Price price = Price.create(priceCreateParams);
 
-		return new CreateCatalogResponse(
-				product.getId(), price.getId(), product.getName(),
-				price.getUnitAmount(), price.getCurrency());
+		return new CreateCatalogResponse(product.getId(), product.getName(),
+				price.getUnitAmount(),
+				price.getCurrency());
 	}
 
 	/**
@@ -219,7 +227,7 @@ public class StripeCatalogService {
 	/**
 	 * creates a checkout session with the selected shipping rate attached to
 	 * it.
-	 * 
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public String createCheckoutSession(String email, String selectedShippingID)
@@ -233,27 +241,31 @@ public class StripeCatalogService {
 
 		SessionCreateParams params = SessionCreateParams.builder()
 				.setSuccessUrl(FRONTEND_URL + "/" + SUCCESS_URL)
-				.setCancelUrl( FRONTEND_URL )
+				.setCancelUrl(FRONTEND_URL)
 				.setCustomerEmail(email)
 				.addAllLineItem(lineItems)
-				.addShippingOption(SessionCreateParams.ShippingOption.builder()
-						.setShippingRateData(ShippingRateData.builder()
-								.setDisplayName(quote.name())
-								.setType(ShippingRateData.Type.FIXED_AMOUNT)
-								.setFixedAmount(ShippingRateData.FixedAmount.builder()
-										.setAmount(quote.amountInCents())
-										.setCurrency(quote.currency())
-										.build())
+				.addShippingOption(
+						SessionCreateParams.ShippingOption.builder()
+								.setShippingRateData(
+										ShippingRateData.builder()
+												.setDisplayName(quote.name())
+												.setType(ShippingRateData.Type.FIXED_AMOUNT)
+												.setFixedAmount(
+														ShippingRateData.FixedAmount.builder()
+																.setAmount(quote.amountInCents())
+																.setCurrency(quote.currency())
+																.build())
+												.build())
 								.build())
-						.build())
 				.setMode(SessionCreateParams.Mode.PAYMENT)
 				.build();
 		Session session = Session.create(params, null);
-		orderService.createPendingOrder(session, shipment, quote, cart, selectedShippingID);
+		orderService.createPendingOrder(session, shipment, quote, cart,
+				selectedShippingID);
 
 		return session.getUrl();
 	}
-	
+
 	/**
 	 * This is intended for managing seed data.
 	 *
@@ -264,7 +276,7 @@ public class StripeCatalogService {
 		ProductListParams productListParams = ProductListParams.builder().setLimit(PAGE_SIZE).build();
 		return Product.list(productListParams);
 	}
-	
+
 	/**
 	 * This is intended for managing seed data.
 	 *
@@ -277,16 +289,16 @@ public class StripeCatalogService {
 
 	/**
 	 * This is the handler for complted checkout events.
-	 * 
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleCompletedCheckoutEvent(Session session) {
 		orderService.applyCompletedCheckout(session);
 	}
-	
+
 	/**
 	 * This is the handler for expired checkout events.
-	 * 
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleExpiredCheckoutEvent(Session session) {
@@ -295,7 +307,7 @@ public class StripeCatalogService {
 
 	/**
 	 * This is the handler for failed checkout events.
-	 * 
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleFailedCheckoutEvent(Session session) {
@@ -303,14 +315,14 @@ public class StripeCatalogService {
 	}
 
 	/**
-	 * This is the handler for successful checkout events. creates a shipping label and genereates the pdf and adds it to the shipping table url for the dashboard view
-	 * 
+	 * This is the handler for successful checkout events. creates a shipping
+	 * label and genereates the pdf and adds it to the shipping table url for
+	 * the dashboard view
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	public void handleSuccessCheckoutEvent(Session deserializeSession) {
 		orderService.applySuccessfulCheckout(deserializeSession);
-		// TODO: generate shipping label
-		// update the shipping table with metadata and url for the pdf.
 		// FIX: Shitty blob storage implementation is shitty. fix it.
 	}
 }
