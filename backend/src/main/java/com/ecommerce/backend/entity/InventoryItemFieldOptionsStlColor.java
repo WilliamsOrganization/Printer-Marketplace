@@ -24,7 +24,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("stl_color")
 public class InventoryItemFieldOptionsStlColor extends InventoryItemFieldOptions {
-
     /**
      * These are the available colors for the STL file to print via (best guess as to what amy actually has)
      * 

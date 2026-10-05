@@ -1,7 +1,9 @@
 package com.ecommerce.backend.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -30,7 +32,7 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("color_picker")
 public class OrderItemFieldColorPicker extends OrderItemField {
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "order_color_picker_options",
         joinColumns = @JoinColumn(name = "color_picker_id"),
@@ -45,4 +47,18 @@ public class OrderItemFieldColorPicker extends OrderItemField {
         return options;
     };
 
+    /**
+     * Copies a cart color picker and its selected color into the order.
+     */
+    public static OrderItemFieldColorPicker from(CartItemFieldColorPicker source) {
+        List<OrderItemFieldOptionsStlColor> options = new ArrayList<>();
+        for (CartItemFieldOptionsStlColor option : source.getOptions()) {
+            options.add(OrderItemFieldOptionsStlColor.from(option));
+        }
+        return builder()
+                .label(source.getLabel())
+                .description(source.getDescription())
+                .options(options)
+                .build();
+    }
 }

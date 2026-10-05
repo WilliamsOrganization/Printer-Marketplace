@@ -97,7 +97,7 @@ function ProductCard({
 									</p>
 								</div>
 							</div>
-							<AddToCartButton item={product} quantity={1} />
+							<AddToCartButton item={product} quantity={1} onCustomize={() => setSelected(product)} />
 						</CardFooter>
 					</MotionCard>
 				))}
@@ -196,7 +196,7 @@ function ProductCard({
 
 								{/* CTA */}
 								<div className="shrink-0 mt-6 pt-4 border-t">
-									<AddToCartButton item={selected} quantity={1} />
+									<AddToCartButton item={selected} quantity={1} fieldSelections={fieldSelections} />
 								</div>
 							</div>
 						</motion.div>

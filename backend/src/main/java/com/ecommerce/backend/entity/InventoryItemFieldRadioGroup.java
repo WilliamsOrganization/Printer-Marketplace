@@ -2,13 +2,13 @@ package com.ecommerce.backend.entity;
 
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,12 +30,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("radio_group")
 public class InventoryItemFieldRadioGroup extends InventoryItemField {
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = "inventory_radio_group_options",
-        joinColumns = @JoinColumn(name = "radio_group_id"),
-        inverseJoinColumns = @JoinColumn(name = "options_id")
-    )
+
+    @OneToMany(mappedBy = "inventoryItemField", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     @NonNull @NotNull private List<InventoryItemFieldOptionsDropdown> options;
 
     /**
@@ -44,5 +41,4 @@ public class InventoryItemFieldRadioGroup extends InventoryItemField {
     public List<InventoryItemFieldOptionsDropdown> getOptions(){
         return options;
     };
-
 }

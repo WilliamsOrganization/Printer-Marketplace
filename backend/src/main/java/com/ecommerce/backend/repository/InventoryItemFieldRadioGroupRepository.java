@@ -5,8 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import com.ecommerce.backend.entity.InventoryItemFieldRadioGroup;
 
+/**
+ * Data access layer for InventoryItemFieldRadioGroup entities.
+ */
 @Repository
 public interface InventoryItemFieldRadioGroupRepository extends JpaRepository<InventoryItemFieldRadioGroup, Long> {
-
-
 }

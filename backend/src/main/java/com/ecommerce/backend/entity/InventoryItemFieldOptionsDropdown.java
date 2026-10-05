@@ -21,4 +21,5 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("dropdown")
-public class InventoryItemFieldOptionsDropdown extends InventoryItemFieldOptions {}
+public class InventoryItemFieldOptionsDropdown extends InventoryItemFieldOptions {
+}

@@ -21,6 +21,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { CartItem } from "@/lib/types";
+import { describeConfiguration } from "@/lib/field-selections";
 import { useCart } from "@/src/context/cart-context";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -33,7 +34,7 @@ export function CartSidebarDrawer() {
 
 	const itemCount = cart?.items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 	const subtotal =
-		cart?.items?.reduce((sum, i) => sum + i.quantity * i.item.itemCost, 0) ?? 0;
+		cart?.items?.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0) ?? 0;
 
 	const handleQuantityChange = (id: number, qty: number) => {
 		if (qty < 1) return;
@@ -189,9 +190,16 @@ function CartItemCard({
 			{/* Info */}
 			<div className="flex flex-col flex-1 min-w-0 gap-1">
 				<div className="flex items-start justify-between gap-1">
-					<p className="font-serif leading-snug line-clamp-1 text-sm">
-						{item.itemTitle}
-					</p>
+					<div className="min-w-0">
+						<p className="font-serif leading-snug line-clamp-1 text-sm">
+							{item.itemTitle}
+						</p>
+						{describeConfiguration(cartItem.cartItemFields) && (
+							<p className="text-xs text-muted-foreground line-clamp-2">
+								{describeConfiguration(cartItem.cartItemFields)}
+							</p>
+						)}
+					</div>
 					<Button
 						size="icon"
 						variant="ghost"
@@ -229,7 +237,7 @@ function CartItemCard({
 					</div>
 
 					<p className="text-sm font-semibold">
-						${(quantity * item.itemCost).toFixed(2)}
+						${(quantity * cartItem.unitPrice).toFixed(2)}
 					</p>
 				</div>
 			</div>

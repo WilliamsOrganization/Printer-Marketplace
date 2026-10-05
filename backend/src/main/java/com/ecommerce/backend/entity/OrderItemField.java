@@ -1,6 +1,5 @@
 package com.ecommerce.backend.entity;
 
-import java.beans.Transient;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -12,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.AccessLevel;
@@ -49,17 +49,29 @@ public abstract class OrderItemField {
     private String description;
 
     /**
-     * The price of the field in cents.
+     * Returns the selected options for this field.
      */
     @Transient
     public abstract List<? extends OrderItemFieldOptions> getOptions();
 
     /**
-     * The price of the field in cents.
+     * The total price of the selected options in dollars.
      */
     public long tallyOptionsPrice() {
         return getOptions().stream()
                 .mapToLong(OrderItemFieldOptions::getPrice)
                 .sum();
+    }
+
+    /**
+     * Copies a cart field into the order as the matching order field type.
+     */
+    public static OrderItemField from(CartItemField source) {
+        return switch (source) {
+            case CartItemFieldRadioGroup radioGroup -> OrderItemFieldRadioGroup.from(radioGroup);
+            case CartItemFieldChecklist checklist -> OrderItemFieldChecklist.from(checklist);
+            case CartItemFieldColorPicker colorPicker -> OrderItemFieldColorPicker.from(colorPicker);
+            default -> throw new IllegalArgumentException("Unknown cart field type: " + source.getClass().getSimpleName());
+        };
     }
 }

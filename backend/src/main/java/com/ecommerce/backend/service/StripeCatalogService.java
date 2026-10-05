@@ -6,7 +6,7 @@ import com.ecommerce.backend.dto.EditCatalogRequest;
 import com.ecommerce.backend.dto.ShippingQuote;
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
-import com.ecommerce.backend.entity.OrderItemField;
+import com.ecommerce.backend.entity.InventoryItem;
 import com.goshippo.shippo_sdk.models.components.Shipment;
 import com.goshippo.shippo_sdk.models.operations.GetRateResponse;
 import com.stripe.exception.StripeException;
@@ -65,24 +65,43 @@ public class StripeCatalogService {
 		List<CartItem> cartItems = cart.getItems();
 		for (CartItem cartItem : cartItems) {
 			Long quantity = Long.valueOf(cartItem.getQuantity());
-			Long customizationsCost = cartItem.getOrderItemFields()
-					.stream()
-					.mapToLong(OrderItemField::tallyOptionsPrice)
-					.sum();
+
+			PriceData.Builder priceData = PriceData.builder()
+					.setCurrency("CAD")
+					.setUnitAmount(cartItem.getUnitPrice() * DOLLAR);
+			String configuration = cartItem.describeConfiguration();
+			if (configuration.isEmpty()) {
+				priceData.setProduct(cartItem.getItem().getStripeProductId());
+			} else {
+				// Stripe only shows a linked product's own name and description, so
+				// configured lines describe themselves to show the chosen options.
+				priceData.setProductData(toConfiguredProductData(cartItem, configuration));
+			}
 
 			LineItem lineItem = LineItem.builder()
-					.setPriceData(
-							PriceData.builder()
-									.setCurrency("CAD")
-									.setUnitAmount(cartItem.getItem().getItemCost() +
-											customizationsCost)
-									.setProduct(cartItem.getItem().getStripeProductId())
-									.build())
+					.setPriceData(priceData.build())
 					.setQuantity(quantity)
 					.build();
 			lineItems.add(lineItem);
 		}
 		return lineItems;
+	}
+
+	/**
+	 * Builds an inline Stripe product for a configured cart line: the item's
+	 * title and first image, with the selected options as the description.
+	 */
+	private static PriceData.ProductData toConfiguredProductData(CartItem cartItem, String configuration) {
+		InventoryItem item = cartItem.getItem();
+		PriceData.ProductData.Builder productData = PriceData.ProductData.builder()
+				.setName(item.getItemTitle())
+				.setDescription(configuration)
+				.putMetadata("stripeProductId", item.getStripeProductId())
+				.putMetadata("configurationKey", cartItem.getConfigurationKey());
+		if (item.getImageUrls() != null && item.getImageUrls().length > 0) {
+			productData.addImage(item.getImageUrls()[0]);
+		}
+		return productData.build();
 	}
 
 	/**

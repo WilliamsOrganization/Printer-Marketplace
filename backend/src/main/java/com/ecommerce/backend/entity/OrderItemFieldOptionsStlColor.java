@@ -27,53 +27,23 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("stl_color")
 public class OrderItemFieldOptionsStlColor extends OrderItemFieldOptions {
 
-    /**
-     * These are the available colors for the STL file to print via (best guess as to what amy actually has)
-     * 
-     */
-    public enum Color {
-        BLACK("Black", "#000000"),
-        BLUE("Blue", "#0000FF"),
-        BROWN("Brown", "#A52A2A"),
-        GREEN("Green", "#008000"),
-        GREY("Grey", "#808080"),
-        ORANGE("Orange", "#FFA500"),
-        PINK("Pink", "#FFC0CB"),
-        PURPLE("Purple", "#800080"),
-        RED("Red", "#FF0000"),
-        WHITE("White", "#FFFFFF"),
-        YELLOW("Yellow", "#FFFF00");
-
-        private final String name;
-        private final String hex;
-
-        Color(String name, String hex) {
-            this.name = name;
-            this.hex = hex;
-        }
-
-        /**
-         * 
-         * @return the name of the color
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * 
-         * @return the hex value of the color
-         */
-        public String getHex() {
-            return hex;
-        }
-    }
-
     @NonNull
     @NotNull
-    private Color selectedColor;
+    private InventoryItemFieldOptionsStlColor.Color selectedColor;
 
     @NonNull
     @NotNull
     private URL stlUrl;
+
+    /**
+     * Copies a cart color option into the order, including the STL file and color to print.
+     */
+    public static OrderItemFieldOptionsStlColor from(CartItemFieldOptionsStlColor source) {
+        return builder()
+                .label(source.getLabel())
+                .price(source.getPrice())
+                .selectedColor(source.getSelectedColor())
+                .stlUrl(source.getStlUrl())
+                .build();
+    }
 }

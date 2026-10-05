@@ -9,8 +9,10 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.backend.dto.ShippingQuote;
 import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
+import com.ecommerce.backend.entity.CartItemField;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.entity.OrderItem;
+import com.ecommerce.backend.entity.OrderItemField;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.ShippingAddress;
@@ -69,14 +71,22 @@ public class OrderService {
 		List<OrderItem> orderItems = new ArrayList<>();
 		for (CartItem cartItem : cart.getItems()) {
 			InventoryItem item = cartItem.getItem();
-			Long unitPrice = item.getItemCost() * DOLLAR;
+			Long unitPrice = cartItem.getUnitPrice() * DOLLAR;
 			subtotal += unitPrice * cartItem.getQuantity();
+
+			List<OrderItemField> orderItemFields = new ArrayList<>();
+			for (CartItemField cartItemField : cartItem.getCartItemFields()) {
+				orderItemFields.add(OrderItemField.from(cartItemField));
+			}
+
 			orderItems.add(OrderItem.builder()
 					.orders(order)
 					.item(item)
 					.quantity(cartItem.getQuantity())
 					.itemTitle(item.getItemTitle())
 					.unitPrice(unitPrice)
+					.configurationKey(cartItem.getConfigurationKey())
+					.orderItemFields(orderItemFields)
 					.build());
 		}
 

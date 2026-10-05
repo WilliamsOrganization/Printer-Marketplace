@@ -8,6 +8,7 @@ import { ArrowRight, PackageCheck } from "lucide-react";
 import { OrderConfetti } from "@/components/ui/custom/order-confetti";
 import { ShipmentTrackingMap } from "@/components/ui/custom/shipment-tracking-map";
 import { getShipmentStatusDisplay } from "@/lib/shipment-status";
+import { describeConfiguration } from "@/lib/field-selections";
 
 export default async function OrderStatus({ searchParams }) {
 	const { session_id } = await searchParams;
@@ -107,6 +108,11 @@ export default async function OrderStatus({ searchParams }) {
 															<p className="font-serif leading-snug line-clamp-1 text-sm text-left">
 																{orderItem.itemTitle}
 															</p>
+															{describeConfiguration(orderItem.orderItemFields) && (
+																<p className="text-xs text-left">
+																	{describeConfiguration(orderItem.orderItemFields)}
+																</p>
+															)}
 															<p className="text-xs text-muted-foreground text-left">
 																${(orderItem.unitPrice / 100).toFixed(2)} each
 															</p>

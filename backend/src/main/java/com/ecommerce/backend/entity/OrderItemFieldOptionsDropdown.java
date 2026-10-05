@@ -21,4 +21,15 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("dropdown")
-public class OrderItemFieldOptionsDropdown extends OrderItemFieldOptions {}
+public class OrderItemFieldOptionsDropdown extends OrderItemFieldOptions {
+
+    /**
+     * Copies a cart option into the order, keeping the price the customer was charged.
+     */
+    public static OrderItemFieldOptionsDropdown from(CartItemFieldOptionsDropdown source) {
+        return builder()
+                .label(source.getLabel())
+                .price(source.getPrice())
+                .build();
+    }
+}

@@ -1,7 +1,9 @@
 package com.ecommerce.backend.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -29,7 +31,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("radio_group")
 public class OrderItemFieldRadioGroup extends OrderItemField {
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "order_radio_group_options",
         joinColumns = @JoinColumn(name = "radio_group_id"),
@@ -44,4 +46,18 @@ public class OrderItemFieldRadioGroup extends OrderItemField {
         return options;
     };
 
+    /**
+     * Copies a cart radio group and its selected option into the order.
+     */
+    public static OrderItemFieldRadioGroup from(CartItemFieldRadioGroup source) {
+        List<OrderItemFieldOptionsDropdown> options = new ArrayList<>();
+        for (CartItemFieldOptionsDropdown option : source.getOptions()) {
+            options.add(OrderItemFieldOptionsDropdown.from(option));
+        }
+        return builder()
+                .label(source.getLabel())
+                .description(source.getDescription())
+                .options(options)
+                .build();
+    }
 }

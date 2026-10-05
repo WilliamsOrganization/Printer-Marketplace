@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { OrderItem } from "@/lib/types";
+import { describeConfiguration } from "@/lib/field-selections";
 
 export function OrderItemsDialog({
 	items,
@@ -58,6 +59,9 @@ export function OrderItemsDialog({
 							>
 								<div className="flex flex-col">
 									<span className="text-sm font-medium">{orderItem.itemTitle}</span>
+									{describeConfiguration(orderItem.orderItemFields) && (
+										<span className="text-xs">{describeConfiguration(orderItem.orderItemFields)}</span>
+									)}
 									<span className="text-muted-foreground text-xs">
 										${(orderItem.unitPrice / 100).toFixed(2)} each &middot; Qty {orderItem.quantity}
 									</span>

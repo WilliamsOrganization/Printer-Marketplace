@@ -1,14 +1,12 @@
 package com.ecommerce.backend.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import java.util.List;
 
 /**
  * AddCartItemRequest
  */
-@Data
-@AllArgsConstructor
-public class AddCartItemRequest {
-	private Long itemId;
-	private Integer quantity;
-}
+public record AddCartItemRequest (
+	Long itemId,
+	Integer quantity,
+	List<InventoryItemFieldSelection> inventoryFieldItemSelections
+){};

@@ -1,7 +1,9 @@
 package com.ecommerce.backend.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -31,7 +33,7 @@ import lombok.experimental.SuperBuilder;
 public class OrderItemFieldChecklist extends OrderItemField {
 
     
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "order_checklist_options",
         joinColumns = @JoinColumn(name = "checklist_id"),
@@ -40,9 +42,24 @@ public class OrderItemFieldChecklist extends OrderItemField {
     @NonNull @NotNull private List<OrderItemFieldOptionsDropdown> options;
 
     /**
-     * The price of the field in cents.
+     * Returns the selected options for this field.
      */
     public List<OrderItemFieldOptionsDropdown> getOptions(){
         return options;
     };
+
+    /**
+     * Copies a cart checklist and its selected options into the order.
+     */
+    public static OrderItemFieldChecklist from(CartItemFieldChecklist source) {
+        List<OrderItemFieldOptionsDropdown> options = new ArrayList<>();
+        for (CartItemFieldOptionsDropdown option : source.getOptions()) {
+            options.add(OrderItemFieldOptionsDropdown.from(option));
+        }
+        return builder()
+                .label(source.getLabel())
+                .description(source.getDescription())
+                .options(options)
+                .build();
+    }
 }

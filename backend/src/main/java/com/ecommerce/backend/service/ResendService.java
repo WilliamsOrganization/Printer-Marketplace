@@ -4,14 +4,18 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import com.ecommerce.backend.entity.EmailVerification;
 import com.ecommerce.backend.entity.EmailVerification.Reason;
 import com.ecommerce.backend.entity.OrderItem;
+import com.ecommerce.backend.entity.OrderItemField;
+import com.ecommerce.backend.entity.OrderItemFieldOptions;
 import com.ecommerce.backend.entity.Orders;
 import com.ecommerce.backend.entity.Shipping;
 import com.ecommerce.backend.entity.Users;
@@ -97,6 +101,7 @@ public class ResendService {
 					.append("</td>")
 					.append("<td style=\"padding:12px 16px;border-bottom:1px solid #e5e5e5;\">")
 					.append("<div style=\"font-size:14px;color:#111;\">").append(orderItem.getItemTitle()).append("</div>")
+					.append(describeConfiguration(orderItem))
 					.append("<div style=\"font-size:12px;color:#888;\">$")
 					.append(formatCents(orderItem.getUnitPrice())).append(" each &middot; Qty ")
 					.append(orderItem.getQuantity()).append("</div>")
@@ -129,6 +134,24 @@ public class ResendService {
 				+ "<a href=\"" + FRONTEND_URL + "\" style=\"font-family:Arial,sans-serif;display:inline-block;color:#555;text-decoration:none;font-size:13px;padding:10px 24px;\">Continue Shopping</a>"
 				+ "</div>"
 				+ "</div>";
+	}
+
+	/**
+	 * Renders the options chosen for an order line, e.g. "Color: Red · Add-ons: Keyring, Gift box".
+	 * Returns an empty string for items without options.
+	 */
+	private String describeConfiguration(OrderItem orderItem) {
+		List<OrderItemField> fields = orderItem.getOrderItemFields() != null ? orderItem.getOrderItemFields() : List.of();
+		List<String> parts = new ArrayList<>();
+		for (OrderItemField field : fields) {
+			List<String> optionLabels = new ArrayList<>();
+			for (OrderItemFieldOptions option : field.getOptions()) {
+				optionLabels.add(option.getLabel());
+			}
+			parts.add(HtmlUtils.htmlEscape(field.getLabel() + ": " + String.join(", ", optionLabels)));
+		}
+		if (parts.isEmpty()) return "";
+		return "<div style=\"font-size:12px;color:#555;\">" + String.join(" &middot; ", parts) + "</div>";
 	}
 
 	private String formatCents(Long cents) {

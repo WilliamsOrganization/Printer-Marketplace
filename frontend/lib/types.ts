@@ -129,6 +129,20 @@ export interface InventoryItem {
 	weightCategory: WeightCategory;
 	fields: InventoryItemField[] | null;
 }
+// One configured field sent with POST /cartitem. optionIds are
+// InventoryItemFieldOptions ids from the item's fields.
+export interface InventoryItemFieldSelection {
+	fieldId: number;
+	optionIds: number[];
+}
+
+// Matches backend AddCartItemRequest
+export interface AddCartItemRequest {
+	itemId: number;
+	quantity: number;
+	inventoryFieldItemSelections: InventoryItemFieldSelection[];
+}
+
 export interface CartItem {
 	id: number;
 	createdAt: string;
@@ -136,6 +150,9 @@ export interface CartItem {
 	cart: Cart;
 	item: InventoryItem;
 	quantity: number;
+	/** Dollars per unit: item cost plus every selected option (CartItem.getUnitPrice). */
+	unitPrice: number;
+	cartItemFields: SelectedField[];
 }
 
 export interface Cart {
@@ -185,12 +202,38 @@ export enum OrderStatus {
 	FAILED = "FAILED",
 }
 
+// A field the customer configured, as stored on a cart or order line.
+export interface SelectedField {
+	label: string;
+	options: { label: string }[];
+}
+
+// Snapshot of one option the customer chose, copied into the order at checkout.
+export interface OrderItemFieldOption {
+	id: number;
+	label: string;
+	price: number;
+	// Only present on color picker options
+	selectedColor?: StlColor;
+	stlUrl?: string;
+}
+
+// Snapshot of one configured field on an order line.
+export interface OrderItemField {
+	id: number;
+	label: string;
+	description: string;
+	options: OrderItemFieldOption[];
+}
+
 export interface OrderItem {
 	id: number;
 	item: InventoryItem;
 	quantity: number;
 	itemTitle: string;
 	unitPrice: number;
+	configurationKey: string;
+	orderItemFields: OrderItemField[];
 }
 
 export interface ShippingAddress {

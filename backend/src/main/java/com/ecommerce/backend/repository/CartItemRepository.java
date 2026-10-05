@@ -29,10 +29,11 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 	void deleteByIdAndCart(Long id, Cart cart);
 
 	/**
-	 * Finds the cart item for a given cart and inventory item.
+	 * Finds the cart item for a given cart, inventory item and configuration.
 	 * @param cart the cart
 	 * @param inventoryItem the inventory item
-	 * @return the cart item
+	 * @param configurationKey the canonical form of the selected options
+	 * @return the cart item, if this exact configuration is already in the cart
 	 */
-	Optional<CartItem> findByCartAndItem(Cart cart, InventoryItem inventoryItem);
+	Optional<CartItem> findByCartAndItemAndConfigurationKey(Cart cart, InventoryItem inventoryItem, String configurationKey);
 }

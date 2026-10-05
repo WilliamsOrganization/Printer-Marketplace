@@ -17,4 +17,5 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
 	 * @return the list of inventory items
 	 */
 	List<InventoryItem> findByIsArchivedFalse(Sort sort);
+
 }
