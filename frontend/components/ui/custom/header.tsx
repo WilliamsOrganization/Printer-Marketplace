@@ -11,9 +11,9 @@ import Image from "next/image";
 import TypeIt from "typeit-react";
 
 const navLinks = [
+	{ label: "Shop", href: "/" },
 	{ label: "Orders", href: "/orders" },
 	{ label: "Returns", href: "/returns" },
-	{ label: "Shop", href: "/" },
 ];
 
 export function Header() {

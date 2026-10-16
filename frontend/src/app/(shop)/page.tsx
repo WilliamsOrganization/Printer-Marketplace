@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ArrowRight, ShoppingCart } from "lucide-react";
 import { FilterSidebar } from "@/components/ui/custom/filter-sidebar";
 import { SortSelect } from "@/components/ui/custom/sort-select";
 import apiServer from "@/lib/api-server";
@@ -78,16 +79,6 @@ export default async function ShopPage({
 
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-4">
-			{/* Page header */}
-			<div className="border-b mb-4">
-				<h1 className="text-3xl font-serif">
-					Next Production Batch: <span className="italic">Spring 2027</span>
-				</h1>
-				<p className="text-sm text-muted-foreground my-2 leading-relaxed">
-					Browse, filter, and find what your looking for.
-				</p>
-			</div>
-
 			{/* Filter + sort bar */}
 			<div className="flex items-center justify-between gap-4 mb-4">
 				<FilterSidebar
@@ -107,17 +98,30 @@ export default async function ShopPage({
 				<ProductGrid products={filteredProducts} />
 
 				{filteredProducts.length === 0 && (
-					<div className="text-center py-20 flex flex-col items-center gap-3">
-						<p className="font-serif text-xl italic text-muted-foreground">
-							Nothing here yet.
-						</p>
-						<p className="text-sm text-muted-foreground">
-							Try adjusting your filters.
-						</p>
-						<Button variant="link" asChild>
-							<Link href="/">Clear filters</Link>
-						</Button>
-					</div>
+					// min-h is 60vh (matching orders/returns) minus 2x the ~68px the
+					// wrapper padding + filter bar push this down, so the content
+					// centers in the same spot as those pages' empty states.
+					<section className="min-h-[calc(60vh-136px)] flex items-center justify-center px-6 py-20">
+						<div className="flex flex-col items-center text-center gap-3 w-full max-w-md text-muted-foreground">
+							<div className="size-16 rounded-full bg-muted flex items-center justify-center">
+								<ShoppingCart className="size-7" />
+							</div>
+							<div className="text-center">
+								<p className="font-serif italic text-foreground">
+									Nothing here yet.
+								</p>
+								<p className="text-xs mt-1 tracking-wide">
+									Try adjusting your filters.
+								</p>
+							</div>
+							<Button asChild className="mt-4">
+								<Link href="/">
+									Clear filters
+									<ArrowRight className="ml-2 size-4" />
+								</Link>
+							</Button>
+						</div>
+					</section>
 				)}
 			</main>
 		</div>
