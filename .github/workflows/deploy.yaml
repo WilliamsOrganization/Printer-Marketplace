@@ -3,8 +3,9 @@
 # TODO: migrate to Kubernetes (Talos on Proxmox) when scaling is needed
 name: Deploy
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+  # push:
+    # branches: [main]
 
 jobs:
   terraform:
