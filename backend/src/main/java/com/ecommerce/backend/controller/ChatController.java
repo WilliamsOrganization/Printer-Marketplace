@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import java.time.LocalDateTime;
@@ -5,12 +6,9 @@ import java.util.UUID;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
 import com.ecommerce.backend.dto.ChatMessage;
-import com.ecommerce.backend.entity.Sessions;
-import com.ecommerce.backend.entity.Users;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

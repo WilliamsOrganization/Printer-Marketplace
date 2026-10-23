@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import java.util.ArrayList;
@@ -45,6 +46,19 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CartService {
+	/**
+	 * Builds a key that is identical for identical selections, regardless of the order they were sent in.
+	 */
+	private static String configurationKey(List<InventoryItemFieldSelection> selections) {
+		List<String> parts = new ArrayList<>();
+		for (InventoryItemFieldSelection selection : selections) {
+			List<Long> ids = new ArrayList<>(selection.optionIds());
+			Collections.sort(ids);
+			parts.add(selection.fieldId() + ":" + ids);
+		}
+		Collections.sort(parts);
+		return String.join(";", parts);
+	}
 	// private static final long DAYS = 30;
 	private final UserService userService;
 	private final SessionRepository sessionRepository;
@@ -52,6 +66,7 @@ public class CartService {
 	private final CartItemRepository cartItemRepository;
 	private final InventoryItemRepository inventoryItemRepository;
 	private final InventoryItemFieldRepository inventoryItemFieldRepository;
+
 	private final InventoryItemFieldOptionsRepository inventoryItemFieldOptionsRepository;
 
 	/**
@@ -89,17 +104,49 @@ public class CartService {
 	}
 
 	/**
-	 * Builds a key that is identical for identical selections, regardless of the order they were sent in.
+	 * getCartItems returns the cart items for the current user
+	 * 
+	 * @return
 	 */
-	private static String configurationKey(List<InventoryItemFieldSelection> selections) {
-		List<String> parts = new ArrayList<>();
-		for (InventoryItemFieldSelection selection : selections) {
-			List<Long> ids = new ArrayList<>(selection.optionIds());
-			Collections.sort(ids);
-			parts.add(selection.fieldId() + ":" + ids);
-		}
-		Collections.sort(parts);
-		return String.join(";", parts);
+	public Cart getCartItems(Users user) {
+		return getCart(userService.getUserFromSession());
+	}
+
+	/**
+	 * deleteCartItem deletes a cart item
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteCartItem(Long id) {
+		Cart cart = cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
+		cartItemRepository.deleteByIdAndCart(id, cart);
+	}
+
+	/**
+	 * finds a cart for a given user if exists
+	 * 
+	 * @Cart
+	 *
+	 */
+	public Cart getCart(Users user) {
+		return cartRepository.findByUser(user).orElseGet(() -> {
+			Cart newCart = Cart.builder().user(user).build();
+			return cartRepository.save(newCart);
+		});
+	}
+
+	/**
+	 * if cart item exists, update quantity
+	 * 
+	 * @param id
+	 * @param quantity
+	 * @return
+	 */
+	public CartItem updateCartItemQuantity(Long id, Integer quantity) {
+		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
+		cartItem.setQuantity(quantity);
+		return cartItemRepository.save(cartItem);
 	}
 
 	/**
@@ -204,51 +251,5 @@ public class CartService {
 				.description(radioGroup.getDescription())
 				.options(cartRadioOption)
 				.build());
-	}
-
-	/**
-	 * getCartItems returns the cart items for the current user
-	 * 
-	 * @return
-	 */
-	public Cart getCartItems(Users user) {
-		return getCart(userService.getUserFromSession());
-	}
-
-	/**
-	 * deleteCartItem deletes a cart item
-	 * 
-	 * @param id
-	 */
-	@Transactional
-	public void deleteCartItem(Long id) {
-		Cart cart = cartRepository.findByUser(userService.getUserFromSession()).orElseThrow();
-		cartItemRepository.deleteByIdAndCart(id, cart);
-	}
-
-	/**
-	 * finds a cart for a given user if exists
-	 * 
-	 * @Cart
-	 *
-	 */
-	public Cart getCart(Users user) {
-		return cartRepository.findByUser(user).orElseGet(() -> {
-			Cart newCart = Cart.builder().user(user).build();
-			return cartRepository.save(newCart);
-		});
-	}
-
-	/**
-	 * if cart item exists, update quantity
-	 * 
-	 * @param id
-	 * @param quantity
-	 * @return
-	 */
-	public CartItem updateCartItemQuantity(Long id, Integer quantity) {
-		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
-		cartItem.setQuantity(quantity);
-		return cartItemRepository.save(cartItem);
 	}
 }

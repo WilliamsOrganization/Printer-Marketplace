@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import java.util.ArrayList;
@@ -31,8 +32,27 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class OrderController {
+	/**
+	 * Reduces a Stripe checkout Session down to the fields the frontend
+	 * needs, since the raw Session isn't Jackson-serializable (it carries
+	 * internal SDK types like LiveStripeResponseGetter).
+	 *
+	 * @param session the Stripe checkout session
+	 * @return the summarized fields
+	 */
+	private static CheckoutSummary toCheckoutSummary(Session session) {
+		String customerEmail = session.getCustomerDetails() != null
+				? session.getCustomerDetails().getEmail()
+				: null;
+		return new CheckoutSummary(
+				session.getStatus(),
+				customerEmail,
+				session.getAmountTotal(),
+				session.getCurrency());
+	}
 	private final UserService userService;
 	private final StripeCatalogService stripeCatalogService;
+
 	private final OrderRepository orderRepository;
 
 	/**
@@ -78,24 +98,5 @@ public class OrderController {
 	@PreAuthorize("hasRole('ADMIN')")
 	public List<Orders> getAllOrders() {
 		return orderRepository.findAll();
-	}
-
-	/**
-	 * Reduces a Stripe checkout Session down to the fields the frontend
-	 * needs, since the raw Session isn't Jackson-serializable (it carries
-	 * internal SDK types like LiveStripeResponseGetter).
-	 *
-	 * @param session the Stripe checkout session
-	 * @return the summarized fields
-	 */
-	private static CheckoutSummary toCheckoutSummary(Session session) {
-		String customerEmail = session.getCustomerDetails() != null
-				? session.getCustomerDetails().getEmail()
-				: null;
-		return new CheckoutSummary(
-				session.getStatus(),
-				customerEmail,
-				session.getAmountTotal(),
-				session.getCurrency());
 	}
 }

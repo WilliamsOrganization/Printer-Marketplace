@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import java.time.LocalDateTime;
@@ -144,44 +145,6 @@ public class AuthService {
 	}
 
 	/**
-	 * Looks up the user's latest verification code for the given reason and
-	 * checks it against what was submitted, without consuming it.
-	 *
-	 * @param user the user the code belongs to
-	 * @param reason which flow the code was issued for (CREATE_ACCOUNT,
-	 *               RESET_PASSWORD, ...) - codes are scoped per-reason so a
-	 *               code from one flow can't be used to satisfy another
-	 * @param submittedCode the code the user typed in
-	 * @return the matching, still-valid EmailVerification
-	 */
-	private EmailVerification checkCode(Users user, Reason reason, String submittedCode) {
-		EmailVerification emailCode = emailVerificationRepository
-				.findFirstByUserAndReasonOrderByCreatedAtDesc(user, reason);
-		if (emailCode == null
-				|| !emailCode.getCode().equals(submittedCode)
-				|| emailCode.getExpiryDate().isBefore(LocalDateTime.now())) {
-			throw new InvalidCredentials("Invalid or expired verification code");
-		}
-		return emailCode;
-	}
-
-	/**
-	 * Checks the user's latest verification code for the given reason
-	 * against what was submitted, rejecting it if it's wrong or expired.
-	 * On success, the code is burned (its expiry is pulled forward to now)
-	 * so it can't be replayed against a second request.
-	 *
-	 * @param user the user the code belongs to
-	 * @param reason which flow the code was issued for
-	 * @param submittedCode the code the user typed in
-	 */
-	private void verifyCode(Users user, Reason reason, String submittedCode) {
-		EmailVerification emailCode = checkCode(user, reason, submittedCode);
-		emailCode.setExpiryDate(LocalDateTime.now());
-		emailVerificationRepository.save(emailCode);
-	}
-
-	/**
 	 * Reset the password if the user forgot
 	 * @param Users
 	 * @param ResetPasswordRequest
@@ -239,6 +202,44 @@ public class AuthService {
 		userService.resetPassword(user, request.getPassword());
 		Sessions newSession = sessionService.refreshUserToken(user);
 		return new AuthResponse(newSession.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
+	}
+
+	/**
+	 * Looks up the user's latest verification code for the given reason and
+	 * checks it against what was submitted, without consuming it.
+	 *
+	 * @param user the user the code belongs to
+	 * @param reason which flow the code was issued for (CREATE_ACCOUNT,
+	 *               RESET_PASSWORD, ...) - codes are scoped per-reason so a
+	 *               code from one flow can't be used to satisfy another
+	 * @param submittedCode the code the user typed in
+	 * @return the matching, still-valid EmailVerification
+	 */
+	private EmailVerification checkCode(Users user, Reason reason, String submittedCode) {
+		EmailVerification emailCode = emailVerificationRepository
+				.findFirstByUserAndReasonOrderByCreatedAtDesc(user, reason);
+		if (emailCode == null
+				|| !emailCode.getCode().equals(submittedCode)
+				|| emailCode.getExpiryDate().isBefore(LocalDateTime.now())) {
+			throw new InvalidCredentials("Invalid or expired verification code");
+		}
+		return emailCode;
+	}
+
+	/**
+	 * Checks the user's latest verification code for the given reason
+	 * against what was submitted, rejecting it if it's wrong or expired.
+	 * On success, the code is burned (its expiry is pulled forward to now)
+	 * so it can't be replayed against a second request.
+	 *
+	 * @param user the user the code belongs to
+	 * @param reason which flow the code was issued for
+	 * @param submittedCode the code the user typed in
+	 */
+	private void verifyCode(Users user, Reason reason, String submittedCode) {
+		EmailVerification emailCode = checkCode(user, reason, submittedCode);
+		emailCode.setExpiryDate(LocalDateTime.now());
+		emailVerificationRepository.save(emailCode);
 	}
 
 }
