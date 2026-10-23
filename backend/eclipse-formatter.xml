@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+	Shared Eclipse JDT formatter profile.
+	Used by Spotless (backend/pom.xml) and jdtls (nvim-java, java.format.settings.url).
+	Anything not listed falls back to the Eclipse [built-in] defaults.
+-->
+<profiles version="23">
+	<profile kind="CodeFormatterProfile" name="ecommerce" version="23">
+		<!-- indentation: tabs, 4 wide -->
+		<setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="tab"/>
+		<setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="4"/>
+		<setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
+		<setting id="org.eclipse.jdt.core.formatter.continuation_indentation" value="2"/>
+
+		<!-- line width -->
+		<setting id="org.eclipse.jdt.core.formatter.lineSplit" value="120"/>
+		<setting id="org.eclipse.jdt.core.formatter.comment.line_length" value="120"/>
+
+		<!-- keep manual line breaks instead of re-joining wrapped lines -->
+		<setting id="org.eclipse.jdt.core.formatter.join_wrapped_lines" value="false"/>
+
+		<!-- leave comment text alone (no reflowing notes / TODOs / javadoc) -->
+		<setting id="org.eclipse.jdt.core.formatter.comment.format_line_comments" value="false"/>
+		<setting id="org.eclipse.jdt.core.formatter.comment.format_block_comments" value="false"/>
+		<setting id="org.eclipse.jdt.core.formatter.comment.format_javadoc_comments" value="false"/>
+		<setting id="org.eclipse.jdt.core.formatter.comment.format_header" value="false"/>
+
+		<!-- allow // @formatter:off ... // @formatter:on regions -->
+		<setting id="org.eclipse.jdt.core.formatter.use_on_off_tags" value="true"/>
+	</profile>
+</profiles>

@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public class ReturnController {
 
 	/**
 	 * Creates a pending return request for admin to review and approve
+	 * 
 	 * @param user
 	 * @param request
 	 * @return
@@ -44,7 +46,18 @@ public class ReturnController {
 	}
 
 	/**
+	 *
+	 *
+	 */
+	@GetMapping("/all")
+	@PreAuthorize("hasRole('ADMIN')")
+	public List<ReturnResponse> getAllReturns() {
+		return returnService.getAllReturnResponses();
+	}
+
+	/**
 	 * Gets every return the current user has requested.
+	 * 
 	 * @return the user's returns
 	 */
 	@GetMapping("/")
@@ -54,17 +67,8 @@ public class ReturnController {
 	}
 
 	/**
-	 *
-	 *
-	 */
-	@GetMapping("/all")
-	@PreAuthorize("hasRole('ADMIN')")
-	public List<ReturnResponse> getAllReturns() {
-		return returnService.getAllReturnResponses();
-	}
-	
-	/**
 	 * Gets a return by id
+	 * 
 	 * @param request
 	 * @return
 	 */

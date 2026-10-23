@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.config;
 
 import org.springframework.context.annotation.Bean;
@@ -13,10 +14,11 @@ public class RequestLogging {
 
 	/**
 	 * Creates a new CommonsRequestLoggingFilter.
+	 * 
 	 * @return the new CommonsRequestLoggingFilter
 	 */
 	@Bean
-	CommonsRequestLoggingFilter requestLoggingFilter(){
+	CommonsRequestLoggingFilter requestLoggingFilter() {
 		CommonsRequestLoggingFilter filter = new CommonsRequestLoggingFilter();
 		filter.setIncludeQueryString(true);
 		filter.setIncludePayload(false);

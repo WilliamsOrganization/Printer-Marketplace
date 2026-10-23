@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -25,10 +26,10 @@ import lombok.NonNull;
 
 /**
  * A reusable parcel size (dimensions + weight) for quoting/booking Shippo
- * shipments. Kept as its own table rather than columns on Shipping, and
- * shared across many Shipping rows via Shipping.parcel, so a known size can
- * be looked up and reused instead of a new row being created every time -
- * see ShippingParcelRepository.
+ * shipments. Kept as its own table rather than columns on Shipping, and shared
+ * across many Shipping rows via Shipping.parcel, so a known size can be looked
+ * up and reused instead of a new row being created every time - see
+ * ShippingParcelRepository.
  *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
@@ -41,17 +42,13 @@ import lombok.NonNull;
 public class ShippingParcel {
 
 	/**
-	 * Standard box sizes for an actual outgoing shipment - deliberately a
-	 * separate, wider-ranging set from InventoryItem.SizeCategory, since one
-	 * box can hold many items combined and so may need to be larger than any
-	 * single item's own size category. Centimeters, length x width x height.
+	 * Standard box sizes for an actual outgoing shipment - deliberately a separate,
+	 * wider-ranging set from InventoryItem.SizeCategory, since one box can hold
+	 * many items combined and so may need to be larger than any single item's own
+	 * size category. Centimeters, length x width x height.
 	 */
 	public enum SizeCategory {
-		SMALL(20, 15, 10),
-		MEDIUM(30, 23, 15),
-		LARGE(40, 30, 20),
-		EXTRA_LARGE(50, 40, 30),
-		JUMBO(60, 45, 40);
+		SMALL(20, 15, 10), MEDIUM(30, 23, 15), LARGE(40, 30, 20), EXTRA_LARGE(50, 40, 30), JUMBO(60, 45, 40);
 
 		public final int lengthCm;
 		public final int widthCm;
@@ -65,16 +62,12 @@ public class ShippingParcel {
 	}
 
 	/**
-	 * Weight tiers for an actual outgoing shipment - same reasoning as
-	 * SizeCategory above, a combined box of several items can weigh more
-	 * than any single item's WeightCategory.
+	 * Weight tiers for an actual outgoing shipment - same reasoning as SizeCategory
+	 * above, a combined box of several items can weigh more than any single item's
+	 * WeightCategory.
 	 */
 	public enum WeightCategory {
-		LIGHT(500),
-		MEDIUM(1500),
-		HEAVY(4000),
-		EXTRA_HEAVY(8000),
-		BULK(15000);
+		LIGHT(500), MEDIUM(1500), HEAVY(4000), EXTRA_HEAVY(8000), BULK(15000);
 
 		public final int grams;
 
@@ -90,10 +83,21 @@ public class ShippingParcel {
 	@CreationTimestamp
 	private LocalDateTime createdAt;
 
-	@NonNull @Column(nullable = false) private Long height;
-	@NonNull @Column(nullable = false) private Long width;
-	@NonNull @Column(nullable = false) private Long length;
-	@NonNull @Column(nullable = false) private Long weight;
+	@NonNull
+	@Column(nullable = false)
+	private Long height;
+
+	@NonNull
+	@Column(nullable = false)
+	private Long width;
+
+	@NonNull
+	@Column(nullable = false)
+	private Long length;
+
+	@NonNull
+	@Column(nullable = false)
+	private Long weight;
 
 	@NonNull
 	@Enumerated(EnumType.STRING)

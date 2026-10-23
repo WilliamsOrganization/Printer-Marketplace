@@ -1,4 +1,13 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import com.ecommerce.backend.dto.CreateCatalogRequest;
 import com.ecommerce.backend.dto.CreateCatalogResponse;
@@ -23,18 +32,13 @@ import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.checkout.SessionCreateParams.LineItem;
 import com.stripe.param.checkout.SessionCreateParams.LineItem.PriceData;
 import com.stripe.param.checkout.SessionCreateParams.ShippingOption.ShippingRateData;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 /**
- * Manages Stripe product/price catalog entries and builds checkout sessions
- * for the cart.
+ * Manages Stripe product/price catalog entries and builds checkout sessions for
+ * the cart.
  */
 @Slf4j
 @Service
@@ -45,15 +49,6 @@ public class StripeCatalogService {
 	private static final Long DOLLAR = 100L;
 
 	private static final Long PAGE_SIZE = 100L;
-
-	private final ShippoService shippoService;
-	private final CartService cartService;
-
-	private final OrderService orderService;
-	private final UserService userService;
-
-	@Value("${frontend.url}")
-	private String FRONTEND_URL;
 
 	/**
 	 * This method is used to map the cart items to line items.
@@ -66,8 +61,7 @@ public class StripeCatalogService {
 		for (CartItem cartItem : cartItems) {
 			Long quantity = Long.valueOf(cartItem.getQuantity());
 
-			PriceData.Builder priceData = PriceData.builder()
-					.setCurrency("CAD")
+			PriceData.Builder priceData = PriceData.builder().setCurrency("CAD")
 					.setUnitAmount(cartItem.getUnitPrice() * DOLLAR);
 			String configuration = cartItem.describeConfiguration();
 			if (configuration.isEmpty()) {
@@ -78,25 +72,19 @@ public class StripeCatalogService {
 				priceData.setProductData(toConfiguredProductData(cartItem, configuration));
 			}
 
-			LineItem lineItem = LineItem.builder()
-					.setPriceData(priceData.build())
-					.setQuantity(quantity)
-					.build();
+			LineItem lineItem = LineItem.builder().setPriceData(priceData.build()).setQuantity(quantity).build();
 			lineItems.add(lineItem);
 		}
 		return lineItems;
 	}
-
 	/**
-	 * Builds an inline Stripe product for a configured cart line: the item's
-	 * title and first image, with the selected options as the description.
+	 * Builds an inline Stripe product for a configured cart line: the item's title
+	 * and first image, with the selected options as the description.
 	 */
 	private static PriceData.ProductData toConfiguredProductData(CartItem cartItem, String configuration) {
 		InventoryItem item = cartItem.getItem();
-		PriceData.ProductData.Builder productData = PriceData.ProductData.builder()
-				.setName(item.getItemTitle())
-				.setDescription(configuration)
-				.putMetadata("stripeProductId", item.getStripeProductId())
+		PriceData.ProductData.Builder productData = PriceData.ProductData.builder().setName(item.getItemTitle())
+				.setDescription(configuration).putMetadata("stripeProductId", item.getStripeProductId())
 				.putMetadata("configurationKey", cartItem.getConfigurationKey());
 		if (item.getImageUrls() != null && item.getImageUrls().length > 0) {
 			productData.addImage(item.getImageUrls()[0]);
@@ -105,73 +93,28 @@ public class StripeCatalogService {
 	}
 
 	/**
-	 * Extracts the display name, price in cents, and currency from a Shippo
-	 * rate quote.
+	 * Extracts the display name, price in cents, and currency from a Shippo rate
+	 * quote.
 	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	private static ShippingQuote toShippingQuote(GetRateResponse rate) {
 		String name = rate.rate().get().servicelevel().name().get();
 		BigDecimal dollars = new BigDecimal(rate.rate().get().amount());
-		Long amountInCents = dollars.movePointRight(2)
-				.setScale(0, RoundingMode.HALF_UP)
-				.longValueExact();
+		Long amountInCents = dollars.movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact();
 		String currency = rate.rate().get().currency().toLowerCase();
 		return new ShippingQuote(name, amountInCents, currency);
 	}
+	private final ShippoService shippoService;
 
-	/**
-	 * Creates a new Product item with a single Price.
-	 *
-	 * @param request the request
-	 * @return the response
-	 */
-	public CreateCatalogResponse createProductAndPrice(CreateCatalogRequest req)
-			throws StripeException {
-		ProductCreateParams productCreateParams = ProductCreateParams.builder()
-				.setName(req.getName())
-				.setDescription(req.getDescription())
-				.addAllImage(req.getImageUrls())
-				.putMetadata("source", "springboot")
-				.putMetadata("stock_qty_snapshot",
-						String.valueOf(req.getQuantity()))
-				.build();
-		Product product = Product.create(productCreateParams);
+	private final CartService cartService;
 
-		PriceCreateParams priceCreateParams = PriceCreateParams.builder()
-				.setProduct(product.getId())
-				.setUnitAmount(req.getUnitAmount() * DOLLAR)
-				.setCurrency(req.getCurrency().toLowerCase())
-				.build();
+	private final OrderService orderService;
 
-		Price price = Price.create(priceCreateParams);
+	private final UserService userService;
 
-		return new CreateCatalogResponse(product.getId(), product.getName(),
-				price.getUnitAmount(),
-				price.getCurrency());
-	}
-
-	/**
-	 * Deletes a Stripe product, falling back to archiving it (setting
-	 * active=false) if Stripe refuses the delete because the product still
-	 * has associated prices/usage.
-	 *
-	 * @param id the Stripe product id
-	 * @return true if the product was deleted, false if it was archived instead
-	 */
-	public boolean deleteProduct(String id) throws StripeException {
-		Product resource = Product.retrieve(id);
-		try {
-			resource.delete();
-			return true;
-		} catch (StripeException e) {
-			log.warn("Could not delete product {}, archiving instead: {}", id,
-					e.getMessage());
-			resource.update(
-					ProductUpdateParams.builder().setActive(false).build());
-			return false;
-		}
-	}
+	@Value("${frontend.url}")
+	private String FRONTEND_URL;
 
 	/**
 	 * This method is used to activate a product that has been archived.
@@ -184,9 +127,61 @@ public class StripeCatalogService {
 	}
 
 	/**
-	 * Archives a product without deleting it (setting active=false) - the
-	 * same fallback deleteProduct uses when Stripe refuses a real delete,
-	 * exposed on its own so an item can be archived directly.
+	 * creates a checkout session with the selected shipping rate attached to it.
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public String createCheckoutSession(String email, String selectedShippingID) throws Exception {
+		Cart cart = cartService.getCartItems(userService.getUserFromSession());
+		List<LineItem> lineItems = mapCartItemstoLineItems(cart);
+		// get quoted price from shippo service.
+		GetRateResponse rate = shippoService.getShipmentRateById(selectedShippingID);
+		Shipment shipment = shippoService.getShipmentForRate(rate.rate().get());
+		ShippingQuote quote = toShippingQuote(rate);
+
+		SessionCreateParams params = SessionCreateParams.builder().setSuccessUrl(FRONTEND_URL + "/" + SUCCESS_URL)
+				.setCancelUrl(FRONTEND_URL).setCustomerEmail(email).addAllLineItem(lineItems)
+				.addShippingOption(SessionCreateParams.ShippingOption.builder()
+						.setShippingRateData(ShippingRateData.builder().setDisplayName(quote.name())
+								.setType(ShippingRateData.Type.FIXED_AMOUNT)
+								.setFixedAmount(ShippingRateData.FixedAmount.builder().setAmount(quote.amountInCents())
+										.setCurrency(quote.currency()).build())
+								.build())
+						.build())
+				.setMode(SessionCreateParams.Mode.PAYMENT).build();
+		Session session = Session.create(params, null);
+		orderService.createPendingOrder(session, shipment, quote, cart, selectedShippingID);
+
+		return session.getUrl();
+	}
+
+	/**
+	 * Creates a new Product item with a single Price.
+	 *
+	 * @param request
+	 *            the request
+	 * @return the response
+	 */
+	public CreateCatalogResponse createProductAndPrice(CreateCatalogRequest req) throws StripeException {
+		ProductCreateParams productCreateParams = ProductCreateParams.builder().setName(req.getName())
+				.setDescription(req.getDescription()).addAllImage(req.getImageUrls())
+				.putMetadata("source", "springboot")
+				.putMetadata("stock_qty_snapshot", String.valueOf(req.getQuantity())).build();
+		Product product = Product.create(productCreateParams);
+
+		PriceCreateParams priceCreateParams = PriceCreateParams.builder().setProduct(product.getId())
+				.setUnitAmount(req.getUnitAmount() * DOLLAR).setCurrency(req.getCurrency().toLowerCase()).build();
+
+		Price price = Price.create(priceCreateParams);
+
+		return new CreateCatalogResponse(product.getId(), product.getName(), price.getUnitAmount(),
+				price.getCurrency());
+	}
+
+	/**
+	 * Archives a product without deleting it (setting active=false) - the same
+	 * fallback deleteProduct uses when Stripe refuses a real delete, exposed on its
+	 * own so an item can be archived directly.
 	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
@@ -196,16 +191,38 @@ public class StripeCatalogService {
 	}
 
 	/**
-	 * Updates a Stripe product's name/description/images, and if a new unit
-	 * amount is given, creates a new Price, sets it as the product's default,
-	 * and deactivates the old one.
+	 * Deletes a Stripe product, falling back to archiving it (setting active=false)
+	 * if Stripe refuses the delete because the product still has associated
+	 * prices/usage.
 	 *
-	 * @param id  the Stripe product id
-	 * @param req the fields to update; null fields are left unchanged
+	 * @param id
+	 *            the Stripe product id
+	 * @return true if the product was deleted, false if it was archived instead
+	 */
+	public boolean deleteProduct(String id) throws StripeException {
+		Product resource = Product.retrieve(id);
+		try {
+			resource.delete();
+			return true;
+		} catch (StripeException e) {
+			log.warn("Could not delete product {}, archiving instead: {}", id, e.getMessage());
+			resource.update(ProductUpdateParams.builder().setActive(false).build());
+			return false;
+		}
+	}
+
+	/**
+	 * Updates a Stripe product's name/description/images, and if a new unit amount
+	 * is given, creates a new Price, sets it as the product's default, and
+	 * deactivates the old one.
+	 *
+	 * @param id
+	 *            the Stripe product id
+	 * @param req
+	 *            the fields to update; null fields are left unchanged
 	 * @return the updated product
 	 */
-	public Product editProduct(String id, EditCatalogRequest req)
-			throws StripeException {
+	public Product editProduct(String id, EditCatalogRequest req) throws StripeException {
 		Product resource = Product.retrieve(id);
 
 		ProductUpdateParams.Builder updateBuilder = ProductUpdateParams.builder();
@@ -219,14 +236,9 @@ public class StripeCatalogService {
 		String oldPriceId = null;
 		if (req.getUnitAmount() != null) {
 			oldPriceId = resource.getDefaultPrice();
-			String currency = req.getCurrency() != null
-					? req.getCurrency().toLowerCase()
-					: "cad";
-			Price newPrice = Price.create(PriceCreateParams.builder()
-					.setProduct(id)
-					.setUnitAmount(req.getUnitAmount() * DOLLAR)
-					.setCurrency(currency)
-					.build());
+			String currency = req.getCurrency() != null ? req.getCurrency().toLowerCase() : "cad";
+			Price newPrice = Price.create(PriceCreateParams.builder().setProduct(id)
+					.setUnitAmount(req.getUnitAmount() * DOLLAR).setCurrency(currency).build());
 			updateBuilder.setDefaultPrice(newPrice.getId());
 		}
 
@@ -236,53 +248,10 @@ public class StripeCatalogService {
 		Product updated = resource.update(updateBuilder.build());
 
 		if (oldPriceId != null) {
-			Price.retrieve(oldPriceId)
-					.update(PriceUpdateParams.builder().setActive(false).build());
+			Price.retrieve(oldPriceId).update(PriceUpdateParams.builder().setActive(false).build());
 		}
 
 		return updated;
-	}
-
-	/**
-	 * creates a checkout session with the selected shipping rate attached to
-	 * it.
-	 *
-	 * @author William Ewanchuk https://github.com/ewanchukwilliam
-	 */
-	public String createCheckoutSession(String email, String selectedShippingID)
-			throws Exception {
-		Cart cart = cartService.getCartItems(userService.getUserFromSession());
-		List<LineItem> lineItems = mapCartItemstoLineItems(cart);
-		// get quoted price from shippo service.
-		GetRateResponse rate = shippoService.getShipmentRateById(selectedShippingID);
-		Shipment shipment = shippoService.getShipmentForRate(rate.rate().get());
-		ShippingQuote quote = toShippingQuote(rate);
-
-		SessionCreateParams params = SessionCreateParams.builder()
-				.setSuccessUrl(FRONTEND_URL + "/" + SUCCESS_URL)
-				.setCancelUrl(FRONTEND_URL)
-				.setCustomerEmail(email)
-				.addAllLineItem(lineItems)
-				.addShippingOption(
-						SessionCreateParams.ShippingOption.builder()
-								.setShippingRateData(
-										ShippingRateData.builder()
-												.setDisplayName(quote.name())
-												.setType(ShippingRateData.Type.FIXED_AMOUNT)
-												.setFixedAmount(
-														ShippingRateData.FixedAmount.builder()
-																.setAmount(quote.amountInCents())
-																.setCurrency(quote.currency())
-																.build())
-												.build())
-								.build())
-				.setMode(SessionCreateParams.Mode.PAYMENT)
-				.build();
-		Session session = Session.create(params, null);
-		orderService.createPendingOrder(session, shipment, quote, cart,
-				selectedShippingID);
-
-		return session.getUrl();
 	}
 
 	/**
@@ -334,9 +303,9 @@ public class StripeCatalogService {
 	}
 
 	/**
-	 * This is the handler for successful checkout events. creates a shipping
-	 * label and genereates the pdf and adds it to the shipping table url for
-	 * the dashboard view
+	 * This is the handler for successful checkout events. creates a shipping label
+	 * and genereates the pdf and adds it to the shipping table url for the
+	 * dashboard view
 	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */

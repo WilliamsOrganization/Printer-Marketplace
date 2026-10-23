@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.seeding;
 
 import org.slf4j.Logger;
@@ -19,91 +20,105 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 public class InventoryItemInitializer {
-    // private static final Long ID = 1L;
-    // private static final Long QUANTITY = 10L;
-    // private static final String CURRENCY = "CAD";
-    // // dollars, not cents - StripeCatalogService multiplies by 100 internally
-    // private static final Long UNIT_AMOUNT = 2L;
-	// TODO: make these local uploads 
-    // private static final List<String> IMAGE_URLS =
-    //     List.of("https://placehold.co/600x400.png");
+	// private static final Long ID = 1L;
+	// private static final Long QUANTITY = 10L;
+	// private static final String CURRENCY = "CAD";
+	// // dollars, not cents - StripeCatalogService multiplies by 100 internally
+	// private static final Long UNIT_AMOUNT = 2L;
+	// TODO: make these local uploads
+	// private static final List<String> IMAGE_URLS =
+	// List.of("https://placehold.co/600x400.png");
 	private static final Logger logger = LoggerFactory.getLogger(InventoryItemInitializer.class);
 
-    @Value("${app.admin.password}") private String password;
-    @Value("${app.admin.email}") private String email;
-    @Value("${app.admin.phone}") private String phone;
+	@Value("${app.admin.password}")
+	private String password;
 
+	@Value("${app.admin.email}")
+	private String email;
+
+	@Value("${app.admin.phone}")
+	private String phone;
 
 	/**
-	 * This is intended for managing inventory item seed data. Use this url to clear out stripe data https://dashboard.stripe.com/test/settings/data
+	 * This is intended for managing inventory item seed data. Use this url to clear
+	 * out stripe data https://dashboard.stripe.com/test/settings/data
+	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-    @Bean
-    ApplicationRunner
-    createDefaultInventory(InventoryItemRepository inventoryItemRepository,
-                           StripeCatalogService stripeCatalogService) {
-        return args -> {
-            if (inventoryItemRepository.count() > 0) {
+	@Bean
+	ApplicationRunner createDefaultInventory(InventoryItemRepository inventoryItemRepository,
+			StripeCatalogService stripeCatalogService) {
+		return args -> {
+			if (inventoryItemRepository.count() > 0) {
 				logger.info("[INIT]: no seed data detected clearing out stripe. populating new data");
 				// ProductCollection products = stripeCatalogService.getAllProducts();
 				// logger.info("[INIT]: ATTEMPTING TO DELETE: {}", products.getData().size());
 				// CleanUnusedProductsAndArchive(stripeCatalogService, products);
 				// TODO: FIX THIS
-				// activateInventoryWithStripeProduct(inventoryItemRepository, stripeCatalogService, products);
-            }else{
+				// activateInventoryWithStripeProduct(inventoryItemRepository,
+				// stripeCatalogService,
+				// products);
+			} else {
 				logger.info("[INIT]: Seed data populated skipping");
 			}
-        };
-    }
-
-    /**
-     * Unimplemented stub for uploading an item's seed images to blob
-     * storage.
-     */
-    // private void seedS3Images(InventoryItem item) {
-    // }
+		};
+	}
 
 	/**
-	 * This method sucks. you cant delete many products at once. You have to delete one at a time. 
-	 * its easy to hit rate limits with large deletes/archives so try to be better about nuking the test data 
-	 * https://stripe.com/docs/api/products/delete
-	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 * Unimplemented stub for uploading an item's seed images to blob storage.
 	 */
-	// private void CleanUnusedProductsAndArchive(StripeCatalogService stripeCatalogService, ProductCollection products) {
-	// 	try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-	// 		products.autoPagingIterable().forEach(product -> {
-	// 			executor.submit(() -> {
-	// 				try {
-	// 					stripeCatalogService.deleteProduct(product.getId());
-	// 				} catch (StripeException e) {
-	// 					logger.error("Failed to delete product: {}", e.getMessage());
-	// 				} finally {
-	// 					logger.info("[INIT]: deleted product: {}", product.getName());
-	// 				}
-	// 			});
-	// 		});
-	// 	}
+	// private void seedS3Images(InventoryItem item) {
 	// }
 
 	/**
-	 * This method is going to transform the ProductCollection our seeded data as it contains in parallel most of what we need then we require very little synchronizing logic. 
+	 * This method sucks. you cant delete many products at once. You have to delete
+	 * one at a time. its easy to hit rate limits with large deletes/archives so try
+	 * to be better about nuking the test data
+	 * https://stripe.com/docs/api/products/delete
+	 * 
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
-	// private void seedInventoryWithStripeProduct(InventoryItemRepository inventoryItemRepository
-	// 	, StripeCatalogService stripeCatalogService, ProductCollection products) {
-	// 	try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-	// 		products.autoPagingIterable().forEach(product -> {
-	// 			executor.submit(() -> {
-	// 				try {
-	// 					stripeCatalogService.deleteProduct(product.getId());
-	// 				} catch (StripeException e) {
-	// 					logger.error("Failed to delete product: {}", e.getMessage());
-	// 				} finally {
-	// 					logger.info("[INIT]: deleted product: {}", product.getName());
-	// 				}
-	// 			});
-	// 		});
-	// 	}
+	// private void CleanUnusedProductsAndArchive(StripeCatalogService
+	// stripeCatalogService,
+	// ProductCollection products) {
+	// try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+	// products.autoPagingIterable().forEach(product -> {
+	// executor.submit(() -> {
+	// try {
+	// stripeCatalogService.deleteProduct(product.getId());
+	// } catch (StripeException e) {
+	// logger.error("Failed to delete product: {}", e.getMessage());
+	// } finally {
+	// logger.info("[INIT]: deleted product: {}", product.getName());
+	// }
+	// });
+	// });
+	// }
+	// }
+
+	/**
+	 * This method is going to transform the ProductCollection our seeded data as it
+	 * contains in parallel most of what we need then we require very little
+	 * synchronizing logic.
+	 * 
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	// private void seedInventoryWithStripeProduct(InventoryItemRepository
+	// inventoryItemRepository
+	// , StripeCatalogService stripeCatalogService, ProductCollection products) {
+	// try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+	// products.autoPagingIterable().forEach(product -> {
+	// executor.submit(() -> {
+	// try {
+	// stripeCatalogService.deleteProduct(product.getId());
+	// } catch (StripeException e) {
+	// logger.error("Failed to delete product: {}", e.getMessage());
+	// } finally {
+	// logger.info("[INIT]: deleted product: {}", product.getName());
+	// }
+	// });
+	// });
+	// }
 	// }
 
 	/**
@@ -111,26 +126,30 @@ public class InventoryItemInitializer {
 	 * concurrently (one virtual thread per product).
 	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
-	 * @param inventoryItemRepository unused - kept for signature symmetry
-	 *                                with the other seeding helpers
-	 * @param stripeCatalogService    used to activate each Stripe product
-	 * @param products                the products to activate
+	 * @param inventoryItemRepository
+	 *            unused - kept for signature symmetry with the other seeding
+	 *            helpers
+	 * @param stripeCatalogService
+	 *            used to activate each Stripe product
+	 * @param products
+	 *            the products to activate
 	 */
-	// private void activateInventoryWithStripeProduct(InventoryItemRepository inventoryItemRepository
-	// 	, StripeCatalogService stripeCatalogService, ProductCollection products) {
-	// 	try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-	// 		products.autoPagingIterable().forEach(product -> {
-	// 			executor.submit(() -> {
-	// 				try {
+	// private void activateInventoryWithStripeProduct(InventoryItemRepository
+	// inventoryItemRepository
+	// , StripeCatalogService stripeCatalogService, ProductCollection products) {
+	// try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+	// products.autoPagingIterable().forEach(product -> {
+	// executor.submit(() -> {
+	// try {
 	//
-	// 					stripeCatalogService.activateProduct(product.getId());
-	// 				} catch (StripeException e) {
-	// 					logger.error("[ERROR]: Failed to activate product: {}", e.getMessage());
-	// 				} finally {
-	// 					logger.info("[INIT]: activated product: {}", product.getName());
-	// 				}
-	// 			});
-	// 		});
-	// 	}
+	// stripeCatalogService.activateProduct(product.getId());
+	// } catch (StripeException e) {
+	// logger.error("[ERROR]: Failed to activate product: {}", e.getMessage());
+	// } finally {
+	// logger.info("[INIT]: activated product: {}", product.getName());
+	// }
+	// });
+	// });
+	// }
 	// }
 }

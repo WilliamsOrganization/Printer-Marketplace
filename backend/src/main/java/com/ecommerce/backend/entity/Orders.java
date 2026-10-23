@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -40,10 +41,17 @@ import lombok.NonNull;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Orders {
 
+	/**
+	 * Order status.
+	 */
+	public enum Status {
+		COMPLETED, EXPIRED, FAILED, PENDING, PAID, RETURNED
+	}
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@CreationTimestamp
 	private LocalDateTime date;
 
@@ -53,7 +61,6 @@ public class Orders {
 	@NonNull
 	private Users user;
 
-	
 	// TODO: consider @OrderBy("id ASC") (or createdAt, if OrderItem gets one) to
 	// guarantee items are fetched in creation order rather than undefined order
 	// TODO: consider @Singular if this collection moves under a @Builder
@@ -70,7 +77,6 @@ public class Orders {
 	private Returns returns;
 
 	private String stripeEmail;
-
 	private String stripeSessionId;
 	// TODO: consider @Email (jakarta.validation)
 	private String email;
@@ -80,6 +86,7 @@ public class Orders {
 	private Long shippingCost;
 	// TODO: consider @PositiveOrZero
 	private Long total;
+
 	private String currency;
 
 	private String cardholderName;
@@ -89,11 +96,4 @@ public class Orders {
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private Status status;
-
-	/**
-	 * Order status.
-	 */
-	public enum Status {
-		COMPLETED, EXPIRED, FAILED, PENDING, PAID, RETURNED
-	}
 }

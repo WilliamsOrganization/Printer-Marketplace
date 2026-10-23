@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import java.util.List;
@@ -30,6 +31,31 @@ public class UserController {
 	private final UserService userService;
 
 	/**
+	 * Creates a new user account.
+	 *
+	 * @param user
+	 *            the user to create
+	 * @return the created user
+	 */
+	@PostMapping
+	public Users create(@RequestBody Users user) {
+		user.setUserRole(Role.CUSTOMER);
+		return repository.save(user);
+	}
+
+	/**
+	 * Deletes the user with the given ID.
+	 *
+	 * @param id
+	 *            the ID of the user to delete
+	 */
+	@DeleteMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public void delete(@PathVariable Long id) {
+		repository.deleteById(id);
+	}
+
+	/**
 	 * Returns all user accounts.
 	 *
 	 * @return a list of all user accounts
@@ -43,7 +69,8 @@ public class UserController {
 	/**
 	 * Returns the user account with the given ID.
 	 *
-	 * @param id the ID of the user to retrieve
+	 * @param id
+	 *            the ID of the user to retrieve
 	 * @return the user with the given ID
 	 */
 	@GetMapping("/{id}")
@@ -53,33 +80,11 @@ public class UserController {
 	}
 
 	/**
-	 * Creates a new user account.
+	 * Updates the current session's user with optional contact info (email/phone),
+	 * for prepopulating checkout on a returning session.
 	 *
-	 * @param user the user to create
-	 * @return the created user
-	 */
-	@PostMapping
-	public Users create(@RequestBody Users user) {
-		user.setUserRole(Role.CUSTOMER);
-		return repository.save(user);
-	}
-
-	/**
-	 * Deletes the user with the given ID.
-	 *
-	 * @param id the ID of the user to delete
-	 */
-	@DeleteMapping("/{id}")
-	@PreAuthorize("hasRole('ADMIN')")
-	public void delete(@PathVariable Long id) {
-		repository.deleteById(id);
-	}
-
-	/**
-	 * Updates the current session's user with optional contact info
-	 * (email/phone), for prepopulating checkout on a returning session.
-	 *
-	 * @param request fields to update; null fields are left unchanged
+	 * @param request
+	 *            fields to update; null fields are left unchanged
 	 * @return the updated user
 	 */
 	@PostMapping("/contact")

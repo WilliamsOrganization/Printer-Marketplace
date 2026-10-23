@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.repository;
 
 import java.time.LocalDateTime;
@@ -17,13 +18,16 @@ public interface SessionRepository extends JpaRepository<Sessions, Long> {
 
 	/**
 	 * Counts sessions that have not yet expired as of the given time.
-	 * @param now the reference time
+	 * 
+	 * @param now
+	 *            the reference time
 	 * @return the count of active sessions
 	 */
 	long countByExpiresAtAfter(LocalDateTime now);
 
 	/**
 	 * Counts the number of distinct users with a session.
+	 * 
 	 * @return the count of unique users
 	 */
 	@Query("SELECT COUNT(DISTINCT s.user.id) FROM Sessions s")
@@ -31,7 +35,9 @@ public interface SessionRepository extends JpaRepository<Sessions, Long> {
 
 	/**
 	 * Finds a session by its token, eagerly fetching the associated user.
-	 * @param token the session token
+	 * 
+	 * @param token
+	 *            the session token
 	 * @return the session, with its user loaded
 	 */
 	@Query("SELECT s FROM Sessions s LEFT JOIN FETCH s.user WHERE s.token= :token")
@@ -39,10 +45,10 @@ public interface SessionRepository extends JpaRepository<Sessions, Long> {
 
 	/**
 	 * Finds a session by its user.
-	 * @param user the user
+	 * 
+	 * @param user
+	 *            the user
 	 * @return the session
 	 */
 	Optional<Sessions> findByUser(Users user);
-
-
 }

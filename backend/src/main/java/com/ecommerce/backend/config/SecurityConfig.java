@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.config;
 
 import org.springframework.context.annotation.Bean;
@@ -23,11 +24,15 @@ public class SecurityConfig {
 
 	/**
 	 * Creates a new SecurityFilterChain.
+	 * 
 	 * @return the new SecurityFilterChain
 	 */
 	@Bean
-	SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
-		http.csrf(csrf->csrf.disable()).sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).addFilterBefore(sessionAuthFilter, UsernamePasswordAuthenticationFilter.class).authorizeHttpRequests(auth-> auth.anyRequest().permitAll());
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.csrf(csrf -> csrf.disable())
+				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.addFilterBefore(sessionAuthFilter, UsernamePasswordAuthenticationFilter.class)
+				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 		return http.build();
 	}
 }

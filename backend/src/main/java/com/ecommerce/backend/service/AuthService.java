@@ -48,34 +48,20 @@ public class AuthService {
 	private final ResendService resendService;
 	private final EmailVerificationRepository emailVerificationRepository;
 
-
 	/**
-	 * Create a new session for a user if one doesn't already exist.
-	 * 
-	 * @return the new session
-	 */
-	public Sessions resolveSession(String token) throws UserNotFoundException {
-		Sessions session = sessionRepository.findbyTokenWithUser(token).orElse(null);
-		if (session == null) {
-			throw new UserNotFoundException("User not found");
-		}
-		return session;
-	}
-
-	/**
-	 * Builds the Spring Security Authentication for a resolved session. If
-	 * the session has no user attached yet, the resulting Authentication
-	 * carries no authorities (equivalent to anonymous) until one is.
+	 * Builds the Spring Security Authentication for a resolved session. If the
+	 * session has no user attached yet, the resulting Authentication carries no
+	 * authorities (equivalent to anonymous) until one is.
 	 *
-	 * @param session the current session
+	 * @param session
+	 *            the current session
 	 * @return the Authentication to set on the SecurityContext
 	 */
 	public Authentication buildAuthentication(Sessions session) {
 		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
 		Users user = session.getUser();
 		if (user != null) {
-			authorities.add(
-					new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name()));
+			authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getUserRole().name()));
 			if (Boolean.TRUE.equals(user.getIsAdmin())) {
 				authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 			}
@@ -84,112 +70,37 @@ public class AuthService {
 	}
 
 	/**
-	 * handleLogin handles the login request and returns the session token
-	 * 
-	 * @param request
-	 * @return 
-	 */
-	public AuthResponse handleLogin(LoginRequestWithProvider request) {
-		Users user = userRepository.findByEmail(request.getEmail())
-				.orElseThrow(
-						() -> new UserNotFoundException("User does not exist"));
-		Sessions session = sessionService.sessionCreateWithProvider(user, request);
-		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
-	}
-
-	/**
-	 * handlePasswordLogin handles the login request and returns the session
-	 * token
+	 * Looks up the user's latest verification code for the given reason and checks
+	 * it against what was submitted, without consuming it.
 	 *
-	 * @param request
-	 * @return
-	 */
-	public AuthResponse handlePasswordLogin(LoginRequestWithProvider request) {
-		Users user = userRepository.findByEmail(request.getEmail())
-				.orElseThrow(
-						() -> new UserNotFoundException("User does not exist"));
-		if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword()))
-			throw new InvalidCredentials("Invalid Email Or Password");
-
-		Sessions session = sessionService.sessionCreateWithProvider(user, request);
-		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
-	}
-
-	/**
-	 * Account Creation Path
-	 * 
-	 * @param request
-	 * @return
-	 */
-	public AuthResponse handleAccountCreation(AccountCreationRequest request) throws ResendException {
-		userRepository.findByEmail(request.getEmail()).ifPresent(email -> {
-			throw new ExistingUserFoundException("User already exists");
-		});
-		Users user = userService.getUserFromSession();
-		userService.registerUserPassword(user, request)	;
-		Sessions newSession = sessionService.refreshUserToken(user);
-		resendService.sendEmailVerification(user, Reason.CREATE_ACCOUNT);
-		return new AuthResponse(newSession.getToken() , user.getId(), user.getEmail(), user.getPhoneNumber());
-	}
-	
-	/**
-	 * Email verification confirmation route for password logins
 	 * @param user
-	 * @param EmailVerificationRequest
-	 * @return AuthResponse
+	 *            the user the code belongs to
+	 * @param reason
+	 *            which flow the code was issued for (CREATE_ACCOUNT,
+	 *            RESET_PASSWORD, ...) - codes are scoped per-reason so a code from
+	 *            one flow can't be used to satisfy another
+	 * @param submittedCode
+	 *            the code the user typed in
+	 * @return the matching, still-valid EmailVerification
 	 */
-	public AuthResponse handleEmailVerification(Users user, EmailVerificationRequest request) {
-		verifyCode(user, Reason.CREATE_ACCOUNT, request.getVerificationString());
-		Sessions newSession = sessionService.refreshUserToken(user);
-		return new AuthResponse(newSession.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
-	}
-
-	/**
-	 * Reset the password if the user forgot
-	 * @param Users
-	 * @param ResetPasswordRequest
-	 * @return AuthResponse
-	 */
-	public void sendResetPasswordEmail(Users user, ResetPasswordRequest request) throws ResendException {
-		if (user.getUserRole() != Users.Role.REGISTERED) {
-			return;
+	private EmailVerification checkCode(Users user, Reason reason, String submittedCode) {
+		EmailVerification emailCode = emailVerificationRepository.findFirstByUserAndReasonOrderByCreatedAtDesc(user,
+				reason);
+		if (emailCode == null || !emailCode.getCode().equals(submittedCode)
+				|| emailCode.getExpiryDate().isBefore(LocalDateTime.now())) {
+			throw new InvalidCredentials("Invalid or expired verification code");
 		}
-		resendService.sendEmailVerification(user, Reason.RESET_PASSWORD);
+		return emailCode;
 	}
 
 	/**
-	 * Confirms a password reset: checks the code from the reset email
-	 * against the user identified by the email in the request (there's no
-	 * session to fall back on here - the user may be on a device that's
-	 * never had one), then sets the new password and logs them in.
+	 * Confirms a password reset: checks the code from the reset email against the
+	 * user identified by the email in the request (there's no session to fall back
+	 * on here - the user may be on a device that's never had one), then sets the
+	 * new password and logs them in.
 	 *
-	 * @param request the email, code, and new password
-	 * @return AuthResponse
-	 */
-	/**
-	 * Checks whether a reset-password code is still valid, without
-	 * consuming it, so the confirm form can reject an expired link before
-	 * showing the password fields.
-	 *
-	 * @param email the email from the reset link
-	 * @param code the verification code from the reset link
-	 */
-	public void validateResetCode(String email, String code) {
-		Users user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
-		if (user.getUserRole() != Users.Role.REGISTERED) {
-			throw new UserNotFoundException("User does not exist");
-		}
-		checkCode(user, Reason.RESET_PASSWORD, code);
-	}
-
-	/**
-	 * Confirms a password reset: checks the code from the reset email
-	 * against the user identified by the email in the request (there's no
-	 * session to fall back on here - the user may be on a device that's
-	 * never had one), then sets the new password and logs them in.
-	 *
-	 * @param request the email, code, and new password
+	 * @param request
+	 *            the email, code, and new password
 	 * @return AuthResponse
 	 */
 	public AuthResponse confirmResetPassword(ResetPasswordConfirmRequest request) {
@@ -205,41 +116,136 @@ public class AuthService {
 	}
 
 	/**
-	 * Looks up the user's latest verification code for the given reason and
-	 * checks it against what was submitted, without consuming it.
+	 * Account Creation Path
 	 *
-	 * @param user the user the code belongs to
-	 * @param reason which flow the code was issued for (CREATE_ACCOUNT,
-	 *               RESET_PASSWORD, ...) - codes are scoped per-reason so a
-	 *               code from one flow can't be used to satisfy another
-	 * @param submittedCode the code the user typed in
-	 * @return the matching, still-valid EmailVerification
+	 * @param request
+	 * @return
 	 */
-	private EmailVerification checkCode(Users user, Reason reason, String submittedCode) {
-		EmailVerification emailCode = emailVerificationRepository
-				.findFirstByUserAndReasonOrderByCreatedAtDesc(user, reason);
-		if (emailCode == null
-				|| !emailCode.getCode().equals(submittedCode)
-				|| emailCode.getExpiryDate().isBefore(LocalDateTime.now())) {
-			throw new InvalidCredentials("Invalid or expired verification code");
-		}
-		return emailCode;
+	public AuthResponse handleAccountCreation(AccountCreationRequest request) throws ResendException {
+		userRepository.findByEmail(request.getEmail()).ifPresent(email -> {
+			throw new ExistingUserFoundException("User already exists");
+		});
+		Users user = userService.getUserFromSession();
+		userService.registerUserPassword(user, request);
+		Sessions newSession = sessionService.refreshUserToken(user);
+		resendService.sendEmailVerification(user, Reason.CREATE_ACCOUNT);
+		return new AuthResponse(newSession.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
 	}
 
 	/**
-	 * Checks the user's latest verification code for the given reason
-	 * against what was submitted, rejecting it if it's wrong or expired.
-	 * On success, the code is burned (its expiry is pulled forward to now)
-	 * so it can't be replayed against a second request.
+	 * Email verification confirmation route for password logins
+	 * 
+	 * @param user
+	 * @param EmailVerificationRequest
+	 * @return AuthResponse
+	 */
+	public AuthResponse handleEmailVerification(Users user, EmailVerificationRequest request) {
+		verifyCode(user, Reason.CREATE_ACCOUNT, request.getVerificationString());
+		Sessions newSession = sessionService.refreshUserToken(user);
+		return new AuthResponse(newSession.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
+	}
+
+	/**
+	 * handleLogin handles the login request and returns the session token
 	 *
-	 * @param user the user the code belongs to
-	 * @param reason which flow the code was issued for
-	 * @param submittedCode the code the user typed in
+	 * @param request
+	 * @return
+	 */
+	public AuthResponse handleLogin(LoginRequestWithProvider request) {
+		Users user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
+		Sessions session = sessionService.sessionCreateWithProvider(user, request);
+		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
+	}
+
+	/**
+	 * handlePasswordLogin handles the login request and returns the session token
+	 *
+	 * @param request
+	 * @return
+	 */
+	public AuthResponse handlePasswordLogin(LoginRequestWithProvider request) {
+		Users user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
+		if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword()))
+			throw new InvalidCredentials("Invalid Email Or Password");
+
+		Sessions session = sessionService.sessionCreateWithProvider(user, request);
+		return new AuthResponse(session.getToken(), user.getId(), user.getEmail(), user.getPhoneNumber());
+	}
+
+	/**
+	 * Create a new session for a user if one doesn't already exist.
+	 *
+	 * @return the new session
+	 */
+	public Sessions resolveSession(String token) throws UserNotFoundException {
+		Sessions session = sessionRepository.findbyTokenWithUser(token).orElse(null);
+		if (session == null) {
+			throw new UserNotFoundException("User not found");
+		}
+		return session;
+	}
+
+	/**
+	 * Reset the password if the user forgot
+	 * 
+	 * @param Users
+	 * @param ResetPasswordRequest
+	 * @return AuthResponse
+	 */
+	public void sendResetPasswordEmail(Users user, ResetPasswordRequest request) throws ResendException {
+		if (user.getUserRole() != Users.Role.REGISTERED) {
+			return;
+		}
+		resendService.sendEmailVerification(user, Reason.RESET_PASSWORD);
+	}
+
+	/**
+	 * Confirms a password reset: checks the code from the reset email against the
+	 * user identified by the email in the request (there's no session to fall back
+	 * on here - the user may be on a device that's never had one), then sets the
+	 * new password and logs them in.
+	 *
+	 * @param request
+	 *            the email, code, and new password
+	 * @return AuthResponse
+	 */
+	/**
+	 * Checks whether a reset-password code is still valid, without consuming it, so
+	 * the confirm form can reject an expired link before showing the password
+	 * fields.
+	 *
+	 * @param email
+	 *            the email from the reset link
+	 * @param code
+	 *            the verification code from the reset link
+	 */
+	public void validateResetCode(String email, String code) {
+		Users user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
+		if (user.getUserRole() != Users.Role.REGISTERED) {
+			throw new UserNotFoundException("User does not exist");
+		}
+		checkCode(user, Reason.RESET_PASSWORD, code);
+	}
+
+	/**
+	 * Checks the user's latest verification code for the given reason against what
+	 * was submitted, rejecting it if it's wrong or expired. On success, the code is
+	 * burned (its expiry is pulled forward to now) so it can't be replayed against
+	 * a second request.
+	 *
+	 * @param user
+	 *            the user the code belongs to
+	 * @param reason
+	 *            which flow the code was issued for
+	 * @param submittedCode
+	 *            the code the user typed in
 	 */
 	private void verifyCode(Users user, Reason reason, String submittedCode) {
 		EmailVerification emailCode = checkCode(user, reason, submittedCode);
 		emailCode.setExpiryDate(LocalDateTime.now());
 		emailVerificationRepository.save(emailCode);
 	}
-
 }

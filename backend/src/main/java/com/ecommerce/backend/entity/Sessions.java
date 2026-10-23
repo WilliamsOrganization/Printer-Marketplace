@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -23,13 +24,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 /**
  * Session management so far only intended for Amy's main route.
  */
 @Data
 @Entity
-@Table(name = "session", uniqueConstraints = @UniqueConstraint(columnNames="user_id"))
+@Table(name = "session", uniqueConstraints = @UniqueConstraint(columnNames = "user_id"))
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

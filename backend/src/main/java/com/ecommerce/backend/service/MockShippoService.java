@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import java.net.URI;
@@ -21,10 +22,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Test-only tooling for exercising the real Shippo tracking webhook
- * locally, without waiting on a real carrier or standing up a tunnel for
- * Shippo to actually reach this app. Kept separate from ShippingService so
- * none of this test-only machinery is mixed in with real shipping logic.
+ * Test-only tooling for exercising the real Shippo tracking webhook locally,
+ * without waiting on a real carrier or standing up a tunnel for Shippo to
+ * actually reach this app. Kept separate from ShippingService so none of this
+ * test-only machinery is mixed in with real shipping logic.
  */
 @Slf4j
 @Service
@@ -32,14 +33,14 @@ import lombok.extern.slf4j.Slf4j;
 public class MockShippoService {
 
 	public static final int notFound = 404;
-	private static final List<TrackingStatusEnum> MOCK_TRACKING_CYCLE =
-			List.of(TrackingStatusEnum.PRE_TRANSIT, TrackingStatusEnum.TRANSIT, TrackingStatusEnum.DELIVERED);
+	private static final List<TrackingStatusEnum> MOCK_TRACKING_CYCLE = List.of(TrackingStatusEnum.PRE_TRANSIT,
+			TrackingStatusEnum.TRANSIT, TrackingStatusEnum.DELIVERED);
 
 	// A real, reliably-geocodable stand-in "in transit" waypoint - there's no
 	// route/interpolation API involved, this is just something plausible to
 	// exercise the real geocoding path with for the TRANSIT mock stage.
-	private static final ShippingAddress MOCK_TRANSIT_WAYPOINT =
-			ShippingAddress.builder().city("Winnipeg").state("MB").country("CA").build();
+	private static final ShippingAddress MOCK_TRANSIT_WAYPOINT = ShippingAddress.builder().city("Winnipeg").state("MB")
+			.country("CA").build();
 
 	private final ShippingRepository shippingRepository;
 	private final ShippingService shippingService;
@@ -47,20 +48,21 @@ public class MockShippoService {
 
 	@Value("${frontend.url}")
 	private String FRONTEND_URL;
+
 	@Value("${server.port:8080}")
 	private int serverPort;
 
-
 	/**
-	 * Advances a shipment one step through PRE_TRANSIT ("shipping") ->
-	 * TRANSIT -> DELIVERED, looping back to PRE_TRANSIT, each time it's
-	 * called. Rather than updating the row directly, this builds a real
-	 * track_updated-shaped payload (using the shipment's real tracking
-	 * number) and POSTs it to this app's own /server/shipping/webhook over
-	 * local HTTP - so the actual webhook endpoint (JSON deserialization
-	 * included) gets exercised, not just its handling logic in isolation.
+	 * Advances a shipment one step through PRE_TRANSIT ("shipping") -> TRANSIT ->
+	 * DELIVERED, looping back to PRE_TRANSIT, each time it's called. Rather than
+	 * updating the row directly, this builds a real track_updated-shaped payload
+	 * (using the shipment's real tracking number) and POSTs it to this app's own
+	 * /server/shipping/webhook over local HTTP - so the actual webhook endpoint
+	 * (JSON deserialization included) gets exercised, not just its handling logic
+	 * in isolation.
 	 *
-	 * @param order the order whose (already-purchased) shipment to advance
+	 * @param order
+	 *            the order whose (already-purchased) shipment to advance
 	 * @return the updated shipment
 	 */
 	public Shipping advanceTracking(Orders order) throws Exception {
@@ -70,12 +72,9 @@ public class MockShippoService {
 					"Order " + order.getId() + " has no tracking number yet - create a label first");
 		}
 
-		int currentIndex = MOCK_TRACKING_CYCLE.stream()
-				.filter(stage -> shippingService.mapTrackingStatus(stage)
-						.map(s -> s == shipping.getStatus()).orElse(false))
-				.findFirst()
-				.map(MOCK_TRACKING_CYCLE::indexOf)
-				.orElse(-1);
+		int currentIndex = MOCK_TRACKING_CYCLE.stream().filter(
+				stage -> shippingService.mapTrackingStatus(stage).map(s -> s == shipping.getStatus()).orElse(false))
+				.findFirst().map(MOCK_TRACKING_CYCLE::indexOf).orElse(-1);
 		TrackingStatusEnum next = MOCK_TRACKING_CYCLE.get((currentIndex + 1) % MOCK_TRACKING_CYCLE.size());
 
 		ShippingAddress location = switch (next) {
@@ -107,11 +106,8 @@ public class MockShippoService {
 				""".formatted(shipping.getTrackingNumber(), UUID.randomUUID(), now, now, next.value(),
 				location.getCity(), location.getState(), location.getCountry());
 
-		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create(FRONTEND_URL + "/server/shipping/webhook"))
-				.header("Content-Type", "application/json")
-				.POST(HttpRequest.BodyPublishers.ofString(payload))
-				.build();
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(FRONTEND_URL + "/server/shipping/webhook"))
+				.header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(payload)).build();
 		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 		if (response.statusCode() >= notFound) {
 			throw new IllegalStateException(

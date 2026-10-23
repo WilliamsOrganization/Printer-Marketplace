@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -19,14 +20,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * This is the controller for stripe checkout events. 
- * to initialize this endpoitn you need stripe-cli installed and listening to your local server. 
+ * This is the controller for stripe checkout events. to initialize this
+ * endpoitn you need stripe-cli installed and listening to your local server.
  * docs: https://stripe.com/docs/webhooks/signatures
  *
  * stripe login
- * 
+ *
  * stripe listen --forward-to localhost:8080/stripe/webhook
- * 
+ *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
 @Slf4j
@@ -40,20 +41,32 @@ public class StripeController {
 	private String webhookSecret;
 
 	/**
-	 * This is the webhook endpoint for stripe checkout events. 
-	 * to initialize this endpoitn you need stripe-cli installed and listening to your local server. 
+	 * getObject() can come back empty when the webhook's api_version doesn't match
+	 * the one stripe-java is pinned to (e.g. a sandbox account on a newer API
+	 * version) - deserializeUnsafe() ignores that mismatch and deserializes the
+	 * payload regardless.
+	 */
+	private Session deserializeSession(Event event) throws EventDataObjectDeserializationException {
+		return (Session) event.getDataObjectDeserializer().deserializeUnsafe();
+	}
+
+	/**
+	 * This is the webhook endpoint for stripe checkout events. to initialize this
+	 * endpoitn you need stripe-cli installed and listening to your local server.
 	 *
-	 * stripe listen --forward-to localhost:8080/stripe/webhook
-     * BUG: this webhook needs to be exposed to the internet so the orders can process and return emails. 
-     * BUG: nginx needs to allow passthrough events from the actual stripe service. so port 8080 needs to be open to nginx on protected routes no matter what preferrably with route protections. 
-     * BUG: thats why your confirmation states are not sending or are exposed anywhere. you could just expose with the local ports for now since this is a testing environment
-	 * 
+	 * stripe listen --forward-to localhost:8080/stripe/webhook BUG: this webhook
+	 * needs to be exposed to the internet so the orders can process and return
+	 * emails. BUG: nginx needs to allow passthrough events from the actual stripe
+	 * service. so port 8080 needs to be open to nginx on protected routes no matter
+	 * what preferrably with route protections. BUG: thats why your confirmation
+	 * states are not sending or are exposed anywhere. you could just expose with
+	 * the local ports for now since this is a testing environment
+	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
 	@PostMapping("/webhook")
 	public ResponseEntity<Void> webhook(@RequestBody String payload,
-			@RequestHeader("Stripe-Signature") String sigHeader)
-			throws SignatureVerificationException {
+			@RequestHeader("Stripe-Signature") String sigHeader) throws SignatureVerificationException {
 		Event event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
 		// Stripe forwards every event type for a transaction (payment_intent.*,
 		// charge.*, checkout.session.*, ...), not just the ones we act on - only
@@ -61,37 +74,27 @@ public class StripeController {
 		// must happen inside those cases, not unconditionally up front.
 		try {
 			switch (event.getType()) {
-			case "checkout.session.completed":
-				stripeCatalogService.handleCompletedCheckoutEvent(deserializeSession(event));
-				break;
-			case "checkout.session.expired":
-				stripeCatalogService.handleExpiredCheckoutEvent(deserializeSession(event));
-				break;
-			case "checkout.session.async_payment_failed":
-				stripeCatalogService.handleFailedCheckoutEvent(deserializeSession(event));
-				break;
-			case "checkout.session.async_payment_succeeded":
-				stripeCatalogService.handleSuccessCheckoutEvent(deserializeSession(event));
-				break;
-			default:
-				log.debug("Ignoring event type: {}", event.getType());
-				break;
+				case "checkout.session.completed" :
+					stripeCatalogService.handleCompletedCheckoutEvent(deserializeSession(event));
+					break;
+				case "checkout.session.expired" :
+					stripeCatalogService.handleExpiredCheckoutEvent(deserializeSession(event));
+					break;
+				case "checkout.session.async_payment_failed" :
+					stripeCatalogService.handleFailedCheckoutEvent(deserializeSession(event));
+					break;
+				case "checkout.session.async_payment_succeeded" :
+					stripeCatalogService.handleSuccessCheckoutEvent(deserializeSession(event));
+					break;
+				default :
+					log.debug("Ignoring event type: {}", event.getType());
+					break;
 			}
 		} catch (EventDataObjectDeserializationException e) {
-			log.error("Failed to deserialize event {} ({}) data object: {}",
-				event.getId(), event.getType(), e.getMessage());
+			log.error("Failed to deserialize event {} ({}) data object: {}", event.getId(), event.getType(),
+					e.getMessage());
 			return ResponseEntity.badRequest().build();
 		}
 		return ResponseEntity.ok().build();
-	}
-
-	/**
-	 * getObject() can come back empty when the webhook's api_version doesn't
-	 * match the one stripe-java is pinned to (e.g. a sandbox account on a
-	 * newer API version) - deserializeUnsafe() ignores that mismatch and
-	 * deserializes the payload regardless.
-	 */
-	private Session deserializeSession(Event event) throws EventDataObjectDeserializationException {
-		return (Session) event.getDataObjectDeserializer().deserializeUnsafe();
 	}
 }

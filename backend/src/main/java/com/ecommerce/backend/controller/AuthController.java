@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,25 @@ public class AuthController {
 	private final UserRepository userRepository;
 
 	/**
+	 * Confirms a password reset using the code from the reset email and sets the
+	 * new password.
+	 */
+	@PostMapping("/reset-password/confirm")
+	public AuthResponse confirmReset(@RequestBody ResetPasswordConfirmRequest request) {
+		return authService.confirmResetPassword(request);
+	}
+
+	/**
+	 * Creates a new account with a password
+	 *
+	 * @param AccountCreationRequest
+	 */
+	@PostMapping("/create")
+	public AuthResponse Create(@RequestBody AccountCreationRequest request) throws ResendException {
+		return authService.handleAccountCreation(request);
+	}
+
+	/**
 	 * Handles logins and password logins
 	 */
 	@PostMapping("/login")
@@ -47,23 +67,14 @@ public class AuthController {
 	}
 
 	/**
-	 * Verifies that the user is an admin
+	 * Checks whether a reset-password link is still valid, without consuming the
+	 * code, so the frontend can reject an expired link before showing the
+	 * new-password fields.
 	 */
-	@GetMapping("/verify-admin")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Void> verifyAdmin() {
+	@GetMapping("/reset-password/validate")
+	public ResponseEntity<Void> validateReset(@RequestParam String email, @RequestParam String code) {
+		authService.validateResetCode(email, code);
 		return ResponseEntity.ok().build();
-	}
-
-	/**
-	 * Creates a new account with a password
-	 *
-	 * @param AccountCreationRequest
-	 */
-	@PostMapping("/create")
-	public AuthResponse Create(@RequestBody AccountCreationRequest request)
-			throws ResendException {
-		return authService.handleAccountCreation(request);
 	}
 
 	/**
@@ -82,27 +93,17 @@ public class AuthController {
 	 */
 	@PostMapping("/reset-password")
 	public void verify(@RequestBody ResetPasswordRequest request) throws ResendException {
-		Users user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new UserNotFoundException("User does not exist"));
+		Users user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> new UserNotFoundException("User does not exist"));
 		authService.sendResetPasswordEmail(user, request);
 	}
 
 	/**
-	 * Confirms a password reset using the code from the reset email and
-	 * sets the new password.
+	 * Verifies that the user is an admin
 	 */
-	@PostMapping("/reset-password/confirm")
-	public AuthResponse confirmReset(@RequestBody ResetPasswordConfirmRequest request) {
-		return authService.confirmResetPassword(request);
-	}
-
-	/**
-	 * Checks whether a reset-password link is still valid, without
-	 * consuming the code, so the frontend can reject an expired link
-	 * before showing the new-password fields.
-	 */
-	@GetMapping("/reset-password/validate")
-	public ResponseEntity<Void> validateReset(@RequestParam String email, @RequestParam String code) {
-		authService.validateResetCode(email, code);
+	@GetMapping("/verify-admin")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> verifyAdmin() {
 		return ResponseEntity.ok().build();
 	}
 }

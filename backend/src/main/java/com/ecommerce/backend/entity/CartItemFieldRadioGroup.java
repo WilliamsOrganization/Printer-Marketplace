@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.List;
@@ -31,18 +32,16 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("radio_group")
 public class CartItemFieldRadioGroup extends CartItemField {
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = "cart_radio_group_options",
-        joinColumns = @JoinColumn(name = "radio_group_id"),
-        inverseJoinColumns = @JoinColumn(name = "options_id")
-    )
-    @NonNull @NotNull private List<CartItemFieldOptionsDropdown> options;
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "cart_radio_group_options", joinColumns = @JoinColumn(name = "radio_group_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@NonNull
+	@NotNull
+	private List<CartItemFieldOptionsDropdown> options;
 
-    /**
-     * Returns the selected options for this field.
-     */
-    public List<CartItemFieldOptionsDropdown> getOptions(){
-        return options;
-    };
+	/**
+	 * Returns the selected options for this field.
+	 */
+	public List<CartItemFieldOptionsDropdown> getOptions() {
+		return options;
+	};
 }

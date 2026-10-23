@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.repository;
 
 import java.util.List;
@@ -9,31 +10,40 @@ import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.InventoryItem;
 
-
 /**
  * Data access layer for CartItem entities.
  */
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 	/**
+	 * Deletes a cart item by its id, scoped to the given cart.
+	 * 
+	 * @param id
+	 *            the cart item id
+	 * @param cart
+	 *            the cart the item must belong to
+	 */
+	void deleteByIdAndCart(Long id, Cart cart);
+
+	/**
 	 * Finds all items in a cart.
-	 * @param cart the cart
+	 * 
+	 * @param cart
+	 *            the cart
 	 * @return the cart's items
 	 */
 	List<CartItem> findByCart(Cart cart);
 
 	/**
-	 * Deletes a cart item by its id, scoped to the given cart.
-	 * @param id the cart item id
-	 * @param cart the cart the item must belong to
-	 */
-	void deleteByIdAndCart(Long id, Cart cart);
-
-	/**
 	 * Finds the cart item for a given cart, inventory item and configuration.
-	 * @param cart the cart
-	 * @param inventoryItem the inventory item
-	 * @param configurationKey the canonical form of the selected options
+	 * 
+	 * @param cart
+	 *            the cart
+	 * @param inventoryItem
+	 *            the inventory item
+	 * @param configurationKey
+	 *            the canonical form of the selected options
 	 * @return the cart item, if this exact configuration is already in the cart
 	 */
-	Optional<CartItem> findByCartAndItemAndConfigurationKey(Cart cart, InventoryItem inventoryItem, String configurationKey);
+	Optional<CartItem> findByCartAndItemAndConfigurationKey(Cart cart, InventoryItem inventoryItem,
+			String configurationKey);
 }

@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.net.URL;
@@ -32,19 +33,20 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("color_picker")
 public class InventoryItemFieldColorPicker extends InventoryItemField {
 
-    @NonNull
-    @NotNull
-    private URL stlUrl;
+	@NonNull
+	@NotNull
+	private URL stlUrl;
 
-    @OneToMany(mappedBy = "inventoryItemField", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    @NonNull @NotNull private List<InventoryItemFieldOptionsStlColor> options;
+	@OneToMany(mappedBy = "inventoryItemField", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonManagedReference
+	@NonNull
+	@NotNull
+	private List<InventoryItemFieldOptionsStlColor> options;
 
-    /**
-     * Returns the options for this field.
-     */
-    public List<InventoryItemFieldOptionsStlColor> getOptions(){
-        return options;
-    };
-
+	/**
+	 * Returns the options for this field.
+	 */
+	public List<InventoryItemFieldOptionsStlColor> getOptions() {
+		return options;
+	};
 }

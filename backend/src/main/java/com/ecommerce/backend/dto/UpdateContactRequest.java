@@ -1,11 +1,10 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 /**
- * Partial update for a user's contact info - either field may be null,
- * meaning "leave unchanged."
+ * Partial update for a user's contact info - either field may be null, meaning
+ * "leave unchanged."
  */
 @lombok.Builder
-public record UpdateContactRequest(
-	String email,
-	String phoneNumber
-) {}
+public record UpdateContactRequest(String email, String phoneNumber) {
+}

@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.repository;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import com.ecommerce.backend.entity.Users;
 public interface ChatRepository extends JpaRepository<Chat, Long> {
 	/**
 	 * Finds all chats for a given admin
+	 * 
 	 * @param adminId
 	 * @return
 	 */

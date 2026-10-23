@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,63 +28,23 @@ public class UserService {
 	private final PasswordEncoder passwordEncoder;
 
 	/**
-	 * Returns the current request's user, lazily creating and attaching one
-	 * to the current session if it doesn't have one yet. SessionAuthFilter
-	 * guarantees a session is always present; it does not guarantee that
-	 * session already has a user (see Sessions.user's nullability).
+	 * Returns the current request's user, lazily creating and attaching one to the
+	 * current session if it doesn't have one yet. SessionAuthFilter guarantees a
+	 * session is always present; it does not guarantee that session already has a
+	 * user (see Sessions.user's nullability).
 	 *
 	 * @return
 	 */
 	public Users getUserFromSession() {
-		Sessions session = (Sessions) SecurityContextHolder.getContext()
-				.getAuthentication()
-				.getPrincipal();
+		Sessions session = (Sessions) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		if (session.getUser() != null) {
-			log.info(
-					"getUserFromSession: session {} (token={}) already has user {}",
-					session.getId(), session.getToken(), session.getUser().getId());
+			log.info("getUserFromSession: session {} (token={}) already has user {}", session.getId(),
+					session.getToken(), session.getUser().getId());
 			return session.getUser();
 		}
-		log.info("getUserFromSession: session {} (token={}) has no user yet, " +
-				"creating one",
-				session.getId(), session.getToken());
+		log.info("getUserFromSession: session {} (token={}) has no user yet, " + "creating one", session.getId(),
+				session.getToken());
 		return sessionService.attachNewUserToSession(session);
-	}
-
-	/**
-	 * Updates the current session's user with optional contact info. Null
-	 * fields on the request are left unchanged, so a partial update (email
-	 * only, or phone only) doesn't wipe the other field.
-	 *
-	 * @param user    the user to update
-	 * @param request fields to update; null fields are left unchanged
-	 */
-	public Users updateContactInfo(Users user, UpdateContactRequest request)
-			throws ExistingUserFoundException {
-		if (request.email() != null &&
-				!request.email().equals(user.getEmail())) {
-			if (user.getUserRole() != Users.Role.CUSTOMER) {
-				throw new ForbiddenException(
-						"Registered accounts must change their email through the verified email-change flow");
-			}
-			userRepository.findByEmail(request.email()).ifPresent(existing -> {
-				throw new ExistingUserFoundException(
-						"Email " + request.email() + " is already in use");
-			});
-			user.setEmail(request.email());
-		}
-		if (request.phoneNumber() != null &&
-				!request.phoneNumber().equals(user.getPhoneNumber())) {
-			userRepository.findByPhoneNumber(request.phoneNumber())
-					.ifPresent(existing -> {
-						throw new ExistingUserFoundException(
-								"Phone number " + request.phoneNumber() +
-										" is already in use");
-					});
-			user.setPhoneNumber(request.phoneNumber());
-		}
-		userRepository.save(user);
-		return user;
 	}
 
 	/**
@@ -111,15 +72,47 @@ public class UserService {
 	}
 
 	/**
-	 * Sets a new password for the user, once the caller has already
-	 * verified ownership of the account (see AuthService.verifyCode).
+	 * Sets a new password for the user, once the caller has already verified
+	 * ownership of the account (see AuthService.verifyCode).
 	 *
-	 * @param user the user to update
-	 * @param rawPassword the new password, not yet hashed
+	 * @param user
+	 *            the user to update
+	 * @param rawPassword
+	 *            the new password, not yet hashed
 	 */
 	public Users resetPassword(Users user, String rawPassword) {
 		user.setPassword(passwordEncoder.encode(rawPassword));
 		return userRepository.save(user);
 	}
 
+	/**
+	 * Updates the current session's user with optional contact info. Null fields on
+	 * the request are left unchanged, so a partial update (email only, or phone
+	 * only) doesn't wipe the other field.
+	 *
+	 * @param user
+	 *            the user to update
+	 * @param request
+	 *            fields to update; null fields are left unchanged
+	 */
+	public Users updateContactInfo(Users user, UpdateContactRequest request) throws ExistingUserFoundException {
+		if (request.email() != null && !request.email().equals(user.getEmail())) {
+			if (user.getUserRole() != Users.Role.CUSTOMER) {
+				throw new ForbiddenException(
+						"Registered accounts must change their email through the verified" + " email-change flow");
+			}
+			userRepository.findByEmail(request.email()).ifPresent(existing -> {
+				throw new ExistingUserFoundException("Email " + request.email() + " is already in use");
+			});
+			user.setEmail(request.email());
+		}
+		if (request.phoneNumber() != null && !request.phoneNumber().equals(user.getPhoneNumber())) {
+			userRepository.findByPhoneNumber(request.phoneNumber()).ifPresent(existing -> {
+				throw new ExistingUserFoundException("Phone number " + request.phoneNumber() + " is already in use");
+			});
+			user.setPhoneNumber(request.phoneNumber());
+		}
+		userRepository.save(user);
+		return user;
+	}
 }

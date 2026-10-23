@@ -1,11 +1,10 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
-import com.ecommerce.backend.entity.InventoryItemFieldOptionsDropdown;
 import java.util.List;
 
-public record InventoryItemFieldChecklistBody(
-	String label, 
-	String description,
-	List<InventoryItemFieldOptionsDropdown> options
-) {
+import com.ecommerce.backend.entity.InventoryItemFieldOptionsDropdown;
+
+public record InventoryItemFieldChecklistBody(String label, String description,
+		List<InventoryItemFieldOptionsDropdown> options) {
 }

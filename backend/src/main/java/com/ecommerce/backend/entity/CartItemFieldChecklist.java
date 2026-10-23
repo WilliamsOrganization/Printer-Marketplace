@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.List;
@@ -18,8 +19,8 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * CartItemFieldChecklist holds the options a customer selected for a
- * checklist field on an item in their cart.
+ * CartItemFieldChecklist holds the options a customer selected for a checklist
+ * field on an item in their cart.
  *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
@@ -31,18 +32,16 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("checklist")
 public class CartItemFieldChecklist extends CartItemField {
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = "cart_checklist_options",
-        joinColumns = @JoinColumn(name = "checklist_id"),
-        inverseJoinColumns = @JoinColumn(name = "options_id")
-    )
-    @NonNull @NotNull private List<CartItemFieldOptionsDropdown> options;
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "cart_checklist_options", joinColumns = @JoinColumn(name = "checklist_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@NonNull
+	@NotNull
+	private List<CartItemFieldOptionsDropdown> options;
 
-    /**
-     * Returns the selected options for this field.
-     */
-    public List<CartItemFieldOptionsDropdown> getOptions(){
-        return options;
-    };
+	/**
+	 * Returns the selected options for this field.
+	 */
+	public List<CartItemFieldOptionsDropdown> getOptions() {
+		return options;
+	};
 }

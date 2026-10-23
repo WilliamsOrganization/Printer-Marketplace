@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.net.URL;
@@ -27,23 +28,20 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("stl_color")
 public class OrderItemFieldOptionsStlColor extends OrderItemFieldOptions {
 
-    @NonNull
-    @NotNull
-    private InventoryItemFieldOptionsStlColor.Color selectedColor;
+	/**
+	 * Copies a cart color option into the order, including the STL file and color
+	 * to print.
+	 */
+	public static OrderItemFieldOptionsStlColor from(CartItemFieldOptionsStlColor source) {
+		return builder().label(source.getLabel()).price(source.getPrice()).selectedColor(source.getSelectedColor())
+				.stlUrl(source.getStlUrl()).build();
+	}
 
-    @NonNull
-    @NotNull
-    private URL stlUrl;
+	@NonNull
+	@NotNull
+	private InventoryItemFieldOptionsStlColor.Color selectedColor;
 
-    /**
-     * Copies a cart color option into the order, including the STL file and color to print.
-     */
-    public static OrderItemFieldOptionsStlColor from(CartItemFieldOptionsStlColor source) {
-        return builder()
-                .label(source.getLabel())
-                .price(source.getPrice())
-                .selectedColor(source.getSelectedColor())
-                .stlUrl(source.getStlUrl())
-                .build();
-    }
+	@NonNull
+	@NotNull
+	private URL stlUrl;
 }

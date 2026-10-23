@@ -33,42 +33,33 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OrderController {
 	/**
-	 * Reduces a Stripe checkout Session down to the fields the frontend
-	 * needs, since the raw Session isn't Jackson-serializable (it carries
-	 * internal SDK types like LiveStripeResponseGetter).
+	 * Reduces a Stripe checkout Session down to the fields the frontend needs,
+	 * since the raw Session isn't Jackson-serializable (it carries internal SDK
+	 * types like LiveStripeResponseGetter).
 	 *
-	 * @param session the Stripe checkout session
+	 * @param session
+	 *            the Stripe checkout session
 	 * @return the summarized fields
 	 */
 	private static CheckoutSummary toCheckoutSummary(Session session) {
-		String customerEmail = session.getCustomerDetails() != null
-				? session.getCustomerDetails().getEmail()
-				: null;
-		return new CheckoutSummary(
-				session.getStatus(),
-				customerEmail,
-				session.getAmountTotal(),
-				session.getCurrency());
+		String customerEmail = session.getCustomerDetails() != null ? session.getCustomerDetails().getEmail() : null;
+		return new CheckoutSummary(session.getStatus(), customerEmail, session.getAmountTotal(), session.getCurrency());
 	}
+
 	private final UserService userService;
 	private final StripeCatalogService stripeCatalogService;
 
 	private final OrderRepository orderRepository;
 
 	/**
-	 * Get orders for the current user.
-	 * 
-	 * @return
+	 * Get every order in the system, for the admin dashboard.
+	 *
+	 * @return all orders
 	 */
-	@GetMapping("/{orderId}")
-	public OrderResponse getSingleOrder(@PathVariable String orderId) throws StripeException {
-		Users user = userService.getUserFromSession();
-		Orders order = orderRepository.findOrderByStripeSessionId(orderId).orElseThrow();
-		if (!order.getUser().getId().equals(user.getId())) {
-			throw new UserNotFoundException("User not found");
-		}
-		Session session = stripeCatalogService.getCheckoutSession(order.getStripeSessionId());
-		return new OrderResponse(order, toCheckoutSummary(session));
+	@GetMapping("/admin/all")
+	@PreAuthorize("hasRole('ADMIN')")
+	public List<Orders> getAllOrders() {
+		return orderRepository.findAll();
 	}
 
 	/**
@@ -90,13 +81,18 @@ public class OrderController {
 	}
 
 	/**
-	 * Get every order in the system, for the admin dashboard.
+	 * Get orders for the current user.
 	 *
-	 * @return all orders
+	 * @return
 	 */
-	@GetMapping("/admin/all")
-	@PreAuthorize("hasRole('ADMIN')")
-	public List<Orders> getAllOrders() {
-		return orderRepository.findAll();
+	@GetMapping("/{orderId}")
+	public OrderResponse getSingleOrder(@PathVariable String orderId) throws StripeException {
+		Users user = userService.getUserFromSession();
+		Orders order = orderRepository.findOrderByStripeSessionId(orderId).orElseThrow();
+		if (!order.getUser().getId().equals(user.getId())) {
+			throw new UserNotFoundException("User not found");
+		}
+		Session session = stripeCatalogService.getCheckoutSession(order.getStripeSessionId());
+		return new OrderResponse(order, toCheckoutSummary(session));
 	}
 }

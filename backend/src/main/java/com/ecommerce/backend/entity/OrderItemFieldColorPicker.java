@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.ArrayList;
@@ -32,33 +33,27 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("color_picker")
 public class OrderItemFieldColorPicker extends OrderItemField {
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = "order_color_picker_options",
-        joinColumns = @JoinColumn(name = "color_picker_id"),
-        inverseJoinColumns = @JoinColumn(name = "options_id")
-    )
-    @NonNull @NotNull private List<OrderItemFieldOptionsStlColor> options;
+	/**
+	 * Copies a cart color picker and its selected color into the order.
+	 */
+	public static OrderItemFieldColorPicker from(CartItemFieldColorPicker source) {
+		List<OrderItemFieldOptionsStlColor> options = new ArrayList<>();
+		for (CartItemFieldOptionsStlColor option : source.getOptions()) {
+			options.add(OrderItemFieldOptionsStlColor.from(option));
+		}
+		return builder().label(source.getLabel()).description(source.getDescription()).options(options).build();
+	}
 
-    /**
-     * Returns the options for this field.
-     */
-    public List<OrderItemFieldOptionsStlColor> getOptions(){
-        return options;
-    };
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "order_color_picker_options", joinColumns = @JoinColumn(name = "color_picker_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@NonNull
+	@NotNull
+	private List<OrderItemFieldOptionsStlColor> options;;
 
-    /**
-     * Copies a cart color picker and its selected color into the order.
-     */
-    public static OrderItemFieldColorPicker from(CartItemFieldColorPicker source) {
-        List<OrderItemFieldOptionsStlColor> options = new ArrayList<>();
-        for (CartItemFieldOptionsStlColor option : source.getOptions()) {
-            options.add(OrderItemFieldOptionsStlColor.from(option));
-        }
-        return builder()
-                .label(source.getLabel())
-                .description(source.getDescription())
-                .options(options)
-                .build();
-    }
+	/**
+	 * Returns the options for this field.
+	 */
+	public List<OrderItemFieldOptionsStlColor> getOptions() {
+		return options;
+	}
 }

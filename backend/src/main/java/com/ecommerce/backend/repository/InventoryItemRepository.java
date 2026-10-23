@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.repository;
 
 import java.util.List;
@@ -14,8 +15,8 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
 
 	/**
 	 * Finds all inventory items that are not archived.
+	 * 
 	 * @return the list of inventory items
 	 */
 	List<InventoryItem> findByIsArchivedFalse(Sort sort);
-
 }

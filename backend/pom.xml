@@ -193,6 +193,54 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>3.10.4</version>
+				<configuration>
+				<!-- optional: limit format enforcement to just the files changed by this feature branch -->
+				<!-- <ratchetFrom>origin/main</ratchetFrom> -->
+				<formats>
+				<!-- you can define as many formats as you want, each is independent -->
+				<format>
+					<!-- define the files to apply to -->
+					<includes>
+					<include>.gitattributes</include>
+					<include>.gitignore</include>
+					</includes>
+					<!-- define the steps to apply to those files -->
+					<trimTrailingWhitespace/>
+					<endWithNewline/>
+					<indent>
+					<tabs>true</tabs>
+					<spacesPerTab>4</spacesPerTab>
+					</indent>
+				</format>
+				</formats>
+				<!-- define a language-specific format -->
+				<java>
+				<!-- no need to specify files, inferred automatically, but you can if you want -->
+
+				<!-- eclipse jdt formatter with sort members (same as the editor code action) -->
+				<eclipse>
+					<!-- shared with jdtls via java.format.settings.url in nvim-java -->
+					<file>${project.basedir}/eclipse-formatter.xml</file>
+					<!-- sort settings below mirror jdtls defaults (Sort Members code action) -->
+					<sortMembersEnabled>true</sortMembersEnabled>
+					<!-- types, static fields, static init, static methods, fields, init, constructors, methods -->
+					<sortMembersOrder>T,SF,SI,SM,F,I,C,M</sortMembersOrder>
+					<sortMembersDoNotSortFields>true</sortMembersDoNotSortFields>
+					<!-- jdtls doesn't sort by visibility, so keep this off to match the editor -->
+					<sortMembersVisibilityOrderEnabled>false</sortMembersVisibilityOrderEnabled>
+				</eclipse>
+				<!-- same groups as checkstyle ImportOrder and nvim-java importOrder -->
+				<importOrder>
+					<order>\#,java,jakarta,org,com,lombok,</order>
+				</importOrder>
+				<removeUnusedImports/>
+				</java>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

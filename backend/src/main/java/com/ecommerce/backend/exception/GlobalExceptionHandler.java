@@ -1,5 +1,5 @@
+/* (C)2026 */
 package com.ecommerce.backend.exception;
-
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,30 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
 	/**
-	 * handleUserNotFound handles the UserNotFoundException
-	 * 
-	 * @param ex
-	 * @return
-	 */
-	@ExceptionHandler(UserNotFoundException.class)
-	public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
-		log.warn("UserNotFoundException: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-	}
-	
-	/**
-	 * handleExistingUserFound handles the ExistingUserFoundException
-	 *
-	 * @param ex
-	 * @return
-	 */
-	@ExceptionHandler(ExistingUserFoundException.class)
-	public ResponseEntity<String> handleExistingUserFound(ExistingUserFoundException ex) {
-		log.warn("ExistingUserFoundException: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-	}
-
-	/**
 	 * handleExistingShippingFound handles the ExistingShippingFound
 	 *
 	 * @param ex
@@ -54,27 +30,15 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
-	 * handleUnsupportedShippingDestination handles the UnsupportedShippingDestination
+	 * handleExistingUserFound handles the ExistingUserFoundException
 	 *
 	 * @param ex
 	 * @return
 	 */
-	@ExceptionHandler(UnsupportedShippingDestination.class)
-	public ResponseEntity<String> handleUnsupportedShippingDestination(UnsupportedShippingDestination ex) {
-		log.warn("UnsupportedShippingDestination: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-	}
-
-	/**
-	 * handleInvalidCredentials handles the InvalidCredentials
-	 *
-	 * @param ex
-	 * @return
-	 */
-	@ExceptionHandler(InvalidCredentials.class)
-	public ResponseEntity<String> handleInvalidCredentials(InvalidCredentials ex) {
-		log.warn("InvalidCredentials: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+	@ExceptionHandler(ExistingUserFoundException.class)
+	public ResponseEntity<String> handleExistingUserFound(ExistingUserFoundException ex) {
+		log.warn("ExistingUserFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
 	}
 
 	/**
@@ -90,15 +54,15 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
-	 * handleOrderNotFound handles the OrderNotFoundException
+	 * handleInvalidCredentials handles the InvalidCredentials
 	 *
 	 * @param ex
 	 * @return
 	 */
-	@ExceptionHandler(OrderNotFoundException.class)
-	public ResponseEntity<String> handleOrderNotFound(OrderNotFoundException ex) {
-		log.warn("OrderNotFoundException: {}", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	@ExceptionHandler(InvalidCredentials.class)
+	public ResponseEntity<String> handleInvalidCredentials(InvalidCredentials ex) {
+		log.warn("InvalidCredentials: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
 	}
 
 	/**
@@ -114,9 +78,21 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
-	 * handleSignatureVerification handles a Stripe webhook request whose
-	 * signature doesn't match - a forged/misconfigured request, not a
-	 * server-side bug, so this shouldn't surface as a 500.
+	 * handleOrderNotFound handles the OrderNotFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(OrderNotFoundException.class)
+	public ResponseEntity<String> handleOrderNotFound(OrderNotFoundException ex) {
+		log.warn("OrderNotFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	/**
+	 * handleSignatureVerification handles a Stripe webhook request whose signature
+	 * doesn't match - a forged/misconfigured request, not a server-side bug, so
+	 * this shouldn't surface as a 500.
 	 *
 	 * @param ex
 	 * @return
@@ -137,5 +113,30 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<String> handleUnexpected(Exception ex) {
 		log.error("[ERROR] Unhandled exception", ex);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+	}
+
+	/**
+	 * handleUnsupportedShippingDestination handles the
+	 * UnsupportedShippingDestination
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(UnsupportedShippingDestination.class)
+	public ResponseEntity<String> handleUnsupportedShippingDestination(UnsupportedShippingDestination ex) {
+		log.warn("UnsupportedShippingDestination: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
+
+	/**
+	 * handleUserNotFound handles the UserNotFoundException
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(UserNotFoundException.class)
+	public ResponseEntity<String> handleUserNotFound(UserNotFoundException ex) {
+		log.warn("UserNotFoundException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}
 }

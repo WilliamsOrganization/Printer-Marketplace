@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import jakarta.persistence.Column;
@@ -39,24 +40,24 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorColumn(name = "option_type")
 public abstract class InventoryItemFieldOptions {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
 
-    @NonNull
-    @NotNull
-    @Column(nullable = false)
-    private String label;
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private String label;
 
-    @NonNull
-    @NotNull
-    @Column(nullable = false)
-    private Long price;
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private Long price;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inventory_item_field_id")
-    @JsonBackReference
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private InventoryItemField inventoryItemField;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "inventory_item_field_id")
+	@JsonBackReference
+	@ToString.Exclude
+	@EqualsAndHashCode.Exclude
+	private InventoryItemField inventoryItemField;
 }

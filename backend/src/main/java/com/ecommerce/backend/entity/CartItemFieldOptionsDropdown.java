@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import jakarta.persistence.DiscriminatorValue;
@@ -22,10 +23,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("dropdown")
 public class CartItemFieldOptionsDropdown extends CartItemFieldOptions {
-    public static CartItemFieldOptionsDropdown from(InventoryItemFieldOptions options) {
-        return CartItemFieldOptionsDropdown.builder()
-                .label(options.getLabel())
-                .price(options.getPrice())
-                .build();
-    }
+	public static CartItemFieldOptionsDropdown from(InventoryItemFieldOptions options) {
+		return CartItemFieldOptionsDropdown.builder().label(options.getLabel()).price(options.getPrice()).build();
+	}
 }

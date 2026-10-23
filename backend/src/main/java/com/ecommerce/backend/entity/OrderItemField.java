@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.List;
@@ -20,9 +21,9 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
-
 /**
- * An inventory item field contains a list of configurabel options that always contain a price.
+ * An inventory item field contains a list of configurabel options that always
+ * contain a price.
  *
  */
 @Data
@@ -34,44 +35,43 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorColumn(name = "field_type")
 public abstract class OrderItemField {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+	/**
+	 * Copies a cart field into the order as the matching order field type.
+	 */
+	public static OrderItemField from(CartItemField source) {
+		return switch (source) {
+			case CartItemFieldRadioGroup radioGroup -> OrderItemFieldRadioGroup.from(radioGroup);
+			case CartItemFieldChecklist checklist -> OrderItemFieldChecklist.from(checklist);
+			case CartItemFieldColorPicker colorPicker -> OrderItemFieldColorPicker.from(colorPicker);
+			default ->
+				throw new IllegalArgumentException("Unknown cart field type: " + source.getClass().getSimpleName());
+		};
+	}
 
-    @NonNull
-    @NotNull
-    @Column(nullable=false)
-    private String label;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
 
-    @NonNull
-    @NotNull
-    @Column(nullable=false)
-    private String description;
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private String label;
 
-    /**
-     * Returns the selected options for this field.
-     */
-    @Transient
-    public abstract List<? extends OrderItemFieldOptions> getOptions();
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private String description;
 
-    /**
-     * The total price of the selected options in dollars.
-     */
-    public long tallyOptionsPrice() {
-        return getOptions().stream()
-                .mapToLong(OrderItemFieldOptions::getPrice)
-                .sum();
-    }
+	/**
+	 * Returns the selected options for this field.
+	 */
+	@Transient
+	public abstract List<? extends OrderItemFieldOptions> getOptions();
 
-    /**
-     * Copies a cart field into the order as the matching order field type.
-     */
-    public static OrderItemField from(CartItemField source) {
-        return switch (source) {
-            case CartItemFieldRadioGroup radioGroup -> OrderItemFieldRadioGroup.from(radioGroup);
-            case CartItemFieldChecklist checklist -> OrderItemFieldChecklist.from(checklist);
-            case CartItemFieldColorPicker colorPicker -> OrderItemFieldColorPicker.from(colorPicker);
-            default -> throw new IllegalArgumentException("Unknown cart field type: " + source.getClass().getSimpleName());
-        };
-    }
+	/**
+	 * The total price of the selected options in dollars.
+	 */
+	public long tallyOptionsPrice() {
+		return getOptions().stream().mapToLong(OrderItemFieldOptions::getPrice).sum();
+	}
 }

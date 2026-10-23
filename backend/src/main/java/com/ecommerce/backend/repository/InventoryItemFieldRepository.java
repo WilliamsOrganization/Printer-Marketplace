@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.repository;
 
 import java.util.Optional;
@@ -10,6 +11,7 @@ import com.ecommerce.backend.entity.InventoryItemField;
 
 /**
  * Repository for the InventoryItemField entity.
+ * 
  * @author ewanchukwiliam
  */
 @Repository
@@ -17,10 +19,12 @@ public interface InventoryItemFieldRepository extends JpaRepository<InventoryIte
 
 	/**
 	 * Finds a field by its id, scoped to the inventory item it belongs to.
-	 * @param id the field id
-	 * @param inventoryItem the inventory item the field must belong to
+	 * 
+	 * @param id
+	 *            the field id
+	 * @param inventoryItem
+	 *            the inventory item the field must belong to
 	 * @return the field, if it exists on this item
 	 */
 	Optional<InventoryItemField> findByIdAndInventoryItem(Long id, InventoryItem inventoryItem);
-
 }

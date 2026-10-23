@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -39,74 +40,78 @@ import lombok.ToString;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
-@Table(name = "cartItem", uniqueConstraints = @UniqueConstraint( columnNames = {"cart_id", "item_id", "configuration_key"}))
+@Table(name = "cartItem", uniqueConstraints = @UniqueConstraint(columnNames = {"cart_id", "item_id",
+		"configuration_key"}))
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class CartItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
+	private Long id;
 
-    @CreationTimestamp private LocalDateTime createdAt;
+	@CreationTimestamp
+	private LocalDateTime createdAt;
 
-    @UpdateTimestamp private LocalDateTime updatedAt;
+	@UpdateTimestamp
+	private LocalDateTime updatedAt;
 
-    @NonNull
-    @ManyToOne
-    @JoinColumn(name = "cart_id", nullable = false)
-    @JsonBackReference
-	// This breaks the circular reference errors 
-    @ToString.Exclude
-    private Cart cart;
+	@NonNull
+	@ManyToOne
+	@JoinColumn(name = "cart_id", nullable = false)
+	@JsonBackReference
+	// This breaks the circular reference errors
+	@ToString.Exclude
+	private Cart cart;
 
-    @NonNull
-    @ManyToOne
-    @JoinColumn(name = "item_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private InventoryItem item;
+	@NonNull
+	@ManyToOne
+	@JoinColumn(name = "item_id", nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	private InventoryItem item;
 
-    
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "cart_item_id")
-    @Builder.Default
-    @ToString.Exclude
-    private List<CartItemField> cartItemFields = new ArrayList<>();
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@JoinColumn(name = "cart_item_id")
+	@Builder.Default
+	@ToString.Exclude
+	private List<CartItemField> cartItemFields = new ArrayList<>();
 
-    // TODO: consider @Positive (jakarta.validation) - can't add zero/negative
-    // quantity to a cart
-    @NonNull @Column(nullable = false) private Integer quantity;
+	// TODO: consider @Positive (jakarta.validation) - can't add zero/negative
+	// quantity to a cart
+	@NonNull
+	@Column(nullable = false)
+	private Integer quantity;
 
-    /**
-     * Canonical form of the selected options, e.g. "7:[5];8:[12, 13]".
-     * Identical configurations of the same item share a key, so they merge into one row.
-     */
-    @NonNull
-    @Column(name = "configuration_key", nullable = false, columnDefinition = "varchar(255) default ''")
-    private String configurationKey;
+	/**
+	 * Canonical form of the selected options, e.g. "7:[5];8:[12, 13]". Identical
+	 * configurations of the same item share a key, so they merge into one row.
+	 */
+	@NonNull
+	@Column(name = "configuration_key", nullable = false, columnDefinition = "varchar(255) default ''")
+	private String configurationKey;
 
-    /**
-     * Price of one unit in dollars: the item's cost plus every selected option.
-     * Stripe, the order and the cart drawer all price from this.
-     */
-    public long getUnitPrice() {
-        long total = item.getItemCost();
-        for (CartItemField field : cartItemFields) {
-            total += field.tallyOptionsPrice();
-        }
-        return total;
-    }
+	/**
+	 * The selected options as one line, e.g. "Color: Red · Add-ons: Keyring". Empty
+	 * for items without options.
+	 */
+	public String describeConfiguration() {
+		List<String> parts = new ArrayList<>();
+		for (CartItemField field : cartItemFields) {
+			parts.add(field.describe());
+		}
+		return String.join(" · ", parts);
+	}
 
-    /**
-     * The selected options as one line, e.g. "Color: Red · Add-ons: Keyring".
-     * Empty for items without options.
-     */
-    public String describeConfiguration() {
-        List<String> parts = new ArrayList<>();
-        for (CartItemField field : cartItemFields) {
-            parts.add(field.describe());
-        }
-        return String.join(" · ", parts);
-    }
+	/**
+	 * Price of one unit in dollars: the item's cost plus every selected option.
+	 * Stripe, the order and the cart drawer all price from this.
+	 */
+	public long getUnitPrice() {
+		long total = item.getItemCost();
+		for (CartItemField field : cartItemFields) {
+			total += field.tallyOptionsPrice();
+		}
+		return total;
+	}
 }

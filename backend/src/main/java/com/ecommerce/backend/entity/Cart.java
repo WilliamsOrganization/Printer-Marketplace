@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,9 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 /**
- * Cart is The user's shopping cart contains items that are being purchased and requested quantity information
+ * Cart is The user's shopping cart contains items that are being purchased and
+ * requested quantity information
+ * 
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
 @Data
@@ -38,21 +41,25 @@ import lombok.NonNull;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Cart {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @CreationTimestamp private LocalDateTime createdAt;
-    @UpdateTimestamp private LocalDateTime updatedAt;
+	@CreationTimestamp
+	private LocalDateTime createdAt;
+	@UpdateTimestamp
+	private LocalDateTime updatedAt;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    @NotNull
-    @NonNull
-    private Users user;
+	@OneToOne
+	@JoinColumn(name = "user_id", nullable = false)
+	@NotNull
+	@NonNull
+	private Users user;
 
-    // TODO: consider @OrderBy("createdAt ASC") to guarantee items are fetched
-    // in creation order rather than undefined order
-    // TODO: consider @Singular if this collection moves under a @Builder
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private List<CartItem> items;
+	// TODO: consider @OrderBy("createdAt ASC") to guarantee items are fetched
+	// in creation order rather than undefined order
+	// TODO: consider @Singular if this collection moves under a @Builder
+	@OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
+	@JsonManagedReference
+	private List<CartItem> items;
 }

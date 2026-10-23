@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import lombok.Data;
@@ -9,4 +10,3 @@ import lombok.Data;
 public class ResetPasswordRequest {
 	private String email;
 }
-

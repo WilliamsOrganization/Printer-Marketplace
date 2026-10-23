@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import jakarta.annotation.Nonnull;
@@ -6,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-
 
 /**
  * ShipmentToRequest

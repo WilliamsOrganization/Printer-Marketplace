@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import jakarta.persistence.Column;
@@ -32,20 +33,20 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorColumn(name = "option_type")
 public abstract class CartItemFieldOptions {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
 
-    @NonNull
-    @NotNull
-    @Column(nullable = false)
-    private String label;
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private String label;
 
-    /**
-     * The price of the option in dollars, the same unit as InventoryItem.itemCost.
-     */
-    @NonNull
-    @NotNull
-    @Column(nullable = false)
-    private Long price;
+	/**
+	 * The price of the option in dollars, the same unit as InventoryItem.itemCost.
+	 */
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private Long price;
 }

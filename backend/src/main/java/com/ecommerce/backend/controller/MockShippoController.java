@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.http.ResponseEntity;
@@ -16,9 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Test-only endpoints for exercising Shippo tracking locally, without
- * waiting on a real carrier or standing up a tunnel for Shippo to actually
- * reach this app - see MockShippoService.
+ * Test-only endpoints for exercising Shippo tracking locally, without waiting
+ * on a real carrier or standing up a tunnel for Shippo to actually reach this
+ * app - see MockShippoService.
  */
 @Slf4j
 @RestController
@@ -29,10 +30,9 @@ public class MockShippoController {
 	private final OrderService orderService;
 
 	/**
-	 * Advances an order's shipment one step through the PRE_TRANSIT ->
-	 * TRANSIT -> DELIVERED cycle by calling the real
-	 * /server/shipping/webhook endpoint with a synthetic payload built from
-	 * the shipment's real tracking number.
+	 * Advances an order's shipment one step through the PRE_TRANSIT -> TRANSIT ->
+	 * DELIVERED cycle by calling the real /server/shipping/webhook endpoint with a
+	 * synthetic payload built from the shipment's real tracking number.
 	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */

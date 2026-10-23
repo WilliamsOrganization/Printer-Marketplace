@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.ArrayList;
@@ -31,33 +32,27 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorValue("radio_group")
 public class OrderItemFieldRadioGroup extends OrderItemField {
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = "order_radio_group_options",
-        joinColumns = @JoinColumn(name = "radio_group_id"),
-        inverseJoinColumns = @JoinColumn(name = "options_id")
-    )
-    @NonNull @NotNull private List<OrderItemFieldOptionsDropdown> options;
+	/**
+	 * Copies a cart radio group and its selected option into the order.
+	 */
+	public static OrderItemFieldRadioGroup from(CartItemFieldRadioGroup source) {
+		List<OrderItemFieldOptionsDropdown> options = new ArrayList<>();
+		for (CartItemFieldOptionsDropdown option : source.getOptions()) {
+			options.add(OrderItemFieldOptionsDropdown.from(option));
+		}
+		return builder().label(source.getLabel()).description(source.getDescription()).options(options).build();
+	}
 
-    /**
-     * Returns the options for this field.
-     */
-    public List<OrderItemFieldOptionsDropdown> getOptions(){
-        return options;
-    };
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "order_radio_group_options", joinColumns = @JoinColumn(name = "radio_group_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@NonNull
+	@NotNull
+	private List<OrderItemFieldOptionsDropdown> options;;
 
-    /**
-     * Copies a cart radio group and its selected option into the order.
-     */
-    public static OrderItemFieldRadioGroup from(CartItemFieldRadioGroup source) {
-        List<OrderItemFieldOptionsDropdown> options = new ArrayList<>();
-        for (CartItemFieldOptionsDropdown option : source.getOptions()) {
-            options.add(OrderItemFieldOptionsDropdown.from(option));
-        }
-        return builder()
-                .label(source.getLabel())
-                .description(source.getDescription())
-                .options(options)
-                .build();
-    }
+	/**
+	 * Returns the options for this field.
+	 */
+	public List<OrderItemFieldOptionsDropdown> getOptions() {
+		return options;
+	}
 }

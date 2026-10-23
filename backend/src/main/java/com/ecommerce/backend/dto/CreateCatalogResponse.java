@@ -1,11 +1,8 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 /**
  * CreateCatalogueResponse
  */
-public record CreateCatalogResponse (
-	String stripeProductId,
-	String name,
-	Long unitAmount,
-	String currency
-){}
+public record CreateCatalogResponse(String stripeProductId, String name, Long unitAmount, String currency) {
+}

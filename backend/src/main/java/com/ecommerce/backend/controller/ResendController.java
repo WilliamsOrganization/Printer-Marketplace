@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * ResendController
  */
-
 @Slf4j
 @RestController
 @RequestMapping("/server/email")
@@ -22,9 +22,10 @@ public class ResendController {
 	private final ResendService resendService;
 
 	/**
-	 * Handles webhooks from Resend.com. 
+	 * Handles webhooks from Resend.com.
 	 *
-	 * @param content the webhook content
+	 * @param content
+	 *            the webhook content
 	 */
 	@PostMapping("/webhook")
 	public void webookHandler(@RequestBody String content) {

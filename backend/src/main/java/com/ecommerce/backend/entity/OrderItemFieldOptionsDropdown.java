@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import jakarta.persistence.DiscriminatorValue;
@@ -23,13 +24,11 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("dropdown")
 public class OrderItemFieldOptionsDropdown extends OrderItemFieldOptions {
 
-    /**
-     * Copies a cart option into the order, keeping the price the customer was charged.
-     */
-    public static OrderItemFieldOptionsDropdown from(CartItemFieldOptionsDropdown source) {
-        return builder()
-                .label(source.getLabel())
-                .price(source.getPrice())
-                .build();
-    }
+	/**
+	 * Copies a cart option into the order, keeping the price the customer was
+	 * charged.
+	 */
+	public static OrderItemFieldOptionsDropdown from(CartItemFieldOptionsDropdown source) {
+		return builder().label(source.getLabel()).price(source.getPrice()).build();
+	}
 }

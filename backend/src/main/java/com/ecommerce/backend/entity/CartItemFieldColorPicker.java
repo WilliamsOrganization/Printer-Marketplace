@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.List;
@@ -31,20 +32,16 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("color_picker")
 public class CartItemFieldColorPicker extends CartItemField {
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = "cart_color_picker_options",
-        joinColumns = @JoinColumn(name = "color_picker_id"),
-        inverseJoinColumns = @JoinColumn(name = "options_id")
-    )
-    @NonNull @NotNull private List<CartItemFieldOptionsStlColor> options;
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "cart_color_picker_options", joinColumns = @JoinColumn(name = "color_picker_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@NonNull
+	@NotNull
+	private List<CartItemFieldOptionsStlColor> options;
 
-    /**
-     * Returns the selected options for this field.
-     */
-    public List<CartItemFieldOptionsStlColor> getOptions(){
-        return options;
-    };
-
-    
+	/**
+	 * Returns the selected options for this field.
+	 */
+	public List<CartItemFieldOptionsStlColor> getOptions() {
+		return options;
+	};
 }

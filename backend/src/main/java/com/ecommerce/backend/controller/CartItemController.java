@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,8 +36,33 @@ public class CartItemController {
 	private final UserService userService;
 
 	/**
+	 * Adds a new cart item to the cart. Or creates and links a new cart to a
+	 * session if none exists.
+	 *
+	 * @param request
+	 * @return
+	 */
+	@PostMapping
+	public AddCartItemResponse create(@RequestBody AddCartItemRequest request) {
+		Users user = userService.getUserFromSession();
+		Cart cart = cartService.getCart(user);
+		AddCartItemResponse result = cartService.createCartItem(request, user, cart);
+		return result;
+	}
+
+	/**
+	 * deleteCartItem deletes a cart item
+	 *
+	 * @param id
+	 */
+	@DeleteMapping("/{id}")
+	public void deleteCartItem(@PathVariable Long id) {
+		cartService.deleteCartItem(id);
+	}
+
+	/**
 	 * getOne returns a cart item by id
-	 * 
+	 *
 	 * @param id
 	 * @return
 	 */
@@ -51,29 +77,14 @@ public class CartItemController {
 	}
 
 	/**
-	 * Adds a new cart item to the cart. Or creates and links a new cart to a session if none exists.
-	 * 
-	 * @param request
-	 * @return
-	 */
-	@PostMapping
-	public AddCartItemResponse create(@RequestBody AddCartItemRequest request) {
-		Users user = userService.getUserFromSession();
-		Cart cart = cartService.getCart(user);
-		AddCartItemResponse result = cartService.createCartItem(request, user, cart);
-		return result;
-	}
-
-	/**
 	 * updateCartItemQuantity updates the quantity of a cart item
-	 * 
+	 *
 	 * @param id
 	 * @param quantity
 	 * @return
 	 */
 	@PutMapping("/quantity/{id}")
-	public CartItem updateCartItemQuantity(@PathVariable Long id,
-			@RequestBody Integer quantity) {
+	public CartItem updateCartItemQuantity(@PathVariable Long id, @RequestBody Integer quantity) {
 		Users user = userService.getUserFromSession();
 		CartItem cartItem = cartItemRepository.findById(id).orElseThrow();
 		if (!cartItem.getCart().getUser().getId().equals(user.getId())) {
@@ -82,15 +93,4 @@ public class CartItemController {
 		cartItem.setQuantity(quantity);
 		return cartItemRepository.save(cartItem);
 	}
-
-	/**
-	 * deleteCartItem deletes a cart item
-	 * 
-	 * @param id
-	 */
-	@DeleteMapping("/{id}")
-	public void deleteCartItem(@PathVariable Long id) {
-		cartService.deleteCartItem(id);
-	}
-
 }

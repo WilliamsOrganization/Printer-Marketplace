@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import java.util.ArrayList;
@@ -43,130 +44,21 @@ public class OrderService {
 	private final GoogleMapsService googleMapsService;
 
 	/**
-	 * Create a new pending order (and its shipping record) from the cart
-	 * being checked out, the Stripe checkout session just created for it, and
-	 * the Shippo shipment/quote backing the rate the customer selected.
+	 * Applies a completed Stripe checkout session to its pending order - marking it
+	 * PAID or COMPLETED depending on whether Stripe reports the session as already
+	 * paid, and syncing the payment fields Stripe now knows. No-ops (returns null)
+	 * if the order isn't still PENDING, since webhook events can be delivered more
+	 * than once.
 	 *
-	 * @param session         the created Stripe checkout session
-	 * @param shipment        the Shippo shipment backing the selected rate, for
-	 *                        its origin/destination addresses
-	 * @param quote           the selected rate's price/service level info
-	 * @param cart            the cart being checked out
-	 * @param selectedRateId  the Shippo rate object id the customer's quote is
-	 *                        locked in at - stored so the label can be
-	 *                        purchased at this same rate once payment confirms
-	 * @return the persisted order, marked as pending
-	 */
-	public Orders createPendingOrder(Session session, Shipment shipment, ShippingQuote quote, Cart cart,
-			String selectedRateId) throws StripeException , Exception {
-		Orders order = Orders.builder()
-				.user(cart.getUser())
-				.stripeSessionId(session.getId())
-				.email(cart.getUser().getEmail())
-				.currency(quote.currency())
-				.status(Orders.Status.PENDING)
-				.build();
-
-		Long subtotal = 0L;
-		List<OrderItem> orderItems = new ArrayList<>();
-		for (CartItem cartItem : cart.getItems()) {
-			InventoryItem item = cartItem.getItem();
-			Long unitPrice = cartItem.getUnitPrice() * DOLLAR;
-			subtotal += unitPrice * cartItem.getQuantity();
-
-			List<OrderItemField> orderItemFields = new ArrayList<>();
-			for (CartItemField cartItemField : cartItem.getCartItemFields()) {
-				orderItemFields.add(OrderItemField.from(cartItemField));
-			}
-
-			orderItems.add(OrderItem.builder()
-					.orders(order)
-					.item(item)
-					.quantity(cartItem.getQuantity())
-					.itemTitle(item.getItemTitle())
-					.unitPrice(unitPrice)
-					.configurationKey(cartItem.getConfigurationKey())
-					.orderItemFields(orderItemFields)
-					.build());
-		}
-
-		Long shippingCost = quote.amountInCents();
-		order.setItems(orderItems);
-		order.setSubtotal(subtotal);
-		order.setShippingCost(shippingCost);
-		order.setTotal(subtotal + shippingCost);
-		order = orderRepository.save(order);
-
-		ShippingAddress addressTo = ShippingAddress.from(shipment.addressTo());
-		ShippingAddress addressFrom = ShippingAddress.from(shipment.addressFrom());
-		var location = googleMapsService.geocode(addressTo);
-		var fromLocation = googleMapsService.geocode(addressFrom);
-		Shipping shipping = Shipping.builder()
-				.orders(order)
-				.serviceType(quote.name())
-				.addressFrom(addressFrom)
-				.addressTo(addressTo)
-				.lat(location != null ? location.lat : null)
-				.lng(location != null ? location.lng : null)
-				.fromLat(fromLocation != null ? fromLocation.lat : null)
-				.fromLng(fromLocation != null ? fromLocation.lng : null)
-				.shippoRateId(selectedRateId)
-				.status(Shipping.Status.PENDING)
-				.build();
-		order.setShipping(shippingRepository.save(shipping));
-
-		return order;
-	}
-
-	/**
-	 * Looks up the order a Stripe checkout session belongs to. Empty when
-	 * there's no match - which is expected for webhook events fired against
-	 * a Stripe account or session this instance never created an order for,
-	 * so callers must handle it rather than let it 500 (Stripe retries 5xx).
-	 *
-	 * @param id the Stripe session id
-	 * @return the order if this instance owns it
-	 */
-	public Optional<Orders> getOrderByStripeSessionId(String id) {
-		return orderRepository.findOrderByStripeSessionId(id);
-	}
-
-	/**
-	 * Gets an order by its id.
-	 *
-	 * @param id the order's id
-	 * @return the order
-	 */
-	public Orders getOrder(Long id) {
-		return orderRepository.findById(id).orElseThrow();
-	}
-
-	/**
-	 * Gets an order by its User and Id.
-	 *
-	 * @param user the user
-	 * @param id the order's id
-	 * @return the order
-	 */
-	public Orders getOrderByUserAndId(Users user, Long id) {
-		return orderRepository.findByUserAndId(user, id)
-				.orElseThrow(() -> new OrderNotFoundException("Order not found"));
-	}
-
-	/**
-	 * Applies a completed Stripe checkout session to its pending order -
-	 * marking it PAID or COMPLETED depending on whether Stripe reports the
-	 * session as already paid, and syncing the payment fields Stripe now
-	 * knows. No-ops (returns null) if the order isn't still PENDING, since
-	 * webhook events can be delivered more than once.
-	 *
-	 * @param session the completed Stripe checkout session
+	 * @param session
+	 *            the completed Stripe checkout session
 	 * @return the updated order, or null if there was nothing to apply
 	 */
 	public void applyCompletedCheckout(Session session) {
 		Orders order = getOrderByStripeSessionId(session.getId()).orElse(null);
 		if (order == null) {
-			log.warn("checkout.session.completed for unknown session {} - no local order, acknowledging", session.getId());
+			log.warn("checkout.session.completed for unknown session {} - no local order," + " acknowledging",
+					session.getId());
 			return;
 		}
 		if (order.getStatus() != Orders.Status.PENDING) {
@@ -183,7 +75,7 @@ public class OrderService {
 		order.setSubtotal(session.getAmountSubtotal());
 		order.setTotal(session.getAmountTotal());
 		order.setCardholderName(session.getCustomerDetails() != null ? session.getCustomerDetails().getName() : null);
-		Users user=userService.registerUser(order.getUser());
+		Users user = userService.registerUser(order.getUser());
 		if (session.getShippingCost() != null) {
 			order.setShippingCost(session.getShippingCost().getAmountTotal());
 		}
@@ -195,10 +87,11 @@ public class OrderService {
 	}
 
 	/**
-	 * Applies an expired Stripe checkout session to its pending order.
-	 * No-ops if the order isn't still PENDING.
+	 * Applies an expired Stripe checkout session to its pending order. No-ops if
+	 * the order isn't still PENDING.
 	 *
-	 * @param stripeSessionId the expired Stripe checkout session's id
+	 * @param stripeSessionId
+	 *            the expired Stripe checkout session's id
 	 */
 	public void applyExpiredCheckout(String stripeSessionId) {
 		Orders order = getOrderByStripeSessionId(stripeSessionId).orElse(null);
@@ -207,7 +100,8 @@ public class OrderService {
 			return;
 		}
 		if (order.getStatus() != Orders.Status.PENDING) {
-			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(),
+					order.getId());
 			return;
 		}
 		order.setStatus(Orders.Status.EXPIRED);
@@ -217,12 +111,13 @@ public class OrderService {
 	}
 
 	/**
-	 * Applies a failed Stripe checkout session to its completed order, and
-	 * demotes the buyer back to a plain registered account (unless they're an
-	 * admin) since the payment behind their most recent order didn't go
-	 * through. No-ops if the order isn't COMPLETED.
+	 * Applies a failed Stripe checkout session to its completed order, and demotes
+	 * the buyer back to a plain registered account (unless they're an admin) since
+	 * the payment behind their most recent order didn't go through. No-ops if the
+	 * order isn't COMPLETED.
 	 *
-	 * @param stripeSessionId the failed Stripe checkout session's id
+	 * @param stripeSessionId
+	 *            the failed Stripe checkout session's id
 	 */
 	public void applyFailedCheckout(String stripeSessionId) {
 		Orders order = getOrderByStripeSessionId(stripeSessionId).orElse(null);
@@ -231,7 +126,8 @@ public class OrderService {
 			return;
 		}
 		if (order.getStatus() != Orders.Status.COMPLETED) {
-			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(),
+					order.getId());
 			return;
 		}
 		order.setStatus(Orders.Status.FAILED);
@@ -241,21 +137,24 @@ public class OrderService {
 	}
 
 	/**
-	 * Applies a successful Stripe checkout session to its completed order.
-	 * No-ops if the order isn't COMPLETED.
+	 * Applies a successful Stripe checkout session to its completed order. No-ops
+	 * if the order isn't COMPLETED.
 	 *
-	 * @param stripeSessionId the successful Stripe checkout session's id
+	 * @param stripeSessionId
+	 *            the successful Stripe checkout session's id
 	 */
 	public void applySuccessfulCheckout(Session session) {
 		Orders order = getOrderByStripeSessionId(session.getId()).orElse(null);
 		if (order == null) {
-			log.warn("checkout.session.async_payment_succeeded for unknown session {} - acknowledging", session.getId());
+			log.warn("checkout.session.async_payment_succeeded for unknown session {} -" + " acknowledging",
+					session.getId());
 			return;
 		}
 		String customerName = session.getCustomerDetails() != null ? session.getCustomerDetails().getName() : null;
 
 		if (order.getStatus() != Orders.Status.COMPLETED) {
-			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(), order.getId());
+			log.info("Order status was skipped due to invalid status {} order id: {}", order.getStatus(),
+					order.getId());
 			return;
 		}
 		order.setStatus(Orders.Status.PAID);
@@ -267,8 +166,112 @@ public class OrderService {
 	}
 
 	/**
+	 * Create a new pending order (and its shipping record) from the cart being
+	 * checked out, the Stripe checkout session just created for it, and the Shippo
+	 * shipment/quote backing the rate the customer selected.
+	 *
+	 * @param session
+	 *            the created Stripe checkout session
+	 * @param shipment
+	 *            the Shippo shipment backing the selected rate, for its
+	 *            origin/destination addresses
+	 * @param quote
+	 *            the selected rate's price/service level info
+	 * @param cart
+	 *            the cart being checked out
+	 * @param selectedRateId
+	 *            the Shippo rate object id the customer's quote is locked in at -
+	 *            stored so the label can be purchased at this same rate once
+	 *            payment confirms
+	 * @return the persisted order, marked as pending
+	 */
+	public Orders createPendingOrder(Session session, Shipment shipment, ShippingQuote quote, Cart cart,
+			String selectedRateId) throws StripeException, Exception {
+		Orders order = Orders.builder().user(cart.getUser()).stripeSessionId(session.getId())
+				.email(cart.getUser().getEmail()).currency(quote.currency()).status(Orders.Status.PENDING).build();
+
+		Long subtotal = 0L;
+		List<OrderItem> orderItems = new ArrayList<>();
+		for (CartItem cartItem : cart.getItems()) {
+			InventoryItem item = cartItem.getItem();
+			Long unitPrice = cartItem.getUnitPrice() * DOLLAR;
+			subtotal += unitPrice * cartItem.getQuantity();
+
+			List<OrderItemField> orderItemFields = new ArrayList<>();
+			for (CartItemField cartItemField : cartItem.getCartItemFields()) {
+				orderItemFields.add(OrderItemField.from(cartItemField));
+			}
+
+			orderItems.add(OrderItem.builder().orders(order).item(item).quantity(cartItem.getQuantity())
+					.itemTitle(item.getItemTitle()).unitPrice(unitPrice)
+					.configurationKey(cartItem.getConfigurationKey()).orderItemFields(orderItemFields).build());
+		}
+
+		Long shippingCost = quote.amountInCents();
+		order.setItems(orderItems);
+		order.setSubtotal(subtotal);
+		order.setShippingCost(shippingCost);
+		order.setTotal(subtotal + shippingCost);
+		order = orderRepository.save(order);
+
+		ShippingAddress addressTo = ShippingAddress.from(shipment.addressTo());
+		ShippingAddress addressFrom = ShippingAddress.from(shipment.addressFrom());
+		var location = googleMapsService.geocode(addressTo);
+		var fromLocation = googleMapsService.geocode(addressFrom);
+		Shipping shipping = Shipping.builder().orders(order).serviceType(quote.name()).addressFrom(addressFrom)
+				.addressTo(addressTo).lat(location != null ? location.lat : null)
+				.lng(location != null ? location.lng : null).fromLat(fromLocation != null ? fromLocation.lat : null)
+				.fromLng(fromLocation != null ? fromLocation.lng : null).shippoRateId(selectedRateId)
+				.status(Shipping.Status.PENDING).build();
+		order.setShipping(shippingRepository.save(shipping));
+
+		return order;
+	}
+
+	/**
+	 * Gets an order by its id.
+	 *
+	 * @param id
+	 *            the order's id
+	 * @return the order
+	 */
+	public Orders getOrder(Long id) {
+		return orderRepository.findById(id).orElseThrow();
+	}
+
+	/**
+	 * Looks up the order a Stripe checkout session belongs to. Empty when there's
+	 * no match - which is expected for webhook events fired against a Stripe
+	 * account or session this instance never created an order for, so callers must
+	 * handle it rather than let it 500 (Stripe retries 5xx).
+	 *
+	 * @param id
+	 *            the Stripe session id
+	 * @return the order if this instance owns it
+	 */
+	public Optional<Orders> getOrderByStripeSessionId(String id) {
+		return orderRepository.findOrderByStripeSessionId(id);
+	}
+
+	/**
+	 * Gets an order by its User and Id.
+	 *
+	 * @param user
+	 *            the user
+	 * @param id
+	 *            the order's id
+	 * @return the order
+	 */
+	public Orders getOrderByUserAndId(Users user, Long id) {
+		return orderRepository.findByUserAndId(user, id)
+				.orElseThrow(() -> new OrderNotFoundException("Order not found"));
+	}
+
+	/**
 	 * Sets the order status to REFUNDED and awaits ADMIN approval
-	 * @param order the order to be paid
+	 * 
+	 * @param order
+	 *            the order to be paid
 	 */
 	public void setOrderReturned(Orders order) {
 		order.setStatus(Orders.Status.RETURNED);

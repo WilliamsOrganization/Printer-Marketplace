@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.ArrayList;
@@ -31,7 +32,8 @@ import lombok.NonNull;
  */
 @Data
 @Entity
-@Table(name = "orderItem", uniqueConstraints = @UniqueConstraint(columnNames = { "orders_id", "item_id", "configuration_key" }))
+@Table(name = "orderItem", uniqueConstraints = @UniqueConstraint(columnNames = {"orders_id", "item_id",
+		"configuration_key"}))
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -66,7 +68,8 @@ public class OrderItem {
 	private String configurationKey = "";
 
 	/**
-	 * The options the customer chose for this line, copied from their cart at checkout.
+	 * The options the customer chose for this line, copied from their cart at
+	 * checkout.
 	 */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "order_item_id")

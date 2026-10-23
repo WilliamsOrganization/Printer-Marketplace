@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.repository;
 
 import java.util.List;
@@ -13,28 +14,34 @@ import com.ecommerce.backend.entity.Shipping;
  */
 public interface ShippingRepository extends JpaRepository<Shipping, Long> {
 	/**
-	 * Finds a shipping by its orders.
-	 * @param ordersId the orders
-	 * @return the shipping
-	 */
-	Optional<Shipping> findByOrders(Orders ordersId);
-
-	/**
-	 * Finds every shipping row that hasn't been geocoded yet.
-	 * @return the un-geocoded shipping rows
-	 */
-	List<Shipping> findByLatIsNull();
-
-	/**
 	 * Finds every shipping row whose pickup address hasn't been geocoded yet.
+	 * 
 	 * @return the un-geocoded shipping rows
 	 */
 	List<Shipping> findByFromLatIsNull();
 
 	/**
+	 * Finds every shipping row that hasn't been geocoded yet.
+	 * 
+	 * @return the un-geocoded shipping rows
+	 */
+	List<Shipping> findByLatIsNull();
+
+	/**
+	 * Finds a shipping by its orders.
+	 * 
+	 * @param ordersId
+	 *            the orders
+	 * @return the shipping
+	 */
+	Optional<Shipping> findByOrders(Orders ordersId);
+
+	/**
 	 * Finds a shipping by its carrier tracking number - how the Shippo
 	 * track_updated webhook looks up which row to update.
-	 * @param trackingNumber the carrier tracking number
+	 * 
+	 * @param trackingNumber
+	 *            the carrier tracking number
 	 * @return the shipping
 	 */
 	Optional<Shipping> findByTrackingNumber(String trackingNumber);

@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import java.time.LocalDateTime;

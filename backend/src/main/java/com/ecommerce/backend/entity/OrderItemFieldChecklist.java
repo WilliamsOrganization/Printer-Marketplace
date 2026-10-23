@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.ArrayList;
@@ -32,34 +33,27 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("checklist")
 public class OrderItemFieldChecklist extends OrderItemField {
 
-    
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-        name = "order_checklist_options",
-        joinColumns = @JoinColumn(name = "checklist_id"),
-        inverseJoinColumns = @JoinColumn(name = "options_id")
-    )
-    @NonNull @NotNull private List<OrderItemFieldOptionsDropdown> options;
+	/**
+	 * Copies a cart checklist and its selected options into the order.
+	 */
+	public static OrderItemFieldChecklist from(CartItemFieldChecklist source) {
+		List<OrderItemFieldOptionsDropdown> options = new ArrayList<>();
+		for (CartItemFieldOptionsDropdown option : source.getOptions()) {
+			options.add(OrderItemFieldOptionsDropdown.from(option));
+		}
+		return builder().label(source.getLabel()).description(source.getDescription()).options(options).build();
+	}
 
-    /**
-     * Returns the selected options for this field.
-     */
-    public List<OrderItemFieldOptionsDropdown> getOptions(){
-        return options;
-    };
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "order_checklist_options", joinColumns = @JoinColumn(name = "checklist_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@NonNull
+	@NotNull
+	private List<OrderItemFieldOptionsDropdown> options;;
 
-    /**
-     * Copies a cart checklist and its selected options into the order.
-     */
-    public static OrderItemFieldChecklist from(CartItemFieldChecklist source) {
-        List<OrderItemFieldOptionsDropdown> options = new ArrayList<>();
-        for (CartItemFieldOptionsDropdown option : source.getOptions()) {
-            options.add(OrderItemFieldOptionsDropdown.from(option));
-        }
-        return builder()
-                .label(source.getLabel())
-                .description(source.getDescription())
-                .options(options)
-                .build();
-    }
+	/**
+	 * Returns the selected options for this field.
+	 */
+	public List<OrderItemFieldOptionsDropdown> getOptions() {
+		return options;
+	}
 }

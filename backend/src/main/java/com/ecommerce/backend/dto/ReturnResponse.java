@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import java.time.LocalDateTime;
@@ -10,27 +11,18 @@ import lombok.Data;
 
 /**
  * Flattened view of a Returns row for list endpoints - Returns.order is
+ * 
  * @JsonBackReference (to break the Orders <-> Returns <-> Shipping.returns
- * cycle), so it never serializes; this pulls just the order fields a
- * returns list needs to link back to the order.
+ *                    cycle), so it never serializes; this pulls just the order
+ *                    fields a returns list needs to link back to the order.
  */
 @Data
 public class ReturnResponse {
-	private Long id;
-	private LocalDateTime requestedDate;
-	private Long orderId;
-	private String orderStripeSessionId;
-	private List<OrderItem> itemsToReturn;
-	private String reasonForReturn;
-	private Returns.ReturnStatus status;
-	private Long refundedAmount;
-	private LocalDateTime refundedAt;
-	private Boolean reviewed;
-
 	/**
 	 * Converts a Returns row into a ReturnResponse.
 	 *
-	 * @param returns the returns row to convert
+	 * @param returns
+	 *            the returns row to convert
 	 * @return the converted returns row
 	 */
 	public static ReturnResponse from(Returns returns) {
@@ -47,4 +39,15 @@ public class ReturnResponse {
 		response.reviewed = returns.getReviewed();
 		return response;
 	}
+	private Long id;
+	private LocalDateTime requestedDate;
+	private Long orderId;
+	private String orderStripeSessionId;
+	private List<OrderItem> itemsToReturn;
+	private String reasonForReturn;
+	private Returns.ReturnStatus status;
+	private Long refundedAmount;
+	private LocalDateTime refundedAt;
+
+	private Boolean reviewed;
 }

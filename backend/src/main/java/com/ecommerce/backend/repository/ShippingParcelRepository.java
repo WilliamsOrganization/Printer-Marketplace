@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.repository;
 
 import java.util.Optional;
@@ -16,12 +17,11 @@ import com.goshippo.shippo_sdk.models.components.WeightUnitEnum;
 public interface ShippingParcelRepository extends JpaRepository<ShippingParcel, Long> {
 
 	/**
-	 * Finds an existing parcel with these exact dimensions, if one exists,
-	 * so callers can reuse it instead of creating a duplicate - e.g.
+	 * Finds an existing parcel with these exact dimensions, if one exists, so
+	 * callers can reuse it instead of creating a duplicate - e.g.
 	 * {@code repo.findByHeightAndWidthAndLengthAndWeightAndWeightUnitAndDistanceUnit(...)
 	 * .orElseGet(() -> repo.save(newParcel))}.
 	 */
-	Optional<ShippingParcel> findByHeightAndWidthAndLengthAndWeightAndWeightUnitAndDistanceUnit(
-			Long height, Long width, Long length, Long weight,
-			WeightUnitEnum weightUnit, DistanceUnitEnum distanceUnit);
+	Optional<ShippingParcel> findByHeightAndWidthAndLengthAndWeightAndWeightUnitAndDistanceUnit(Long height, Long width,
+			Long length, Long weight, WeightUnitEnum weightUnit, DistanceUnitEnum distanceUnit);
 }

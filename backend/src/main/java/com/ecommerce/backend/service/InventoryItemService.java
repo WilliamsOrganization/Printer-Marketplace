@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import java.util.List;
@@ -28,214 +29,202 @@ import software.amazon.awssdk.core.exception.SdkException;
 @Service
 @RequiredArgsConstructor
 public class InventoryItemService {
-    private final InventoryItemRepository inventoryItemRepository;
-    private final StripeCatalogService stripeCatalogService;
-    private final S3Service s3Service;
+	/**
+	 * Outcome of a delete request - lets the controller decide the HTTP status/body
+	 * without needing to know how the deletion was actually carried out.
+	 */
+	public enum DeleteOutcome {
+		NOT_FOUND, DELETED, ARCHIVED, STRIPE_ERROR, S3_ERROR
+	}
+	private final InventoryItemRepository inventoryItemRepository;
+	private final StripeCatalogService stripeCatalogService;
 
-    /**
-     * Outcome of a delete request - lets the controller decide the HTTP
-     * status/body without needing to know how the deletion was actually
-     * carried out.
-     */
-    public enum DeleteOutcome {
-        NOT_FOUND,
-        DELETED,
-        ARCHIVED,
-        STRIPE_ERROR,
-        S3_ERROR
-    }
+	private final S3Service s3Service;
 
-    /**
-     * Gets every non-archived inventory item.
-     *
-     * @return the list of inventory items
-     */
-    public List<InventoryItem> getAll() {
-        return inventoryItemRepository.findByIsArchivedFalse(
-            Sort.by(Sort.Direction.ASC, "id"));
-    }
+	private InventoryItem create(InventoryItem submitted) throws StripeException {
+		CreateCatalogRequest createCatalogRequest = new CreateCatalogRequest(submitted.getItemTitle(),
+				submitted.getItemDescription(), List.of(submitted.getImageUrls()), submitted.getItemCost(),
+				submitted.getCurrency(), submitted.getQuantity());
 
-    /**
-     * Gets every inventory item, including archived ones.
-     *
-     * @return the list of inventory items
-     */
-    public List<InventoryItem> getAllAdmin() {
-        return inventoryItemRepository.findAll(
-            Sort.by(Sort.Direction.ASC, "id"));
-    }
+		CreateCatalogResponse stripeResponse = stripeCatalogService.createProductAndPrice(createCatalogRequest);
+		submitted.setStripeProductId(stripeResponse.stripeProductId());
+		if (submitted.getFields() != null) {
+			for (InventoryItemField field : submitted.getFields()) {
+				field.setInventoryItem(submitted);
+			}
+		}
+		log.info("Stripe Item was created");
+		return inventoryItemRepository.save(submitted);
+	}
 
-    /**
-     * Gets a single inventory item by id.
-     *
-     * @param id the item's id
-     * @return the item
-     */
-    public InventoryItem getOne(Long id) {
-        return inventoryItemRepository.findById(id).orElseThrow();
-    }
+	/**
+	 * Deletes an item's Stripe product; if Stripe refuses because the product has
+	 * prior usage, the item is archived instead of deleted.
+	 *
+	 * @param id
+	 *            the item's id
+	 * @return how the delete was actually resolved
+	 */
+	public DeleteOutcome delete(Long id) {
+		InventoryItem item = inventoryItemRepository.findById(id).orElse(null);
+		if (item == null) {
+			log.warn("Delete requested for non-existent item id: {}", id);
+			return DeleteOutcome.NOT_FOUND;
+		}
+		try {
+			boolean deleted = stripeCatalogService.deleteProduct(item.getStripeProductId());
+			if (deleted) {
+				// Row first - if S3 cleanup fails afterward, worst case is
+				// an orphaned file in the bucket, not a deleted image still
+				// referenced by a row that's supposed to be gone.
+				inventoryItemRepository.deleteById(id);
+				s3Service.deleteImages(item);
+				log.info("Stripe product {} deleted", item.getStripeProductId());
+				return DeleteOutcome.DELETED;
+			}
+			item.setIsArchived(true);
+			inventoryItemRepository.save(item);
+			log.info("Stripe product {} archived, inventory item {} marked archived", item.getStripeProductId(), id);
+			return DeleteOutcome.ARCHIVED;
+		} catch (StripeException e) {
+			log.error("Stripe failed to delete item {}: {}", item.getStripeProductId(), e.getMessage());
+			return DeleteOutcome.STRIPE_ERROR;
+		} catch (SdkException e) {
+			log.error("S3 failed to delete item {}: {}", item.getStripeProductId(), e.getMessage());
+			return DeleteOutcome.S3_ERROR;
+		}
+	}
 
-    /**
-     * Single entry point for creating or updating an inventory item: if the
-     * submitted item carries an id that already exists, it's treated as an
-     * update; otherwise a new item (and matching Stripe product/price) is
-     * created. Lets the frontend use one form/dialog for both flows instead
-     * of maintaining separate create and edit paths.
-     *
-     * @param submitted the item to create or update
-     * @return the saved item
-     * @throws StripeException if the Stripe product/price call fails
-     */
-    public InventoryItem save(InventoryItem submitted) throws StripeException {
-        if (submitted.getId() != null &&
-            inventoryItemRepository.existsById(submitted.getId())) {
-            return update(submitted);
-        }
-        return create(submitted);
-    }
+	/**
+	 * Removes images the client uploaded directly to S3 - used to roll back a
+	 * partially-completed multi-image upload when a later file in the batch fails.
+	 *
+	 * @param urls
+	 *            the publicUrls to delete
+	 */
+	public void deleteUploadedImages(List<String> urls) {
+		s3Service.deleteObjects(urls);
+	}
 
-    private InventoryItem create(InventoryItem submitted)
-        throws StripeException {
-        CreateCatalogRequest createCatalogRequest = new CreateCatalogRequest(
-            submitted.getItemTitle(), submitted.getItemDescription(),
-            List.of(submitted.getImageUrls()), submitted.getItemCost(),
-            submitted.getCurrency(), submitted.getQuantity());
+	/**
+	 * Gets every non-archived inventory item.
+	 *
+	 * @return the list of inventory items
+	 */
+	public List<InventoryItem> getAll() {
+		return inventoryItemRepository.findByIsArchivedFalse(Sort.by(Sort.Direction.ASC, "id"));
+	}
 
-        CreateCatalogResponse stripeResponse =
-            stripeCatalogService.createProductAndPrice(createCatalogRequest);
-        submitted.setStripeProductId(stripeResponse.stripeProductId());
-        if (submitted.getFields() != null) {
-            for (InventoryItemField field : submitted.getFields()) {
-                field.setInventoryItem(submitted);
-            }
-        }
-        log.info("Stripe Item was created");
-        return inventoryItemRepository.save(submitted);
-    }
+	/**
+	 * Gets every inventory item, including archived ones.
+	 *
+	 * @return the list of inventory items
+	 */
+	public List<InventoryItem> getAllAdmin() {
+		return inventoryItemRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+	}
 
-    private InventoryItem update(InventoryItem submitted)
-        throws StripeException {
-        InventoryItem existing =
-            inventoryItemRepository.findById(submitted.getId()).orElseThrow();
+	/**
+	 * Gets a single inventory item by id.
+	 *
+	 * @param id
+	 *            the item's id
+	 * @return the item
+	 */
+	public InventoryItem getOne(Long id) {
+		return inventoryItemRepository.findById(id).orElseThrow();
+	}
 
-        // Diff against existing's still-current imageUrls before it gets
-        // overwritten below, so whatever the admin removed in this edit
-        // actually gets deleted from S3 instead of just dropped from the row.
-        s3Service.updateImages(submitted.getImageUrls(), existing);
+	/**
+	 * Signs presigned PUT URLs so the browser can upload product images directly to
+	 * S3 instead of streaming them through this service.
+	 *
+	 * @param requests
+	 *            the files the client intends to upload
+	 * @return a presigned upload slot per request, in order
+	 */
+	public List<PresignedImageUpload> presignImageUploads(List<PresignImageUploadRequest> requests) {
+		return s3Service.presignUploads(requests);
+	}
 
-        existing.setItemTitle(submitted.getItemTitle());
-        existing.setItemDescription(submitted.getItemDescription());
-        existing.setItemCost(submitted.getItemCost());
-        existing.setImageUrls(submitted.getImageUrls());
-        existing.setQuantity(submitted.getQuantity());
-        existing.setCurrency(submitted.getCurrency());
-        existing.setSizeCategory(submitted.getSizeCategory());
-        existing.setWeightCategory(submitted.getWeightCategory());
-        existing.setSale(submitted.getSale());
+	/**
+	 * Single entry point for creating or updating an inventory item: if the
+	 * submitted item carries an id that already exists, it's treated as an update;
+	 * otherwise a new item (and matching Stripe product/price) is created. Lets the
+	 * frontend use one form/dialog for both flows instead of maintaining separate
+	 * create and edit paths.
+	 *
+	 * @param submitted
+	 *            the item to create or update
+	 * @return the saved item
+	 * @throws StripeException
+	 *             if the Stripe product/price call fails
+	 */
+	public InventoryItem save(InventoryItem submitted) throws StripeException {
+		if (submitted.getId() != null && inventoryItemRepository.existsById(submitted.getId())) {
+			return update(submitted);
+		}
+		return create(submitted);
+	}
 
-        existing.getFields().clear();
-        if (submitted.getFields() != null) {
-            for (InventoryItemField field : submitted.getFields()) {
-                field.setInventoryItem(existing);
-                existing.getFields().add(field);
-            }
-        }
+	/**
+	 * Toggles an item's archived state directly, syncing Stripe's product active
+	 * flag to match.
+	 *
+	 * @param id
+	 *            the item's id
+	 * @param archived
+	 *            the archived state to set
+	 * @return the updated item
+	 */
+	public InventoryItem setArchived(Long id, boolean archived) throws StripeException {
+		InventoryItem item = inventoryItemRepository.findById(id).orElseThrow();
+		if (archived) {
+			stripeCatalogService.deactivateProduct(item.getStripeProductId());
+		} else {
+			stripeCatalogService.activateProduct(item.getStripeProductId());
+		}
+		item.setIsArchived(archived);
+		return inventoryItemRepository.save(item);
+	}
 
-        return inventoryItemRepository.save(existing);
-    }
+	private InventoryItem update(InventoryItem submitted) throws StripeException {
+		InventoryItem existing = inventoryItemRepository.findById(submitted.getId()).orElseThrow();
 
-    /**
-     * Deletes an item's Stripe product; if Stripe refuses because the
-     * product has prior usage, the item is archived instead of deleted.
-     *
-     * @param id the item's id
-     * @return how the delete was actually resolved
-     */
-    public DeleteOutcome delete(Long id) {
-        InventoryItem item = inventoryItemRepository.findById(id).orElse(null);
-        if (item == null) {
-            log.warn("Delete requested for non-existent item id: {}", id);
-            return DeleteOutcome.NOT_FOUND;
-        }
-        try {
-            boolean deleted =
-                stripeCatalogService.deleteProduct(item.getStripeProductId());
-            if (deleted) {
-                // Row first - if S3 cleanup fails afterward, worst case is
-                // an orphaned file in the bucket, not a deleted image still
-                // referenced by a row that's supposed to be gone.
-                inventoryItemRepository.deleteById(id);
-                s3Service.deleteImages(item);
-                log.info("Stripe product {} deleted",
-                         item.getStripeProductId());
-                return DeleteOutcome.DELETED;
-            }
-            item.setIsArchived(true);
-            inventoryItemRepository.save(item);
-            log.info(
-                "Stripe product {} archived, inventory item {} marked archived",
-                item.getStripeProductId(), id);
-            return DeleteOutcome.ARCHIVED;
-        } catch (StripeException e) {
-            log.error("Stripe failed to delete item {}: {}",
-                      item.getStripeProductId(), e.getMessage());
-            return DeleteOutcome.STRIPE_ERROR;
-        } catch (SdkException e) {
-            log.error("S3 failed to delete item {}: {}",
-                      item.getStripeProductId(), e.getMessage());
-            return DeleteOutcome.S3_ERROR;
-        }
-    }
+		// Diff against existing's still-current imageUrls before it gets
+		// overwritten below, so whatever the admin removed in this edit
+		// actually gets deleted from S3 instead of just dropped from the row.
+		s3Service.updateImages(submitted.getImageUrls(), existing);
 
-    /**
-     * Toggles an item's archived state directly, syncing Stripe's product
-     * active flag to match.
-     *
-     * @param id       the item's id
-     * @param archived the archived state to set
-     * @return the updated item
-     */
-    public InventoryItem setArchived(Long id, boolean archived)
-        throws StripeException {
-        InventoryItem item = inventoryItemRepository.findById(id).orElseThrow();
-        if (archived) {
-            stripeCatalogService.deactivateProduct(item.getStripeProductId());
-        } else {
-            stripeCatalogService.activateProduct(item.getStripeProductId());
-        }
-        item.setIsArchived(archived);
-        return inventoryItemRepository.save(item);
-    }
+		existing.setItemTitle(submitted.getItemTitle());
+		existing.setItemDescription(submitted.getItemDescription());
+		existing.setItemCost(submitted.getItemCost());
+		existing.setImageUrls(submitted.getImageUrls());
+		existing.setQuantity(submitted.getQuantity());
+		existing.setCurrency(submitted.getCurrency());
+		existing.setSizeCategory(submitted.getSizeCategory());
+		existing.setWeightCategory(submitted.getWeightCategory());
+		existing.setSale(submitted.getSale());
 
-    /**
-     * Uploads images to S3 and returns their URLs.
-     *
-     * @param files the images to upload
-     * @return the S3 URLs
-     */
-    public List<String> uploadImages(List<MultipartFile> files) {
-        return s3Service.uploadImages(files);
-    }
+		existing.getFields().clear();
+		if (submitted.getFields() != null) {
+			for (InventoryItemField field : submitted.getFields()) {
+				field.setInventoryItem(existing);
+				existing.getFields().add(field);
+			}
+		}
 
-    /**
-     * Signs presigned PUT URLs so the browser can upload product images
-     * directly to S3 instead of streaming them through this service.
-     *
-     * @param requests the files the client intends to upload
-     * @return a presigned upload slot per request, in order
-     */
-    public List<PresignedImageUpload> presignImageUploads(List<PresignImageUploadRequest> requests) {
-        return s3Service.presignUploads(requests);
-    }
+		return inventoryItemRepository.save(existing);
+	}
 
-    /**
-     * Removes images the client uploaded directly to S3 - used to roll back
-     * a partially-completed multi-image upload when a later file in the
-     * batch fails.
-     *
-     * @param urls the publicUrls to delete
-     */
-    public void deleteUploadedImages(List<String> urls) {
-        s3Service.deleteObjects(urls);
-    }
+	/**
+	 * Uploads images to S3 and returns their URLs.
+	 *
+	 * @param files
+	 *            the images to upload
+	 * @return the S3 URLs
+	 */
+	public List<String> uploadImages(List<MultipartFile> files) {
+		return s3Service.uploadImages(files);
+	}
 }

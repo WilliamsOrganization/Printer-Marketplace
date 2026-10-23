@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.seeding;
 
 import java.util.List;
@@ -14,10 +15,10 @@ import com.ecommerce.backend.service.GoogleMapsService;
 import com.google.maps.model.LatLng;
 
 /**
- * One-time backfill for Shipping rows created before lat/lng were geocoded
- * at order-creation time (see OrderService.createPendingOrder). Naturally
- * idempotent - only rows still missing coordinates get touched, so this is
- * safe to leave running on every startup.
+ * One-time backfill for Shipping rows created before lat/lng were geocoded at
+ * order-creation time (see OrderService.createPendingOrder). Naturally
+ * idempotent - only rows still missing coordinates get touched, so this is safe
+ * to leave running on every startup.
  */
 @Configuration
 public class ShippingCoordinatesBackfill {

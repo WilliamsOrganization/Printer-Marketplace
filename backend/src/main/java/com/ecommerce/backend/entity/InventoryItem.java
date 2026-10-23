@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
@@ -42,99 +42,107 @@ import lombok.NonNull;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class InventoryItem {
 
-    /**
-     * Standard physical package footprint sizes an item ships in, width by
-     * length in centimeters. A rough classification (not the item's exact
-     * dimensions) so a whole order's items can be combined into one
-     * estimated ShippingParcel at checkout - see ShippingService.estimateParcel.
-     */
-    public enum SizeCategory {
-        SIZE_2X2(2, 2),
-        SIZE_4X5(4, 5),
-        SIZE_5X7(5, 7),
-        SIZE_8X10(8, 10),
-        SIZE_11X14(11, 14),
-        SIZE_16X20(16, 20),
-        SIZE_20X30(20, 30);
+	/**
+	 * Standard physical package footprint sizes an item ships in, width by length
+	 * in centimeters. A rough classification (not the item's exact dimensions) so a
+	 * whole order's items can be combined into one estimated ShippingParcel at
+	 * checkout - see ShippingService.estimateParcel.
+	 */
+	public enum SizeCategory {
+		SIZE_2X2(2, 2), SIZE_4X5(4, 5), SIZE_5X7(5, 7), SIZE_8X10(8, 10), SIZE_11X14(11, 14), SIZE_16X20(16,
+				20), SIZE_20X30(20, 30);
 
-        public final int widthCm;
-        public final int lengthCm;
+		public final int widthCm;
+		public final int lengthCm;
 
-        SizeCategory(int widthCm, int lengthCm) {
-            this.widthCm = widthCm;
-            this.lengthCm = lengthCm;
-        }
-    }
+		SizeCategory(int widthCm, int lengthCm) {
+			this.widthCm = widthCm;
+			this.lengthCm = lengthCm;
+		}
+	}
 
-    /**
-     * Standard weight tiers an item ships at, in grams - same rough,
-     * checkout-estimate purpose as SizeCategory above.
-     */
-    public enum WeightCategory {
-        LIGHT(100),
-        MEDIUM(500),
-        HEAVY(1000),
-        EXTRA_HEAVY(2000);
+	/**
+	 * Standard weight tiers an item ships at, in grams - same rough,
+	 * checkout-estimate purpose as SizeCategory above.
+	 */
+	public enum WeightCategory {
+		LIGHT(100), MEDIUM(500), HEAVY(1000), EXTRA_HEAVY(2000);
 
-        public final int grams;
+		public final int grams;
 
-        WeightCategory(int grams) {
-            this.grams = grams;
-        }
-    }
+		WeightCategory(int grams) {
+			this.grams = grams;
+		}
+	}
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @CreationTimestamp private LocalDateTime createdAt;
+	@CreationTimestamp
+	private LocalDateTime createdAt;
 
-    @UpdateTimestamp private LocalDateTime updatedAt;
+	@UpdateTimestamp
+	private LocalDateTime updatedAt;
 
-    // TODO: consider @Size(min = 1, max = ...) to bound title length
-    @NonNull @Column(nullable = false) private String itemTitle;
+	// TODO: consider @Size(min = 1, max = ...) to bound title length
+	@NonNull
+	@Column(nullable = false)
+	private String itemTitle;
 
-    // TODO: consider @Size(max = ...) to bound description length
-    @NonNull @Column(nullable = false) private String itemDescription;
+	// TODO: consider @Size(max = ...) to bound description length
+	@NonNull
+	@Column(nullable = false)
+	private String itemDescription;
 
-    // TODO: consider @Positive (jakarta.validation) - cost shouldn't be
-    // zero/negative
-    @NonNull @Column(nullable = false) private Long itemCost;
-    @Column(columnDefinition = "text[]") private String[] imageUrls;
+	// TODO: consider @Positive (jakarta.validation) - cost shouldn't be
+	// zero/negative
+	@NonNull
+	@Column(nullable = false)
+	private Long itemCost;
 
-    @NonNull @Column(nullable = false) private String stripeProductId; // TODO: remove this field and go with inline pricing. 
+	@Column(columnDefinition = "text[]")
+	private String[] imageUrls;
 
-    // TODO: consider @PositiveOrZero (stock can be 0, not negative)
-    // TODO: consider @Version on this class for optimistic locking - concurrent
-    // checkouts decrementing quantity at once can oversell stock without it
-    @NonNull @Column(nullable = false) private Long quantity;
+	@NonNull
+	@Column(nullable = false)
+	private String stripeProductId; // TODO: remove this field and go with inline pricing.
 
-    // TODO: consider @Pattern/@Size(min = 3, max = 3) to validate ISO currency
-    // code
-    @NonNull
-    @Column(nullable = false, length = 3)
-    @ColumnDefault("'CAD'")
-    private String currency;
+	// TODO: consider @PositiveOrZero (stock can be 0, not negative)
+	// TODO: consider @Version on this class for optimistic locking - concurrent
+	// checkouts decrementing quantity at once can oversell stock without it
+	@NonNull
+	@Column(nullable = false)
+	private Long quantity;
 
-    private Boolean sale;
+	// TODO: consider @Pattern/@Size(min = 3, max = 3) to validate ISO currency
+	// code
+	@NonNull
+	@Column(nullable = false, length = 3)
+	@ColumnDefault("'CAD'")
+	private String currency;
 
-    // TODO: needs @Builder.Default or the builder passes null (not false) here,
-    // which trips @NonNull the moment .build() is called without
-    // .isArchived(...)
-    @NonNull
-    @Column(nullable = false)
-    @ColumnDefault("false")
-    @Builder.Default
-    private Boolean isArchived = false;
+	private Boolean sale;
 
-    @NonNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(255) default 'SIZE_4X5'")
-    private SizeCategory sizeCategory;
+	// TODO: needs @Builder.Default or the builder passes null (not false) here,
+	// which trips @NonNull the moment .build() is called without
+	// .isArchived(...)
+	@NonNull
+	@Column(nullable = false)
+	@ColumnDefault("false")
+	@Builder.Default
+	private Boolean isArchived = false;
 
-    @OneToMany(mappedBy = "inventoryItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<InventoryItemField> fields;
+	@NonNull
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, columnDefinition = "varchar(255) default 'SIZE_4X5'")
+	private SizeCategory sizeCategory;
 
-    @NonNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(255) default 'MEDIUM'")
-    private WeightCategory weightCategory;
+	@OneToMany(mappedBy = "inventoryItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+	private List<InventoryItemField> fields;
+
+	@NonNull
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, columnDefinition = "varchar(255) default 'MEDIUM'")
+	private WeightCategory weightCategory;
 }

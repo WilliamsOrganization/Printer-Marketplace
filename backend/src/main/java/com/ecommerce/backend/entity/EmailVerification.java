@@ -1,5 +1,5 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
-
 
 import java.time.LocalDateTime;
 
@@ -26,7 +26,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-
 /**
  * EmailVerification
  */
@@ -37,6 +36,13 @@ import lombok.NonNull;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class EmailVerification {
+	/**
+	 * Reasons for email verification.
+	 */
+	public enum Reason {
+		CREATE_ACCOUNT, RESET_PASSWORD, CHANGE_EMAIL
+	}
+
 	private static final int length = 6;
 
 	@Id
@@ -46,26 +52,26 @@ public class EmailVerification {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "fk_email_verification_codes_users"))
 	private Users user;
-	@NotNull @NonNull private String email;
-	@NotNull @NonNull
-	@Column(length = length) 
+
+	@NotNull
+	@NonNull
+	private String email;
+
+	@NotNull
+	@NonNull
+	@Column(length = length)
 	private String code;
-	@NotNull @NonNull private LocalDateTime expiryDate;
+
+	@NotNull
+	@NonNull
+	private LocalDateTime expiryDate;
 
 	@CreationTimestamp
 	private LocalDateTime createdAt;
-
 
 	@NotNull
 	@NonNull
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private Reason reason;
-
-	/**
-	 * Reasons for email verification.
-	 */
-	public enum Reason {
-		CREATE_ACCOUNT, RESET_PASSWORD, CHANGE_EMAIL
-	}
 }

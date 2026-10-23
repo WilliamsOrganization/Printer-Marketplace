@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import com.ecommerce.backend.entity.CartItem;

@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 /**
@@ -5,9 +6,5 @@ package com.ecommerce.backend.dto;
  * frontend actually needs, so the raw Stripe SDK object (which isn't
  * Jackson-serializable) never has to leave the backend.
  */
-public record CheckoutSummary(
-		String status,
-		String customerEmail,
-		Long amountTotal,
-		String currency) {
+public record CheckoutSummary(String status, String customerEmail, Long amountTotal, String currency) {
 }

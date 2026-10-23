@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -32,21 +33,34 @@ import lombok.NonNull;
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Users {
+	/**
+	 * User roles.
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	public enum Role {
+		CUSTOMER, REGISTERED, ADMIN
+	}
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@CreationTimestamp
 	private LocalDateTime createdAt;
+
 	@UpdateTimestamp
 	private LocalDateTime updatedAt;
+
 	@Column(unique = true)
 	private String email;
 	@UpdateTimestamp
 	private LocalDateTime lastLogin;
 	// TODO: consider @Pattern for phone number format
 	private String phoneNumber; // completes to phone_number in the table
-	// TODO: consider @Size(min = ...) minimum length - confirm this stores a hash, not raw password
+	// TODO: consider @Size(min = ...) minimum length - confirm this stores a hash,
+	// not raw password
 	private String password;
+
 	private Boolean isAdmin;
 
 	@NotNull
@@ -54,14 +68,4 @@ public class Users {
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private Role userRole;
-
-	/**
-	 * User roles.
-	 * 
-	 * @author William Ewanchuk https://github.com/ewanchukwilliam
-	 */
-	public enum Role {
-		CUSTOMER, REGISTERED, ADMIN
-	}
-
 }

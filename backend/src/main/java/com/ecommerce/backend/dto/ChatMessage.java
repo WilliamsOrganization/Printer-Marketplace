@@ -1,8 +1,7 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import java.time.LocalDateTime;
-
-import com.ecommerce.backend.entity.Users;
 
 import lombok.Data;
 
@@ -12,15 +11,13 @@ import lombok.Data;
 @Data
 @lombok.Builder
 public class ChatMessage {
+	public enum MessageType {
+		CHAT, JOIN, LEAVE
+	}
 	private MessageType messageType;
 	private String content;
 	private Boolean sender;
 	private LocalDateTime createdAt;
-	private String id;
 
-	public enum MessageType {
-		CHAT,
-		JOIN,
-		LEAVE
-	}
+	private String id;
 }

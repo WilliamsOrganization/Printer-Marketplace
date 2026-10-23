@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import java.time.LocalDateTime;
@@ -19,9 +20,25 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class SessionService {
-    private final SessionRepository sessionRepository;
+	private final SessionRepository sessionRepository;
 	private final UserRepository userRepository;
 	private final int DAYS = 1;
+
+	/**
+	 * Lazily creates a guest user and attaches it to a session that doesn't have
+	 * one yet - called only by code paths that actually need a user (e.g. adding to
+	 * a cart), not on every request.
+	 *
+	 * @param session
+	 *            the current, userless session
+	 * @return the newly-created user
+	 */
+	public Users attachNewUserToSession(Sessions session) {
+		Users user = userRepository.save(Users.builder().userRole(Users.Role.CUSTOMER).build());
+		session.setUser(user);
+		sessionRepository.save(session);
+		return user;
+	}
 
 	/**
 	 * create session and attach a user to it
@@ -37,22 +54,8 @@ public class SessionService {
 	}
 
 	/**
-	 * Lazily creates a guest user and attaches it to a session that doesn't
-	 * have one yet - called only by code paths that actually need a user
-	 * (e.g. adding to a cart), not on every request.
-	 *
-	 * @param session the current, userless session
-	 * @return the newly-created user
-	 */
-	public Users attachNewUserToSession(Sessions session) {
-		Users user = userRepository.save(Users.builder().userRole(Users.Role.CUSTOMER).build());
-		session.setUser(user);
-		sessionRepository.save(session);
-		return user;
-	}
-
-	/**
 	 * Returns the current request's session if it extists from the request headers
+	 * 
 	 * @return
 	 */
 	public Sessions getSessionFromContext() {
@@ -64,8 +67,23 @@ public class SessionService {
 	}
 
 	/**
+	 * Creates a new refreshed session token for a returning user. do not call this
+	 * if the request is not authenticated.
+	 *
+	 */
+	public Sessions refreshUserToken(Users user) {
+		Sessions session = sessionRepository.findByUser(user).orElseGet(() -> {
+			Sessions newSession = Sessions.builder().user(user).build();
+			return newSession;
+		});
+		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
+		updateLastLogin(user);
+		return sessionRepository.save(session);
+	}
+
+	/**
 	 * handleOAuthLogin handles the login request and returns the session token
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -76,19 +94,6 @@ public class SessionService {
 		});
 		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		session.setProviderAccountID(request.getProviderAccountID());
-		updateLastLogin(user);
-		return sessionRepository.save(session);
-	}
-	/**
-	 * Creates a new refreshed session token for a returning user. do not call this if the request is not authenticated.
-	 *
-	 */
-	public Sessions refreshUserToken(Users user) {
-		Sessions session = sessionRepository.findByUser(user).orElseGet(()->{
-			Sessions newSession = Sessions.builder().user(user).build();
-			return newSession;
-		});
-		session.setExpiresAt(LocalDateTime.now().plusDays(DAYS));
 		updateLastLogin(user);
 		return sessionRepository.save(session);
 	}

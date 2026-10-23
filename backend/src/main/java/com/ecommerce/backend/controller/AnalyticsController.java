@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,7 +23,7 @@ public class AnalyticsController {
 
 	/**
 	 * Main route for the dashboard analytics page.
-	 * 
+	 *
 	 * @return {@link DashboardAnalyticsResponse}
 	 */
 	@GetMapping("/dashboard")

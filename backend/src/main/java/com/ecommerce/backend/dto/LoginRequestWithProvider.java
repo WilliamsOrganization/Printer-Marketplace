@@ -1,9 +1,10 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import lombok.Data;
 
 /**
- * LoginRequest	
+ * LoginRequest
  */
 @Data
 public class LoginRequestWithProvider {
@@ -12,5 +13,4 @@ public class LoginRequestWithProvider {
 	private String email;
 	private String password;
 	private String name;
-
 }

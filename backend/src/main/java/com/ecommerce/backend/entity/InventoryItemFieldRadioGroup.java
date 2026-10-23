@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.List;
@@ -31,14 +32,16 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("radio_group")
 public class InventoryItemFieldRadioGroup extends InventoryItemField {
 
-    @OneToMany(mappedBy = "inventoryItemField", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    @NonNull @NotNull private List<InventoryItemFieldOptionsDropdown> options;
+	@OneToMany(mappedBy = "inventoryItemField", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonManagedReference
+	@NonNull
+	@NotNull
+	private List<InventoryItemFieldOptionsDropdown> options;
 
-    /**
-     * Returns the options for this field.
-     */
-    public List<InventoryItemFieldOptionsDropdown> getOptions(){
-        return options;
-    };
+	/**
+	 * Returns the options for this field.
+	 */
+	public List<InventoryItemFieldOptionsDropdown> getOptions() {
+		return options;
+	};
 }

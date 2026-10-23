@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.seeding;
 
 import org.slf4j.Logger;
@@ -19,29 +20,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 public class UserDataInitializer {
-    private static final Logger logger =
-        LoggerFactory.getLogger(UserDataInitializer.class);
+	private static final Logger logger = LoggerFactory.getLogger(UserDataInitializer.class);
 
-    @Value("${app.admin.password}") private String password;
-    @Value("${app.admin.email}") private String email;
-    @Value("${app.admin.phone}") private String phone;
+	@Value("${app.admin.password}")
+	private String password;
 
-    @Bean
-    ApplicationRunner createDefaultAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        return args -> {
-            if (userRepository.findByEmail(email).isEmpty()) {
-                logger.info("[INIT]: No default admin detected "
-                                + "populating seed data for email: {}",
-                            email);
-                Users admin = Users.builder()
-                                  .password(passwordEncoder.encode(password))
-                                  .email(email)
-                                  .phoneNumber(phone)
-                                  .isAdmin(true)
-                                  .userRole(Users.Role.ADMIN)
-                                  .build();
-                userRepository.save(admin);
-            }
-        };
-    }
+	@Value("${app.admin.email}")
+	private String email;
+
+	@Value("${app.admin.phone}")
+	private String phone;
+
+	@Bean
+	ApplicationRunner createDefaultAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+		return args -> {
+			if (userRepository.findByEmail(email).isEmpty()) {
+				logger.info("[INIT]: No default admin detected " + "populating seed data for email: {}", email);
+				Users admin = Users.builder().password(passwordEncoder.encode(password)).email(email).phoneNumber(phone)
+						.isAdmin(true).userRole(Users.Role.ADMIN).build();
+				userRepository.save(admin);
+			}
+		};
+	}
 }

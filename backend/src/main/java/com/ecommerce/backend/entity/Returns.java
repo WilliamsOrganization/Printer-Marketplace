@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,8 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 /**
- * Returns containing refind metadata and a reference to the order and items to return. and the shipping status in reverse (destination and back)
+ * Returns containing refind metadata and a reference to the order and items to
+ * return. and the shipping status in reverse (destination and back)
  */
 @Data
 @Entity
@@ -37,10 +39,17 @@ import lombok.NonNull;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Returns {
 
+	/**
+	 *
+	 */
+	public enum ReturnStatus {
+		PENDING, CANCELLED, REFUNDED
+	}
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@NonNull
 	@NotNull
 	@CreationTimestamp
@@ -85,12 +94,6 @@ public class Returns {
 	@NotNull
 	@Builder.Default
 	private Boolean reviewed = false;
-	/**
-	 *
-	 */
-	public enum ReturnStatus {
-		PENDING, CANCELLED, REFUNDED
-	}
 
 	@OneToOne
 	@JoinColumn(name = "chat_id", unique = true)

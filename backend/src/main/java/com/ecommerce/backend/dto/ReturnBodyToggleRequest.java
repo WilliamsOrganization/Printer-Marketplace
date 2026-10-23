@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.dto;
 
 import lombok.Data;
@@ -7,6 +8,6 @@ import lombok.Data;
  */
 @Data
 public class ReturnBodyToggleRequest {
-    private Boolean reviewed;
-    private Long id;
+	private Boolean reviewed;
+	private Long id;
 }

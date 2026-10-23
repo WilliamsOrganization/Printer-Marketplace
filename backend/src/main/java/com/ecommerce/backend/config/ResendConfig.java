@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.config;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ public class ResendConfig {
 
 	/**
 	 * Creates a new Resend.
+	 * 
 	 * @return the new Resend
 	 */
 	@Bean

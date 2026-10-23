@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.http.ResponseEntity;
@@ -17,31 +18,28 @@ import lombok.RequiredArgsConstructor;
 /**
  * CatalogController
  */
-
 @RestController
 @RequestMapping("/server/catalog")
 @RequiredArgsConstructor
 public class CatalogController {
-    private final StripeCatalogService stripeCatalogService;
+	private final StripeCatalogService stripeCatalogService;
 
 	/**
-     * Creates a new catalog item.
-     *
-     * @param request the request
-     * @return the response
-     */
-    @PostMapping("/items")
+	 * Creates a new catalog item.
+	 *
+	 * @param request
+	 *            the request
+	 * @return the response
+	 */
+	@PostMapping("/items")
 	@PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?>
-    createCatalogItem(@RequestBody CreateCatalogRequest request) {
-        try {
-            CreateCatalogResponse response =
-                stripeCatalogService.createProductAndPrice(request);
-            return ResponseEntity.ok(response);
+	public ResponseEntity<?> createCatalogItem(@RequestBody CreateCatalogRequest request) {
+		try {
+			CreateCatalogResponse response = stripeCatalogService.createProductAndPrice(request);
+			return ResponseEntity.ok(response);
 
-        } catch (StripeException e) {
-            return ResponseEntity.badRequest().body(
-                java.util.Map.of("error", e.getMessage()));
-        }
-    }
+		} catch (StripeException e) {
+			return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+		}
+	}
 }

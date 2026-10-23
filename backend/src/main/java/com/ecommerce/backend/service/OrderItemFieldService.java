@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.service;
 
 import org.springframework.stereotype.Service;
@@ -9,6 +10,4 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class OrderItemFieldService {
-
-
 }

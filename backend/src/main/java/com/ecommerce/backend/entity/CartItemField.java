@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.ArrayList;
@@ -21,7 +22,6 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
-
 /**
  * A cart item field holds the options a customer has selected for one
  * configurable field of an item sitting in their cart.
@@ -37,43 +37,42 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorColumn(name = "field_type")
 public abstract class CartItemField {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
 
-    @NonNull
-    @NotNull
-    @Column(nullable=false)
-    private String label;
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private String label;
 
-    @NonNull
-    @NotNull
-    @Column(nullable=false)
-    private String description;
+	@NonNull
+	@NotNull
+	@Column(nullable = false)
+	private String description;
 
-    /**
-     * Returns the selected options for this field.
-     */
-    @Transient
-    public abstract List<? extends CartItemFieldOptions> getOptions();
+	/**
+	 * Human-readable form of this selection, e.g. "Color: Red" or "Add-ons:
+	 * Keyring, Gift box".
+	 */
+	public String describe() {
+		List<String> optionLabels = new ArrayList<>();
+		for (CartItemFieldOptions option : getOptions()) {
+			optionLabels.add(option.getLabel());
+		}
+		return label + ": " + String.join(", ", optionLabels);
+	}
 
-    /**
-     * The total price of the selected options in dollars.
-     */
-    public long tallyOptionsPrice() {
-        return getOptions().stream()
-                .mapToLong(CartItemFieldOptions::getPrice)
-                .sum();
-    }
+	/**
+	 * Returns the selected options for this field.
+	 */
+	@Transient
+	public abstract List<? extends CartItemFieldOptions> getOptions();
 
-    /**
-     * Human-readable form of this selection, e.g. "Color: Red" or "Add-ons: Keyring, Gift box".
-     */
-    public String describe() {
-        List<String> optionLabels = new ArrayList<>();
-        for (CartItemFieldOptions option : getOptions()) {
-            optionLabels.add(option.getLabel());
-        }
-        return label + ": " + String.join(", ", optionLabels);
-    }
+	/**
+	 * The total price of the selected options in dollars.
+	 */
+	public long tallyOptionsPrice() {
+		return getOptions().stream().mapToLong(CartItemFieldOptions::getPrice).sum();
+	}
 }

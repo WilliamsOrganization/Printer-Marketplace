@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend;
 
 import org.junit.jupiter.api.Test;
@@ -9,5 +10,4 @@ class BackendApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

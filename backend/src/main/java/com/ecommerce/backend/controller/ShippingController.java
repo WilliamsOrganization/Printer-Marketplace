@@ -1,3 +1,4 @@
+/* (C)2026 */
 package com.ecommerce.backend.controller;
 
 import org.springframework.http.ResponseEntity;
@@ -46,9 +47,31 @@ public class ShippingController {
 	private final OrderService orderService;
 
 	/**
-	 * Quotes shipping rates for the current session's cart: combines all of
-	 * its items into one estimated parcel (see
-	 * ShippingService.estimateParcel) and asks Shippo for rates against it.
+	 * Purchases a shipping label for an order, against the admin's chosen
+	 * real-world box size/weight - triggered from the shipments admin table, not
+	 * automatically at checkout.
+	 *
+	 * @author William Ewanchuk https://github.com/ewanchukwilliam
+	 */
+	@PostMapping("/{orderId}/label")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Shipping> createShippingLabel(@PathVariable Long orderId,
+			@RequestBody CreateShippingLabelRequest request)
+			throws ExistingShippingFound, Exception, UnsupportedShippingDestination {
+		Orders order = orderService.getOrder(orderId);
+		Shipping existing = order.getShipping();
+		if (existing != null && existing.getLabelPdfUrl() != null && !existing.getLabelPdfUrl().isBlank()) {
+			throw new ExistingShippingFound("Shipping label already exists for order " + orderId);
+		}
+		Shipping shipping = shippingService.createShippingLabel(order, request.lengthCm(), request.widthCm(),
+				request.heightCm(), request.weightGrams());
+		return ResponseEntity.ok(shipping);
+	}
+
+	/**
+	 * Quotes shipping rates for the current session's cart: combines all of its
+	 * items into one estimated parcel (see ShippingService.estimateParcel) and asks
+	 * Shippo for rates against it.
 	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
@@ -65,46 +88,18 @@ public class ShippingController {
 		ShipmentFromValues shipmentFromValues = new ShipmentFromValues();
 		Users user = userService.getUserFromSession();
 		Cart cart = cartService.getCartItems(user);
-		userService.updateContactInfo(
-				user, UpdateContactRequest.builder()
-						.email(shipmentToValues.getEmail())
-						.phoneNumber(shipmentToValues.getPhone())
-						.build());
+		userService.updateContactInfo(user, UpdateContactRequest.builder().email(shipmentToValues.getEmail())
+				.phoneNumber(shipmentToValues.getPhone()).build());
 		ShippingParcel parcel = shippingService.estimateParcel(cart);
-		var rates = shippoService.getShipmentRates(shipmentFromValues,
-				shipmentToValues, parcel);
+		var rates = shippoService.getShipmentRates(shipmentFromValues, shipmentToValues, parcel);
 		return ResponseEntity.ok(rates);
 	}
 
 	/**
-	 * Purchases a shipping label for an order, against the admin's chosen
-	 * real-world box size/weight - triggered from the shipments admin table,
-	 * not automatically at checkout.
-	 *
-	 * @author William Ewanchuk https://github.com/ewanchukwilliam
-	 */
-	@PostMapping("/{orderId}/label")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Shipping> createShippingLabel(@PathVariable Long orderId,
-			@RequestBody CreateShippingLabelRequest request)
-			throws ExistingShippingFound, Exception, UnsupportedShippingDestination {
-		Orders order = orderService.getOrder(orderId);
-		Shipping existing = order.getShipping();
-		if (existing != null && existing.getLabelPdfUrl() != null && !existing.getLabelPdfUrl().isBlank()) {
-			throw new ExistingShippingFound(
-					"Shipping label already exists for order " + orderId);
-		}
-		Shipping shipping = shippingService.createShippingLabel(
-				order, request.lengthCm(), request.widthCm(), request.heightCm(),
-				request.weightGrams());
-		return ResponseEntity.ok(shipping);
-	}
-
-	/**
-	 * Shippo's track_updated webhook - updates the shipment's status and
-	 * last-known checkpoint as the carrier scans it. Exempted from session
-	 * auth in SessionAuthFilter, same as the Stripe webhook - Shippo calls
-	 * this directly with no session token.
+	 * Shippo's track_updated webhook - updates the shipment's status and last-known
+	 * checkpoint as the carrier scans it. Exempted from session auth in
+	 * SessionAuthFilter, same as the Stripe webhook - Shippo calls this directly
+	 * with no session token.
 	 *
 	 * @author William Ewanchuk https://github.com/ewanchukwilliam
 	 */
