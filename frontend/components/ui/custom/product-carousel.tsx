@@ -5,44 +5,31 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from "@/components/ui/carousel";
-import { InventoryItem, InventoryItemFieldStlOption, StlChunk, StlColorHex } from "@/lib/types";
+import { InventoryItem } from "@/lib/types";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import PreviewRoom from "./preview-room";
+import { useMemo } from "react";
+import PreviewRoom, { SlotColors } from "./preview-room";
 
 /**
- * Builds StlChunks from all color_picker fields on an item.
- * Each color picker field has one stlUrl shared by all its color options.
- * The selected color option determines the color for that chunk.
- * If no selection, defaults to the first option's color.
+ * Builds the 3D preview from the item's 3MF color picker field: its file and
+ * each region's color keyed by slot. Regions without a selection preview in
+ * their first option's color. Only the first 3MF field is previewed.
  */
-function buildChunks(
+function buildPreview(
 	item: InventoryItem,
 	fieldSelections: Record<number, Set<number>>,
-): StlChunk[] {
-	const chunks: StlChunk[] = [];
-	if (!item.fields) return chunks;
+): { url: string; slotColors: SlotColors } | null {
+	const field = item.fields?.find((f) => f.field_type === "three_mf_color_picker" && f.threeMFUrl);
+	if (!field?.threeMFUrl) return null;
 
-	for (const field of item.fields) {
-		if (field.field_type !== "color_picker" || !field.stlUrl) continue;
-
-		const stlOptions = field.options as InventoryItemFieldStlOption[];
-		const selected = fieldSelections[field.id];
-		let chosenOption = stlOptions[0];
-		if (selected && selected.size > 0) {
-			const found = stlOptions.find((o) => selected.has(o.id));
-			if (found) chosenOption = found;
-		}
-		if (!chosenOption) continue;
-
-		chunks.push({
-			url: field.stlUrl,
-			color: StlColorHex[chosenOption.selectedColor] ?? "#808080",
-			position: [0, 0, 0],
-		});
+	const selected = fieldSelections[field.id];
+	const slotColors: SlotColors = {};
+	for (const region of field.regions ?? []) {
+		const chosen = region.options.find((o) => selected?.has(o.id)) ?? region.options[0];
+		if (chosen) slotColors[region.slotIndex] = chosen.selectedColor.hex;
 	}
-
-	return chunks;
+	return { url: field.threeMFUrl, slotColors };
 }
 
 export function ProductCarousel({
@@ -59,13 +46,12 @@ export function ProductCarousel({
 	onShowPreviewChange: (show: boolean) => void;
 }) {
 	const images = product.imageUrls?.length ? product.imageUrls : ["/stock-1.jpg"];
-	const chunks = buildChunks(product, fieldSelections);
-	const has3d = chunks.length > 0;
+	const preview = useMemo(() => buildPreview(product, fieldSelections), [product, fieldSelections]);
 
 	return (
 		<motion.div layoutId={layoutId} className="relative aspect-square w-full overflow-hidden rounded-2xl">
 			<AnimatePresence>
-				{showPreview && has3d ? (
+				{showPreview && preview ? (
 					<motion.div
 						key="preview"
 						initial={{ opacity: 0 }}
@@ -74,7 +60,7 @@ export function ProductCarousel({
 						transition={{ duration: 0.3 }}
 						className="absolute inset-0"
 					>
-						<PreviewRoom chunks={chunks} />
+						<PreviewRoom url={preview.url} slotColors={preview.slotColors} />
 						<button
 							onClick={() => onShowPreviewChange(false)}
 							className="absolute bottom-4 left-1/2 -translate-x-1/2 font-serif italic text-white text-sm bg-black/40 backdrop-blur-sm px-4 py-1.5 rounded"
@@ -110,7 +96,7 @@ export function ProductCarousel({
 							<CarouselNext className="top-auto bottom-4 right-4 translate-y-0" />
 						</Carousel>
 
-						{has3d && (
+						{preview && (
 							<div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors duration-300 flex items-end justify-center pb-4 pointer-events-none">
 								<button
 									onClick={() => onShowPreviewChange(true)}

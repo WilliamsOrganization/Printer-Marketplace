@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +19,9 @@ import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.CartItemField;
 import com.ecommerce.backend.entity.CartItemFieldChecklist;
 import com.ecommerce.backend.entity.CartItemFieldOptionsDropdown;
-import com.ecommerce.backend.entity.CartItemFieldOptionsThreeMFColorRegion;
 import com.ecommerce.backend.entity.CartItemFieldRadioGroup;
 import com.ecommerce.backend.entity.CartItemFieldThreeMFColorPicker;
+import com.ecommerce.backend.entity.CartItemFieldThreeMFRegion;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.entity.InventoryItemField;
 import com.ecommerce.backend.entity.InventoryItemFieldChecklist;
@@ -30,6 +29,7 @@ import com.ecommerce.backend.entity.InventoryItemFieldOptions;
 import com.ecommerce.backend.entity.InventoryItemFieldOptionsThreeMFColorRegion;
 import com.ecommerce.backend.entity.InventoryItemFieldRadioGroup;
 import com.ecommerce.backend.entity.InventoryItemFieldThreeMFColorPicker;
+import com.ecommerce.backend.entity.InventoryItemFieldThreeMFRegion;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.repository.CartItemRepository;
@@ -112,6 +112,12 @@ public class CartService {
 		cartItemRepository.deleteByIdAndCart(id, cart);
 	}
 
+	private List<InventoryItemFieldOptions> findSelectedOptions(InventoryItemFieldSelection field,
+			InventoryItemField inventoryItemField) {
+		return inventoryItemFieldOptionsRepository.findByIdInAndInventoryItemField(field.optionIds(),
+				inventoryItemField);
+	}
+
 	/**
 	 * finds a cart for a given user if exists
 	 *
@@ -163,26 +169,24 @@ public class CartService {
 	}
 
 	private void getCartThreeMFRegionOptions(List<CartItemField> fieldSelections, InventoryItemFieldSelection field,
-			List<InventoryItemFieldOptions> selected, InventoryItemFieldThreeMFColorPicker colorPicker) {
-		if (selected.size() != field.optionIds().size())
-			throw new IllegalArgumentException("Invalid option for " + colorPicker.getLabel());
-		Set<UUID> regions = new HashSet<>();
-		for (InventoryItemFieldOptionsThreeMFColorRegion option : colorPicker.getOptions()) {
-			regions.add(option.getUuid());
-		}
-		Set<UUID> chosenRegions = new HashSet<>();
-		List<CartItemFieldOptionsThreeMFColorRegion> cartRegionOptions = new ArrayList<>();
-		for (InventoryItemFieldOptions option : selected) {
-			InventoryItemFieldOptionsThreeMFColorRegion region = (InventoryItemFieldOptionsThreeMFColorRegion) option;
-			if (!chosenRegions.add(region.getUuid()))
+			InventoryItemFieldThreeMFColorPicker colorPicker) {
+		Set<Long> optionIds = new HashSet<>(field.optionIds());
+		if (optionIds.size() != field.optionIds().size())
+			throw new IllegalArgumentException("Duplicate option for " + colorPicker.getLabel());
+		List<CartItemFieldThreeMFRegion> cartRegions = new ArrayList<>();
+		for (InventoryItemFieldThreeMFRegion region : colorPicker.getRegions()) {
+			List<InventoryItemFieldOptionsThreeMFColorRegion> chosen = region.getOptions().stream()
+					.filter(option -> optionIds.contains(option.getId())).toList();
+			if (chosen.isEmpty())
+				throw new IllegalArgumentException(region.getName() + " needs a color");
+			if (chosen.size() > 1)
 				throw new IllegalArgumentException(region.getName() + " has more than one color selected");
-			cartRegionOptions.add(CartItemFieldOptionsThreeMFColorRegion.from(region));
+			cartRegions.add(CartItemFieldThreeMFRegion.from(region, chosen.get(0)));
 		}
-		if (!chosenRegions.equals(regions))
-			throw new IllegalArgumentException("Every region of " + colorPicker.getLabel() + " needs a color");
-		fieldSelections.add(CartItemFieldThreeMFColorPicker.builder().label(colorPicker.getLabel())
-				.description(colorPicker.getDescription()).threeMFUrl(colorPicker.getThreeMFUrl())
-				.options(cartRegionOptions).build());
+		// Every region matched exactly one id, so any leftover id belongs to no region
+		if (cartRegions.size() != optionIds.size())
+			throw new IllegalArgumentException("Invalid option for " + colorPicker.getLabel());
+		fieldSelections.add(CartItemFieldThreeMFColorPicker.from(colorPicker, cartRegions));
 	}
 
 	/**
@@ -238,17 +242,16 @@ public class CartService {
 					.findByIdAndInventoryItem(field.fieldId(), inventoryItem)
 					.orElseThrow(() -> new IllegalArgumentException(
 							"Field " + field.fieldId() + " does not exist on this item"));
-			List<InventoryItemFieldOptions> selected = inventoryItemFieldOptionsRepository
-					.findByIdInAndInventoryItemField(field.optionIds(), inventoryItemField);
 			switch (inventoryItemField) {
 				case InventoryItemFieldRadioGroup radioGroup :
-					getCartRadioOption(fieldSelections, field, selected, radioGroup);
+					getCartRadioOption(fieldSelections, field, findSelectedOptions(field, radioGroup), radioGroup);
 					break;
 				case InventoryItemFieldChecklist checklist :
-					getCartChecklistOptions(fieldSelections, field, selected, checklist);
+					getCartChecklistOptions(fieldSelections, field, findSelectedOptions(field, checklist), checklist);
 					break;
+				// 3MF options hang off regions rather than the field, so they resolve through it
 				case InventoryItemFieldThreeMFColorPicker threeMFColorPicker :
-					getCartThreeMFRegionOptions(fieldSelections, field, selected, threeMFColorPicker);
+					getCartThreeMFRegionOptions(fieldSelections, field, threeMFColorPicker);
 					break;
 				default :
 					throw new IllegalArgumentException("Field " + field.fieldId() + " is not a valid field type");

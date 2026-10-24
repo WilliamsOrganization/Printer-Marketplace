@@ -21,8 +21,8 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * InventoryItemFieldThreeMFColorPicker is a single 3MF file split into color
- * regions. Each option is one region offered in one color; the customer picks
- * exactly one option per region.
+ * regions, one per pindex slot. Each region offers its own colors; the customer
+ * picks exactly one per region.
  *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
@@ -38,16 +38,16 @@ public class InventoryItemFieldThreeMFColorPicker extends InventoryItemField {
 	@NotNull
 	private URL threeMFUrl;
 
-	@OneToMany(mappedBy = "inventoryItemField", cascade = CascadeType.ALL, orphanRemoval = true)
-	@JsonManagedReference
+	@OneToMany(mappedBy = "field", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonManagedReference("three-mf-regions")
 	@NonNull
 	@NotNull
-	private List<InventoryItemFieldOptionsThreeMFColorRegion> options;
+	private List<InventoryItemFieldThreeMFRegion> regions;
 
 	/**
-	 * Returns the region/color options for this field.
+	 * Returns every region's color options as one list.
 	 */
 	public List<InventoryItemFieldOptionsThreeMFColorRegion> getOptions() {
-		return options;
+		return regions.stream().flatMap(region -> region.getOptions().stream()).toList();
 	}
 }

@@ -4,12 +4,23 @@ import { InventoryItemFieldSelection, InventoryItem, InventoryItemField, Selecte
 export type FieldSelections = Record<number, Set<number>>;
 
 /**
- * Radio groups and color pickers are single-choice and must be answered
- * before the item can go in the cart. Checklists are optional add-ons, so
- * selecting none of them is valid.
+ * Radio groups and 3MF color pickers must be answered before the item can go
+ * in the cart. Checklists are optional add-ons, so selecting none of them is
+ * valid.
  */
 export function isFieldRequired(field: InventoryItemField): boolean {
-	return field.field_type === "radio_group" || field.field_type === "color_picker";
+	return field.field_type === "radio_group" || field.field_type === "three_mf_color_picker";
+}
+
+/**
+ * Whether a field has enough selected to be added to the cart. A 3MF color
+ * picker needs one color for every region, not just any selection.
+ */
+function isFieldAnswered(field: InventoryItemField, selected: Set<number> | undefined): boolean {
+	if (field.field_type === "three_mf_color_picker") {
+		return (field.regions ?? []).every((region) => region.options.some((o) => selected?.has(o.id)));
+	}
+	return (selected?.size ?? 0) > 0;
 }
 
 export function isConfigurable(item: InventoryItem): boolean {
@@ -24,7 +35,7 @@ export function getMissingFields(
 	selections: FieldSelections,
 ): InventoryItemField[] {
 	return (item.fields ?? []).filter(
-		(field) => isFieldRequired(field) && !(selections[field.id]?.size),
+		(field) => isFieldRequired(field) && !isFieldAnswered(field, selections[field.id]),
 	);
 }
 

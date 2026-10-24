@@ -1,4 +1,4 @@
-import { InventoryItemField, InventoryItemFieldStlOption } from "@/lib/types";
+import { InventoryItemField } from "@/lib/types";
 import { FieldRadioGroup } from "./field-radio-group";
 import { FieldChecklist } from "./field-checklist";
 import { FieldColorPicker } from "./field-color-picker";
@@ -22,10 +22,10 @@ export function FieldSelector({
 		return <FieldChecklist field={field} selected={selected} onChange={onChange} />;
 	}
 
-	if (field.field_type === "color_picker") {
+	if (field.field_type === "three_mf_color_picker") {
 		return (
 			<FieldColorPicker
-				field={{ ...field, options: field.options as InventoryItemFieldStlOption[] }}
+				field={{ ...field, regions: field.regions ?? [] }}
 				selected={selected}
 				onChange={(next) => {
 					onChange(next);

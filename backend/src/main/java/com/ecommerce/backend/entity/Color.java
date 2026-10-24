@@ -1,6 +1,8 @@
 /* (C)2026 */
 package com.ecommerce.backend.entity;
 
+import java.util.Locale;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,6 +31,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // for JPA
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Color {
+
+	public static class ColorBuilder {
+		public ColorBuilder hex(String hex) {
+			if (hex == null || !hex.matches("^#[0-9A-Fa-f]{6}$"))
+				throw new IllegalArgumentException("Hex must look like #RRGGBB");
+			this.hex = hex.toUpperCase(Locale.ROOT);
+			return this;
+		}
+	}
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private Long id;

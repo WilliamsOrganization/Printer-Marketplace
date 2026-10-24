@@ -1,8 +1,6 @@
 /* (C)2026 */
 package com.ecommerce.backend.entity;
 
-import java.util.UUID;
-
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -34,17 +32,9 @@ public class OrderItemFieldOptionsThreeMFColorRegion extends OrderItemFieldOptio
 	 * Copies a cart region color into the order.
 	 */
 	public static OrderItemFieldOptionsThreeMFColorRegion from(CartItemFieldOptionsThreeMFColorRegion source) {
-		return builder().label(source.getLabel()).price(source.getPrice()).uuid(source.getUuid())
-				.name(source.getName()).selectedColor(source.getSelectedColor()).build();
+		return builder().label(source.getLabel()).price(source.getPrice()).selectedColor(source.getSelectedColor())
+				.build();
 	}
-
-	@NonNull
-	@NotNull
-	private UUID uuid;
-
-	@NonNull
-	@NotNull
-	private String name;
 
 	@NonNull
 	@NotNull

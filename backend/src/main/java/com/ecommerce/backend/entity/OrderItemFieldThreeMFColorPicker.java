@@ -8,9 +8,7 @@ import java.util.List;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.AccessLevel;
@@ -35,32 +33,32 @@ import lombok.experimental.SuperBuilder;
 public class OrderItemFieldThreeMFColorPicker extends OrderItemField {
 
 	/**
-	 * Copies a cart 3MF color picker and its selected region colors into the
-	 * order.
+	 * Copies a cart 3MF color picker and its region colors into the order.
 	 */
 	public static OrderItemFieldThreeMFColorPicker from(CartItemFieldThreeMFColorPicker source) {
-		List<OrderItemFieldOptionsThreeMFColorRegion> options = new ArrayList<>();
-		for (CartItemFieldOptionsThreeMFColorRegion option : source.getOptions()) {
-			options.add(OrderItemFieldOptionsThreeMFColorRegion.from(option));
+		List<OrderItemFieldThreeMFRegion> regions = new ArrayList<>();
+		for (CartItemFieldThreeMFRegion region : source.getRegions()) {
+			regions.add(OrderItemFieldThreeMFRegion.from(region));
 		}
-		return builder().label(source.getLabel()).description(source.getDescription())
-				.threeMFUrl(source.getThreeMFUrl()).options(options).build();
+		OrderItemFieldThreeMFColorPicker picker = builder().label(source.getLabel())
+				.description(source.getDescription()).threeMFUrl(source.getThreeMFUrl()).regions(regions).build();
+		regions.forEach(region -> region.setField(picker));
+		return picker;
 	}
 
 	@NonNull
 	@NotNull
 	private URL threeMFUrl;
 
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "order_three_mf_color_picker_options", joinColumns = @JoinColumn(name = "color_picker_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@OneToMany(mappedBy = "field", cascade = CascadeType.ALL, orphanRemoval = true)
 	@NonNull
 	@NotNull
-	private List<OrderItemFieldOptionsThreeMFColorRegion> options;
+	private List<OrderItemFieldThreeMFRegion> regions;
 
 	/**
-	 * Returns the region colors for this field.
+	 * Returns the color of every region.
 	 */
 	public List<OrderItemFieldOptionsThreeMFColorRegion> getOptions() {
-		return options;
+		return regions.stream().map(OrderItemFieldThreeMFRegion::getOption).toList();
 	}
 }

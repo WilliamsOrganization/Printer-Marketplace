@@ -1,43 +1,54 @@
 'use client';
-import { Suspense, memo, useMemo } from 'react';
+import { Suspense, memo, useEffect, useMemo } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import * as THREE from 'three';
-import { StlChunk } from '@/lib/types';
+import { SlottedThreeMFLoader } from '@/lib/three-mf-loader';
 
 const SPAWN_POSITION: [number, number, number] = [0, 0, 0.3];
+
+/** 3MF slot (pindex) -> hex color */
+export type SlotColors = Record<number, string>;
 
 const Room = memo(function Room() {
   const { scene } = useGLTF('/centered-room.compressed.glb');
   return <primitive object={scene} />;
 });
 
-function StlModel({ chunks, scale = 0.1 }: { chunks: StlChunk[]; scale?: number }) {
-  const geometries = useLoader(STLLoader, chunks.map((c) => c.url));
+function ThreeMFModel({ url, slotColors, scale = 1 }: { url: string; slotColors: SlotColors; scale?: number }) {
+  const loaded = useLoader(SlottedThreeMFLoader, url);
 
-  const { geometry, materials } = useMemo(() => {
-    const merged = mergeGeometries(geometries, true)!;
-    const mats = chunks.map(
-      (chunk) => new THREE.MeshStandardMaterial({ color: chunk.color, roughness: 0.4, metalness: 0.15 })
-    );
-    return { geometry: merged, materials: mats };
-  }, [geometries, chunks]);
+  // useLoader caches by url, so clone before mutating materials. Each mesh
+  // keeps its file material so slots without a chosen color fall back to it.
+  const model = useMemo(() => {
+    const clone = loaded.clone(true);
+    clone.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData.fileMaterial = mesh.material;
+    });
+    return clone;
+  }, [loaded]);
 
-  return (
-    <mesh
-      geometry={geometry}
-      material={materials}
-      scale={scale}
-      position={SPAWN_POSITION}
-      castShadow
-      receiveShadow
-    />
-  );
+  useEffect(() => {
+    const materials = new Map<number, THREE.MeshStandardMaterial>();
+    for (const [slot, hex] of Object.entries(slotColors)) {
+      materials.set(Number(slot), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.4, metalness: 0.15 }));
+    }
+    model.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.material = materials.get(mesh.userData.slot) ?? mesh.userData.fileMaterial;
+    });
+    return () => materials.forEach((material) => material.dispose());
+  }, [model, slotColors]);
+
+  return <primitive object={model} scale={scale} position={SPAWN_POSITION} />;
 }
 
-export default function PreviewRoom({ chunks }: { chunks: StlChunk[] }) {
+export default function PreviewRoom({ url, slotColors }: { url: string; slotColors: SlotColors }) {
   return (
     <div className="relative w-full h-full">
       <Canvas camera={{ position: [-1, 0.2, -0.5], fov: 40 }} shadows>
@@ -45,7 +56,7 @@ export default function PreviewRoom({ chunks }: { chunks: StlChunk[] }) {
         <directionalLight position={[0, 5, -5]} intensity={2} />
         <Suspense fallback={null}>
           <Room />
-          <StlModel chunks={chunks} />
+          <ThreeMFModel url={url} slotColors={slotColors} />
         </Suspense>
         <OrbitControls
           target={SPAWN_POSITION}

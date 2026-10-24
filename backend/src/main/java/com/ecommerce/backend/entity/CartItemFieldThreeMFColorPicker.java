@@ -7,9 +7,7 @@ import java.util.List;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.AccessLevel;
@@ -33,20 +31,30 @@ import lombok.experimental.SuperBuilder;
 @DiscriminatorValue("three_mf_color_picker")
 public class CartItemFieldThreeMFColorPicker extends CartItemField {
 
+	/**
+	 * Builds the picker and points each region back at it.
+	 */
+	public static CartItemFieldThreeMFColorPicker from(InventoryItemFieldThreeMFColorPicker source,
+			List<CartItemFieldThreeMFRegion> regions) {
+		CartItemFieldThreeMFColorPicker picker = builder().label(source.getLabel())
+				.description(source.getDescription()).threeMFUrl(source.getThreeMFUrl()).regions(regions).build();
+		regions.forEach(region -> region.setField(picker));
+		return picker;
+	}
+
 	@NonNull
 	@NotNull
 	private URL threeMFUrl;
 
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "cart_three_mf_color_picker_options", joinColumns = @JoinColumn(name = "color_picker_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@OneToMany(mappedBy = "field", cascade = CascadeType.ALL, orphanRemoval = true)
 	@NonNull
 	@NotNull
-	private List<CartItemFieldOptionsThreeMFColorRegion> options;
+	private List<CartItemFieldThreeMFRegion> regions;
 
 	/**
-	 * Returns the selected region colors for this field.
+	 * Returns the selected color of every region.
 	 */
 	public List<CartItemFieldOptionsThreeMFColorRegion> getOptions() {
-		return options;
+		return regions.stream().map(CartItemFieldThreeMFRegion::getOption).toList();
 	}
 }

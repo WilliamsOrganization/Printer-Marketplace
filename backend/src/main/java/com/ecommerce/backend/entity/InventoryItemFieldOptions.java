@@ -13,6 +13,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -34,7 +35,9 @@ import lombok.experimental.SuperBuilder;
 @Data
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "inventory_item_field_options")
+// A 3MF region can't offer the same color twice
+@Table(name = "inventory_item_field_options", uniqueConstraints = @UniqueConstraint(columnNames = {
+		"three_mf_region_id", "color_id"}))
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorColumn(name = "option_type")

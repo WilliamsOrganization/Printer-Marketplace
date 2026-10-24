@@ -1,8 +1,6 @@
 /* (C)2026 */
 package com.ecommerce.backend.entity;
 
-import java.util.UUID;
-
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -32,20 +30,14 @@ public class CartItemFieldOptionsThreeMFColorRegion extends CartItemFieldOptions
 
 	/**
 	 * Given an InventoryItemFieldOptionsThreeMFColorRegion, returns a
-	 * CartItemFieldOptionsThreeMFColorRegion.
+	 * CartItemFieldOptionsThreeMFColorRegion. The label is prefixed with the
+	 * region name so describe() reads "Buckle: Red" instead of just "Red".
 	 */
-	public static CartItemFieldOptionsThreeMFColorRegion from(InventoryItemFieldOptionsThreeMFColorRegion option) {
-		return builder().label(option.getLabel()).price(option.getPrice()).uuid(option.getUuid())
-				.name(option.getName()).selectedColor(option.getSelectedColor()).build();
+	public static CartItemFieldOptionsThreeMFColorRegion from(InventoryItemFieldThreeMFRegion region,
+			InventoryItemFieldOptionsThreeMFColorRegion option) {
+		return builder().label(region.getName() + ": " + option.getLabel()).price(option.getPrice())
+				.selectedColor(option.getSelectedColor()).build();
 	}
-
-	@NonNull
-	@NotNull
-	private UUID uuid;
-
-	@NonNull
-	@NotNull
-	private String name;
 
 	@NonNull
 	@NotNull

@@ -3,26 +3,20 @@ export interface AuthResponse {
 	userId: number;
 }
 
-export type StlChunk = {
-  url: string;
-  color: string;
-  position: [number, number, number];
-}
-
 export const COLOR_VARIANTS: Record<string, string> = {
-  red: "#e63946",
-  green: "#2a9d8f",
-  blue: "#457b9d",
-  yellow: "#e9b456",
-  orange: "#f48024",
-  purple: "#a855f7",
-  pink: "#f66d9b",
-  gray: "#6e6e6e",
-  brown: "#9c8866",
-  cyan: "#5fb3b3",
-  magenta: "#d16d9e",
-  indigo: "#4f46e5",
-  violet: "#a946f6",
+	red: "#e63946",
+	green: "#2a9d8f",
+	blue: "#457b9d",
+	yellow: "#e9b456",
+	orange: "#f48024",
+	purple: "#a855f7",
+	pink: "#f66d9b",
+	gray: "#6e6e6e",
+	brown: "#9c8866",
+	cyan: "#5fb3b3",
+	magenta: "#d16d9e",
+	indigo: "#4f46e5",
+	violet: "#a946f6",
 };
 // Values must match InventoryItem.SizeCategory's Java constant names exactly
 // (Jackson serializes enums by .name()) - backend is the source of truth.
@@ -64,33 +58,15 @@ export const WeightCategoryLabel: Record<WeightCategory, string> = {
 // Mirrors the backend single-table inheritance hierarchy for
 // InventoryItemField / InventoryItemFieldOptions.
 
-export enum StlColor {
-	BLACK = "BLACK",
-	BLUE = "BLUE",
-	BROWN = "BROWN",
-	GREEN = "GREEN",
-	GREY = "GREY",
-	ORANGE = "ORANGE",
-	PINK = "PINK",
-	PURPLE = "PURPLE",
-	RED = "RED",
-	WHITE = "WHITE",
-	YELLOW = "YELLOW",
+// Matches backend Color - the global palette every 3MF region picks from.
+export interface Color {
+	id: number;
+	name: string;
+	/** Uppercase #RRGGBB */
+	hex: string;
+	isDisabled: boolean;
+	isDeleted: boolean;
 }
-
-export const StlColorHex: Record<StlColor, string> = {
-	[StlColor.BLACK]: "#000000",
-	[StlColor.BLUE]: "#0000FF",
-	[StlColor.BROWN]: "#A52A2A",
-	[StlColor.GREEN]: "#008000",
-	[StlColor.GREY]: "#808080",
-	[StlColor.ORANGE]: "#FFA500",
-	[StlColor.PINK]: "#FFC0CB",
-	[StlColor.PURPLE]: "#800080",
-	[StlColor.RED]: "#FF0000",
-	[StlColor.WHITE]: "#FFFFFF",
-	[StlColor.YELLOW]: "#FFFF00",
-};
 
 export interface InventoryItemFieldOption {
 	id: number;
@@ -98,19 +74,34 @@ export interface InventoryItemFieldOption {
 	price: number;
 }
 
-export interface InventoryItemFieldStlOption extends InventoryItemFieldOption {
-	selectedColor: StlColor;
+// One color a 3MF region is offered in.
+export interface InventoryItemFieldThreeMFOption extends InventoryItemFieldOption {
+	selectedColor: Color;
 }
 
-export type FieldType = "checklist" | "radio_group" | "color_picker";
+// One color slot (3MF pindex) of a 3MF file. The customer picks exactly one
+// of its options.
+export interface InventoryItemFieldThreeMFRegion {
+	id: number;
+	slotIndex: number;
+	name: string;
+	options: InventoryItemFieldThreeMFOption[];
+}
+
+export type FieldType = "checklist" | "radio_group" | "three_mf_color_picker";
 
 export interface InventoryItemField {
 	id: number;
 	label: string;
 	description: string;
 	field_type: FieldType;
+	// TODO: drop once the admin field dialog uploads 3MF files instead of STL
 	stlUrl?: string;
-	options: InventoryItemFieldOption[] | InventoryItemFieldStlOption[];
+	/** Only on three_mf_color_picker fields */
+	threeMFUrl?: string;
+	/** Only on three_mf_color_picker fields. `options` is every region's options flattened. */
+	regions?: InventoryItemFieldThreeMFRegion[];
+	options: InventoryItemFieldOption[];
 }
 
 export interface InventoryItem {
@@ -169,7 +160,7 @@ export interface User {
 }
 
 
-export interface StripeCatalogRequest{
+export interface StripeCatalogRequest {
 	name: string,
 	description: string,
 	unitAmount: number,
@@ -213,9 +204,8 @@ export interface OrderItemFieldOption {
 	id: number;
 	label: string;
 	price: number;
-	// Only present on color picker options
-	selectedColor?: StlColor;
-	stlUrl?: string;
+	// Only present on 3MF region options
+	selectedColor?: Color;
 }
 
 // Snapshot of one configured field on an order line.
