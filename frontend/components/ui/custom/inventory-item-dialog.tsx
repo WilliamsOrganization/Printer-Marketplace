@@ -35,10 +35,9 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { ImageDropField } from "@/components/ui/custom/image-drop-field";
-import { InventoryItemFieldDialog } from "@/components/ui/custom/inventory-item-field-dialog";
+import { InventoryItemFieldDialog, InventoryItemFieldDraft } from "@/components/ui/custom/inventory-item-field-dialog";
 import {
 	InventoryItem,
-	InventoryItemField,
 	SizeCategory,
 	SizeCategoryLabel,
 	WeightCategory,
@@ -64,6 +63,18 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+/**
+ * The field as POST /inventoryitem expects it. New fields and options carry
+ * id 0 in the dialog, which Hibernate would read as an existing row, so it's
+ * dropped; 3MF fields send their regions instead of the flattened options.
+ */
+function toFieldPayload(field: InventoryItemFieldDraft) {
+	// undefined keys are left out of the JSON body
+	const payload = { ...field, id: field.id || undefined, _threeMFFile: undefined };
+	if (field.regions) return { ...payload, options: undefined };
+	return { ...payload, options: field.options.map((opt) => ({ ...opt, id: opt.id || undefined })) };
+}
 
 type InventoryItemDialogProps = {
 	/** Item to edit. Omit to create a new item instead. */
@@ -91,8 +102,7 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 	const open = controlledOpen ?? uncontrolledOpen;
 	const setOpen = onOpenChange ?? setUncontrolledOpen;
 	const [existingImageUrls, setExistingImageUrls] = useState<string[]>(item?.imageUrls ?? []);
-	type FieldWithFile = InventoryItemField & { _stlFile?: File };
-	const [fields, setFields] = useState<FieldWithFile[]>(item?.fields ?? []);
+	const [fields, setFields] = useState<InventoryItemFieldDraft[]>(item?.fields ?? []);
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
@@ -127,23 +137,23 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 			}
 		}
 
-		// Upload STL files for color picker fields, same presign flow.
-		const fieldsWithUrls: FieldWithFile[] = [...fields];
-		const stlUploads: string[] = [];
+		// Upload 3MF files for color picker fields, same presign flow.
+		const fieldsWithUrls: InventoryItemFieldDraft[] = [...fields];
+		const threeMFUploads: string[] = [];
 		for (let i = 0; i < fieldsWithUrls.length; i++) {
 			const f = fieldsWithUrls[i];
-			if (f._stlFile) {
+			if (f._threeMFFile) {
 				try {
-					const [url] = await uploadInventoryImages([f._stlFile]);
-					stlUploads.push(url);
-					fieldsWithUrls[i] = { ...f, stlUrl: url, _stlFile: undefined };
+					const [url] = await uploadInventoryImages([f._threeMFFile]);
+					threeMFUploads.push(url);
+					fieldsWithUrls[i] = { ...f, threeMFUrl: url, _threeMFFile: undefined };
 				} catch (err) {
-					// Roll back any STL uploads already done + product images
-					const allUploaded = [...freshUploads, ...stlUploads];
+					// Roll back any 3MF uploads already done + product images
+					const allUploaded = [...freshUploads, ...threeMFUploads];
 					if (allUploaded.length > 0) {
 						await api.post("/inventoryitem/images/delete", allUploaded).catch(() => undefined);
 					}
-					toast.error("Error uploading STL file: " + (err as Error).message);
+					toast.error("Error uploading 3MF file: " + (err as Error).message);
 					return;
 				}
 			}
@@ -155,7 +165,7 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 				...data,
 				imageUrls,
 				image: undefined,
-				fields: fieldsWithUrls.map(({ _stlFile, ...rest }) => rest),
+				fields: fieldsWithUrls.map(toFieldPayload),
 			});
 			toast.success(isEditing ? "Inventory Item Updated" : "Inventory Item Created");
 			setInventory((prev) =>
@@ -167,7 +177,7 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 			form.reset();
 		} catch {
 			// The item never saved - don't leave uploads orphaned in S3.
-			const allUploaded = [...freshUploads, ...stlUploads];
+			const allUploaded = [...freshUploads, ...threeMFUploads];
 			if (allUploaded.length > 0) {
 				await api
 					.post("/inventoryitem/images/delete", allUploaded)
@@ -359,7 +369,9 @@ export function InventoryItemDialog({ item, trigger, open: controlledOpen, onOpe
 													<div>
 														<span className="font-medium">{f.label}</span>
 														<span className="ml-2 text-muted-foreground">
-															({f.options?.length ?? 0} option{f.options?.length === 1 ? "" : "s"})
+															{f.regions
+																? `(${f.regions.length} region${f.regions.length === 1 ? "" : "s"})`
+																: `(${f.options?.length ?? 0} option${f.options?.length === 1 ? "" : "s"})`}
 														</span>
 													</div>
 													<Button

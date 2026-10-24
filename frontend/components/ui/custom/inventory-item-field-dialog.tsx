@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import type { InventoryItemField } from "@/lib/types";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import type {
+	Color,
+	InventoryItemField,
+	UnsavedInventoryItemFieldOptionsThreeMFColorRegion,
+	UnsavedInventoryItemFieldThreeMFRegion,
+} from "@/lib/types";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,12 +37,17 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { ImageDropField } from "@/components/ui/custom/image-drop-field";
+import { readThreeMFRegions } from "@/lib/three-mf-loader";
+import { useAdminColors } from "@/lib/use-colors";
+
+// three.js is heavy and only needed once a 3MF file is dropped
+const PreviewRoom = dynamic(() => import("@/components/ui/custom/preview-room"), { ssr: false });
 
 // ── Field type constants ───────────────────────────────────────────────
 const FIELD_TYPES = {
 	RADIO_GROUP: "radio-group",
 	CHECKLIST: "dropdown",
-	COLOR_PICKER: "stl",
+	THREE_MF_COLOR_PICKER: "three-mf",
 } as const;
 
 type FieldType = (typeof FIELD_TYPES)[keyof typeof FIELD_TYPES];
@@ -44,44 +55,40 @@ type FieldType = (typeof FIELD_TYPES)[keyof typeof FIELD_TYPES];
 const FIELD_TYPE_LABELS: Record<FieldType, string> = {
 	"radio-group": "Radio Group",
 	dropdown: "Checklist / Dropdown",
-	stl: "Color Picker (STL)",
+	"three-mf": "Color Picker (3MF)",
 };
 
-// ── STL color enum mirroring backend ───────────────────────────────────
-const STL_COLORS = [
-	{ value: "RED", label: "Red", hex: "#FF0000" },
-	{ value: "ORANGE", label: "Orange", hex: "#FFA500" },
-	{ value: "YELLOW", label: "Yellow", hex: "#FFFF00" },
-	{ value: "GREEN", label: "Green", hex: "#008000" },
-	{ value: "BLUE", label: "Blue", hex: "#0000FF" },
-	{ value: "PURPLE", label: "Purple", hex: "#800080" },
-	{ value: "PINK", label: "Pink", hex: "#FFC0CB" },
-	{ value: "BROWN", label: "Brown", hex: "#A52A2A" },
-	{ value: "GREY", label: "Grey", hex: "#808080" },
-	{ value: "WHITE", label: "White", hex: "#FFFFFF" },
-	{ value: "BLACK", label: "Black", hex: "#000000" },
-] as const;
+// 3MF color pickers always use these; the inputs show them greyed out
+const THREE_MF_LABEL = "Colors";
+const THREE_MF_DESCRIPTION = "Pick a color for each part of the print.";
 
 // ── Option row shapes ──────────────────────────────────────────────────
 type DropdownOption = { label: string; price: string };
-type StlOption = { label: string; price: string; selectedColor: string };
 
 const emptyDropdownOption = (): DropdownOption => ({ label: "", price: "" });
 
-const defaultStlOptions = (): StlOption[] =>
-	STL_COLORS.map((c) => ({
-		label: c.label,
-		price: "0",
-		selectedColor: c.value,
-	}));
+const toThreeMFOption = (color: Color): UnsavedInventoryItemFieldOptionsThreeMFColorRegion => ({
+	label: color.name,
+	price: 0,
+	selectedColor: color,
+});
+
+/**
+ * A field as the item dialog holds it before saving. 3MF regions have no ids
+ * yet and the file is uploaded on item submit, which fills in threeMFUrl.
+ */
+export type InventoryItemFieldDraft = Omit<InventoryItemField, "regions"> & {
+	regions?: UnsavedInventoryItemFieldThreeMFRegion[];
+	_threeMFFile?: File;
+};
 
 // ── Props ──────────────────────────────────────────────────────────────
 type InventoryItemFieldDialogProps = {
 	trigger?: React.ReactNode;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
-	/** Called after a field is successfully created, with the response data. */
-	onFieldCreated?: (field: InventoryItemField) => void;
+	/** Called with the new field, in the shape it will be stored in. */
+	onFieldCreated?: (field: InventoryItemFieldDraft) => void;
 };
 
 export function InventoryItemFieldDialog({
@@ -99,43 +106,66 @@ export function InventoryItemFieldDialog({
 	const [label, setLabel] = useState("");
 	const [description, setDescription] = useState("");
 	const [dropdownOptions, setDropdownOptions] = useState<DropdownOption[]>([emptyDropdownOption()]);
-	const [stlOptions, setStlOptions] = useState<StlOption[]>(defaultStlOptions());
-	const [stlFile, setStlFile] = useState<File[]>([]);
+	const [threeMFFile, setThreeMFFile] = useState<File[]>([]);
+	const [regions, setRegions] = useState<UnsavedInventoryItemFieldThreeMFRegion[]>([]);
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	const { data: allColors = [] } = useAdminColors();
+	const palette = allColors.filter((c) => !c.isDisabled);
 
-	const isStl = fieldType === FIELD_TYPES.COLOR_PICKER;
-	const options = isStl ? stlOptions : dropdownOptions;
+	const isThreeMF = fieldType === FIELD_TYPES.THREE_MF_COLOR_PICKER;
+	const fieldLabel = isThreeMF ? THREE_MF_LABEL : label;
+	const fieldDescription = isThreeMF ? THREE_MF_DESCRIPTION : description;
 
 	const isValid =
-		label.trim().length > 0 &&
-		description.trim().length > 0 &&
-		options.length > 0 &&
-		options.every((opt) => opt.label.trim().length > 0 && opt.price !== "" && !isNaN(Number(opt.price)) && Number(opt.price) >= 0) &&
-		(!isStl || stlFile.length > 0);
+		fieldLabel.trim().length > 0 &&
+		fieldDescription.trim().length > 0 &&
+		(isThreeMF
+			? threeMFFile.length > 0 &&
+				regions.length > 0 &&
+				regions.every((r) => r.name.trim().length > 0 && r.options.length > 0 && r.options.every((o) => o.price >= 0))
+			: dropdownOptions.length > 0 &&
+				dropdownOptions.every((opt) => opt.label.trim().length > 0 && opt.price !== "" && !isNaN(Number(opt.price)) && Number(opt.price) >= 0));
+
+	// The preview loads the dropped file from a blob URL; free it when replaced
+	useEffect(() => {
+		return () => {
+			if (previewUrl) URL.revokeObjectURL(previewUrl);
+		};
+	}, [previewUrl]);
+
+	async function handleThreeMFFile(files: File[]) {
+		setThreeMFFile(files);
+		setRegions([]);
+		setPreviewUrl(null);
+		const file = files[0];
+		if (!file) return;
+		if (palette.length === 0) toast.warning("No printing colors yet - add some from the dashboard first");
+		try {
+			setRegions(readThreeMFRegions(await file.arrayBuffer(), palette));
+			setPreviewUrl(URL.createObjectURL(file));
+		} catch (err) {
+			setThreeMFFile([]);
+			toast.error((err as Error).message);
+		}
+	}
 
 	function resetForm() {
 		setFieldType(FIELD_TYPES.RADIO_GROUP);
 		setLabel("");
 		setDescription("");
 		setDropdownOptions([emptyDropdownOption()]);
-		setStlOptions(defaultStlOptions());
-		setStlFile([]);
+		setThreeMFFile([]);
+		setRegions([]);
+		setPreviewUrl(null);
 	}
 
 	// ── option helpers ──────────────────────────────────────────────────
 	function addOption() {
-		if (isStl) {
-			setStlOptions((prev) => [...prev, { label: "", price: "0", selectedColor: "BLACK" }]);
-		} else {
-			setDropdownOptions((prev) => [...prev, emptyDropdownOption()]);
-		}
+		setDropdownOptions((prev) => [...prev, emptyDropdownOption()]);
 	}
 
 	function removeOption(index: number) {
-		if (isStl) {
-			setStlOptions((prev) => prev.filter((_, i) => i !== index));
-		} else {
-			setDropdownOptions((prev) => prev.filter((_, i) => i !== index));
-		}
+		setDropdownOptions((prev) => prev.filter((_, i) => i !== index));
 	}
 
 	function updateDropdownOption(index: number, key: keyof DropdownOption, value: string) {
@@ -144,10 +174,16 @@ export function InventoryItemFieldDialog({
 		);
 	}
 
-	function updateStlOption(index: number, key: keyof StlOption, value: string) {
-		setStlOptions((prev) =>
-			prev.map((opt, i) => (i === index ? { ...opt, [key]: value } : opt)),
-		);
+	// ── 3MF region helpers ──────────────────────────────────────────────
+	function updateRegion(slotIndex: number, update: (r: UnsavedInventoryItemFieldThreeMFRegion) => UnsavedInventoryItemFieldThreeMFRegion) {
+		setRegions((prev) => prev.map((r) => (r.slotIndex === slotIndex ? update(r) : r)));
+	}
+
+	function updateRegionOptions(
+		slotIndex: number,
+		update: (options: UnsavedInventoryItemFieldOptionsThreeMFColorRegion[]) => UnsavedInventoryItemFieldOptionsThreeMFColorRegion[],
+	) {
+		updateRegion(slotIndex, (r) => ({ ...r, options: update(r.options) }));
 	}
 
 	// ── submit ──────────────────────────────────────────────────────────
@@ -155,61 +191,63 @@ export function InventoryItemFieldDialog({
 		e.preventDefault();
 		e.stopPropagation();
 
-		if (!label.trim()) {
+		if (!fieldLabel.trim()) {
 			toast.error("Field label is required");
 			return;
 		}
-		if (!description.trim()) {
+		if (!fieldDescription.trim()) {
 			toast.error("Field description is required");
 			return;
 		}
-		if (options.length === 0) {
-			toast.error("At least one option is required");
-			return;
-		}
-
-		for (const opt of options) {
-			if (!opt.label.trim()) {
-				toast.error("All options must have a label");
+		if (isThreeMF) {
+			if (threeMFFile.length === 0) {
+				toast.error("A 3MF file is required for color picker fields");
 				return;
 			}
-			if (opt.price === "" || isNaN(Number(opt.price)) || Number(opt.price) < 0) {
-				toast.error("All options must have a valid price");
+			const unnamed = regions.find((r) => !r.name.trim());
+			if (unnamed) {
+				toast.error(`Region in slot ${unnamed.slotIndex} needs a name`);
 				return;
+			}
+			const colorless = regions.find((r) => r.options.length === 0);
+			if (colorless) {
+				toast.error(`${colorless.name} needs at least one color`);
+				return;
+			}
+		} else {
+			if (dropdownOptions.length === 0) {
+				toast.error("At least one option is required");
+				return;
+			}
+			for (const opt of dropdownOptions) {
+				if (!opt.label.trim()) {
+					toast.error("All options must have a label");
+					return;
+				}
+				if (opt.price === "" || isNaN(Number(opt.price)) || Number(opt.price) < 0) {
+					toast.error("All options must have a valid price");
+					return;
+				}
 			}
 		}
 
-		if (isStl && stlFile.length === 0) {
-			toast.error("An STL file is required for color picker fields");
-			return;
-		}
-
-		const formattedOptions = isStl
-			? stlOptions.map((opt) => ({
-					label: opt.label,
-					price: Number(opt.price),
-					selectedColor: opt.selectedColor,
-				}))
-			: dropdownOptions.map((opt) => ({
-					label: opt.label,
-					price: Number(opt.price),
-				}));
-
-		// Map field type slug to discriminator value
-		const fieldTypeMap: Record<string, string> = {
-			"radio-group": "radio_group",
-			dropdown: "checklist",
-			stl: "color_picker",
-		};
-
-		const field: InventoryItemField & { _stlFile?: File } = {
-			id: 0,
-			label,
-			description,
-			field_type: fieldTypeMap[fieldType] as InventoryItemField["field_type"],
-			options: formattedOptions as InventoryItemField["options"],
-			...(isStl ? { _stlFile: stlFile[0] } : {}),
-		};
+		const field: InventoryItemFieldDraft = isThreeMF
+			? {
+					id: 0,
+					label: fieldLabel,
+					description: fieldDescription,
+					field_type: "three_mf_color_picker",
+					regions: regions.map((r) => ({ ...r, name: r.name.trim() })),
+					options: [],
+					_threeMFFile: threeMFFile[0],
+				}
+			: {
+					id: 0,
+					label: fieldLabel,
+					description: fieldDescription,
+					field_type: fieldType === FIELD_TYPES.RADIO_GROUP ? "radio_group" : "checklist",
+					options: dropdownOptions.map((opt) => ({ id: 0, label: opt.label, price: Number(opt.price) })),
+				};
 
 		onFieldCreated?.(field);
 		resetForm();
@@ -247,7 +285,7 @@ export function InventoryItemFieldDialog({
 							<FieldDescription>
 								{fieldType === FIELD_TYPES.RADIO_GROUP && "Customers pick exactly one option."}
 								{fieldType === FIELD_TYPES.CHECKLIST && "Customers can select multiple options."}
-								{fieldType === FIELD_TYPES.COLOR_PICKER && "Customers pick a color for a 3D-printed part."}
+								{fieldType === FIELD_TYPES.THREE_MF_COLOR_PICKER && "Customers pick a color for each region of a 3D-printed part."}
 							</FieldDescription>
 						</Field>
 					</FieldGroup>
@@ -259,7 +297,8 @@ export function InventoryItemFieldDialog({
 							<Input
 								id="fieldLabel"
 								placeholder='e.g. "Size" or "Filament Color"'
-								value={label}
+								value={fieldLabel}
+								disabled={isThreeMF}
 								onChange={(e) => setLabel(e.target.value)}
 							/>
 						</Field>
@@ -268,50 +307,140 @@ export function InventoryItemFieldDialog({
 							<Input
 								id="fieldDescription"
 								placeholder="Brief description of this field"
-								value={description}
+								value={fieldDescription}
+								disabled={isThreeMF}
 								onChange={(e) => setDescription(e.target.value)}
 							/>
 						</Field>
 					</div>
 
-					{/* ── STL file upload ─────────────────────────────────────── */}
-					{isStl && (
-						<Field>
-							<FieldLabel>STL File</FieldLabel>
-							<FieldDescription>
-								Upload the 3D model file that will be printed in the selected color.
-							</FieldDescription>
-							<ImageDropField
-								name="stlFile"
-								value={stlFile}
-								onChange={setStlFile}
-								maxFiles={1}
-								accept={{ "model/stl": [".stl"], "application/octet-stream": [".stl"] }}
-							/>
-						</Field>
+					{/* ── 3MF file + generated regions ───────────────────────── */}
+					{isThreeMF && (
+						<>
+							<Field>
+								<FieldLabel>3MF File</FieldLabel>
+								<FieldDescription>
+									Each color slot in the file becomes a region customers pick a color for.
+								</FieldDescription>
+								<ImageDropField
+									name="threeMFFile"
+									value={threeMFFile}
+									onChange={handleThreeMFFile}
+									maxFiles={1}
+									accept={{
+										"model/3mf": [".3mf"],
+										"application/vnd.ms-package.3dmanufacturing-3dmodel+xml": [".3mf"],
+										"application/octet-stream": [".3mf"],
+									}}
+								/>
+							</Field>
+
+							{previewUrl && (
+								<div className="h-64 overflow-hidden rounded-md border bg-muted">
+									<PreviewRoom
+										url={previewUrl}
+										slotColors={Object.fromEntries(
+											regions.filter((r) => r.options[0]).map((r) => [r.slotIndex, r.options[0].selectedColor.hex]),
+										)}
+									/>
+								</div>
+							)}
+
+							{regions.map((region) => {
+								const offered = new Set(region.options.map((o) => o.selectedColor.id));
+								const addable = palette.filter((c) => !offered.has(c.id));
+								return (
+									<div key={region.slotIndex} className="flex flex-col gap-3 rounded-md border p-3">
+										<div className="flex items-center gap-3">
+											<span className="shrink-0 text-xs text-muted-foreground">Slot {region.slotIndex}</span>
+											<Input
+												aria-label="Region name"
+												placeholder="Region name"
+												value={region.name}
+												onChange={(e) => updateRegion(region.slotIndex, (r) => ({ ...r, name: e.target.value }))}
+											/>
+										</div>
+
+										<div className="grid grid-cols-[16px_1fr_90px_32px] items-center gap-2 text-xs font-medium text-muted-foreground">
+											<span />
+											<span>Color</span>
+											<span>Price ($)</span>
+											<span />
+										</div>
+										{region.options.map((opt, i) => (
+											<div key={opt.selectedColor.id} className="grid grid-cols-[16px_1fr_90px_32px] items-center gap-2">
+												<span className="size-4 rounded-full border" style={{ backgroundColor: opt.selectedColor.hex }} />
+												<span className="truncate text-sm">{opt.label}</span>
+												<Input
+													type="number"
+													min={0}
+													step={1}
+													value={opt.price}
+													onChange={(e) =>
+														updateRegionOptions(region.slotIndex, (options) =>
+															options.map((o, j) => (j === i ? { ...o, price: Math.max(0, Number(e.target.value) || 0) } : o)),
+														)
+													}
+												/>
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													onClick={() => updateRegionOptions(region.slotIndex, (options) => options.filter((_, j) => j !== i))}
+												>
+													<Trash2 className="size-4" />
+												</Button>
+											</div>
+										))}
+
+										{addable.length > 0 && (
+											<Select
+												value=""
+												onValueChange={(id) => {
+													const color = palette.find((c) => String(c.id) === id);
+													if (color) updateRegionOptions(region.slotIndex, (options) => [...options, toThreeMFOption(color)]);
+												}}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Add a color" />
+												</SelectTrigger>
+												<SelectContent>
+													{addable.map((c) => (
+														<SelectItem key={c.id} value={String(c.id)}>
+															<span className="flex items-center gap-2">
+																<span className="inline-block size-3 rounded-full border" style={{ backgroundColor: c.hex }} />
+																{c.name}
+															</span>
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										)}
+									</div>
+								);
+							})}
+						</>
 					)}
 
 					{/* ── Options ─────────────────────────────────────────────── */}
-					<div className="flex flex-col gap-3">
-						<div className="flex items-center justify-between">
-							<FieldLabel>Options</FieldLabel>
-							<Button type="button" variant="outline" size="sm" onClick={addOption}>
-								<Plus className="mr-1 size-4" />
-								Add Option
-							</Button>
-						</div>
+					{!isThreeMF && (
+						<div className="flex flex-col gap-3">
+							<div className="flex items-center justify-between">
+								<FieldLabel>Options</FieldLabel>
+								<Button type="button" variant="outline" size="sm" onClick={addOption}>
+									<Plus className="mr-1 size-4" />
+									Add Option
+								</Button>
+							</div>
 
-						{/* Column headers */}
-						<div className={`grid gap-2 text-xs font-medium text-muted-foreground ${isStl ? "grid-cols-[1fr_80px_120px_32px]" : "grid-cols-[1fr_100px_32px]"}`}>
-							<span>Label</span>
-							<span>Price (cents)</span>
-							{isStl && <span>Color</span>}
-							<span />
-						</div>
+							{/* Column headers */}
+							<div className="grid grid-cols-[1fr_100px_32px] gap-2 text-xs font-medium text-muted-foreground">
+								<span>Label</span>
+								<span>Price ($)</span>
+								<span />
+							</div>
 
-						{/* Option rows */}
-						{!isStl &&
-							dropdownOptions.map((opt, i) => (
+							{dropdownOptions.map((opt, i) => (
 								<div key={i} className="grid grid-cols-[1fr_100px_32px] gap-2">
 									<Input
 										placeholder="Option label"
@@ -336,55 +465,8 @@ export function InventoryItemFieldDialog({
 									</Button>
 								</div>
 							))}
-
-						{isStl &&
-							stlOptions.map((opt, i) => (
-								<div key={i} className="grid grid-cols-[1fr_80px_120px_32px] gap-2">
-									<Input
-										placeholder="Option label"
-										value={opt.label}
-										onChange={(e) => updateStlOption(i, "label", e.target.value)}
-									/>
-									<Input
-										type="number"
-										min={0}
-										placeholder="0"
-										value={opt.price}
-										onChange={(e) => updateStlOption(i, "price", e.target.value)}
-									/>
-									<Select
-										value={opt.selectedColor}
-										onValueChange={(v) => updateStlOption(i, "selectedColor", v)}
-									>
-										<SelectTrigger className="w-full">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{STL_COLORS.map((c) => (
-												<SelectItem key={c.value} value={c.value}>
-													<span className="flex items-center gap-2">
-														<span
-															className="inline-block size-3 rounded-full border"
-															style={{ backgroundColor: c.hex }}
-														/>
-														{c.label}
-													</span>
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon"
-										onClick={() => removeOption(i)}
-										disabled={stlOptions.length <= 1}
-									>
-										<Trash2 className="size-4" />
-									</Button>
-								</div>
-							))}
-					</div>
+						</div>
+					)}
 				</form>
 
 				<DialogFooter>

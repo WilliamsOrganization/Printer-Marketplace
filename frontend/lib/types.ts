@@ -74,19 +74,27 @@ export interface InventoryItemFieldOption {
 	price: number;
 }
 
-// One color a 3MF region is offered in.
-export interface InventoryItemFieldThreeMFOption extends InventoryItemFieldOption {
+// Matches backend InventoryItemFieldOptionsThreeMFColorRegion - one color a
+// 3MF region is offered in.
+export interface InventoryItemFieldOptionsThreeMFColorRegion extends InventoryItemFieldOption {
 	selectedColor: Color;
 }
 
-// One color slot (3MF pindex) of a 3MF file. The customer picks exactly one
-// of its options.
+// Matches backend InventoryItemFieldThreeMFRegion - one color slot (3MF
+// pindex) of a 3MF file. The customer picks exactly one of its options.
 export interface InventoryItemFieldThreeMFRegion {
 	id: number;
 	slotIndex: number;
 	name: string;
-	options: InventoryItemFieldThreeMFOption[];
+	options: InventoryItemFieldOptionsThreeMFColorRegion[];
 }
+
+// The same shapes before the backend has assigned ids - what the admin
+// field dialog generates from a 3MF file and submits.
+export type UnsavedInventoryItemFieldOptionsThreeMFColorRegion = Omit<InventoryItemFieldOptionsThreeMFColorRegion, "id">;
+export type UnsavedInventoryItemFieldThreeMFRegion = Omit<InventoryItemFieldThreeMFRegion, "id" | "options"> & {
+	options: UnsavedInventoryItemFieldOptionsThreeMFColorRegion[];
+};
 
 export type FieldType = "checklist" | "radio_group" | "three_mf_color_picker";
 
@@ -95,13 +103,18 @@ export interface InventoryItemField {
 	label: string;
 	description: string;
 	field_type: FieldType;
-	// TODO: drop once the admin field dialog uploads 3MF files instead of STL
-	stlUrl?: string;
 	/** Only on three_mf_color_picker fields */
 	threeMFUrl?: string;
 	/** Only on three_mf_color_picker fields. `options` is every region's options flattened. */
 	regions?: InventoryItemFieldThreeMFRegion[];
 	options: InventoryItemFieldOption[];
+}
+
+// Matches backend InventoryItemFieldThreeMFColorPicker
+export interface InventoryItemFieldThreeMFColorPicker extends InventoryItemField {
+	field_type: "three_mf_color_picker";
+	threeMFUrl: string;
+	regions: InventoryItemFieldThreeMFRegion[];
 }
 
 export interface InventoryItem {

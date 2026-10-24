@@ -35,7 +35,7 @@ function ThreeMFModel({ url, slotColors, scale = 1 }: { url: string; slotColors:
   useEffect(() => {
     const materials = new Map<number, THREE.MeshStandardMaterial>();
     for (const [slot, hex] of Object.entries(slotColors)) {
-      materials.set(Number(slot), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.4, metalness: 0.15 }));
+      materials.set(Number(slot), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.5, metalness: 0.0 }));
     }
     model.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
@@ -63,8 +63,8 @@ export default function PreviewRoom({ url, slotColors }: { url: string; slotColo
           enablePan={false}
           enableZoom={true}
           maxPolarAngle={(94 * Math.PI) / 180}
-          maxDistance={0.9}
-          minDistance={0.4}
+          maxDistance={0.5}
+          minDistance={0.3}
           autoRotate
           autoRotateSpeed={2}
         />

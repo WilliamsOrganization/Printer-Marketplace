@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InventoryItemDialog } from "./inventory-item-dialog";
+import { PrintingColorDialog } from "./printing-color-dialog";
+import { useAdminColors } from "@/lib/use-colors";
 import { useDashboard } from "@/src/context/dashboard-context";
 
 export function SectionCards() {
@@ -20,6 +22,8 @@ export function SectionCards() {
 	const archivedCount = analytics?.inventoryArchivedCount ?? 0;
 	const activeCount = analytics?.inventoryActiveCount ?? 0;
 	const totalAccounts = analytics?.totalAccounts ?? 0;
+	const { data: colors = [] } = useAdminColors();
+	const disabledColorCount = colors.filter((c) => c.isDisabled).length;
 	return (
 		<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
 			{/* this is the important card I want to actually mess with */}
@@ -42,6 +46,42 @@ export function SectionCards() {
 				<CardFooter className="flex-col items-start gap-1.5 text-sm">
 					<InventoryItemDialog
 						trigger={<Button className="min-w-full" variant="outline">Create Inventory Item</Button>}
+					/>
+				</CardFooter>
+			</Card>
+
+			{/* Printing Colors Card - the palette 3MF regions pick from */}
+			<Card className="@container/card">
+				<CardHeader>
+					<CardDescription>Printing Colors</CardDescription>
+					<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+						<div className="flex justify-between w-full px-2">
+							<div className="flex flex-col">
+								<span>{colors.length - disabledColorCount}</span>
+								<span className="text-sm font-normal text-muted-foreground">Active</span>
+							</div>
+							<div className="flex flex-col">
+								<span>{disabledColorCount}</span>
+								<span className="text-sm font-normal text-muted-foreground">Disabled</span>
+							</div>
+						</div>
+					</CardTitle>
+				</CardHeader>
+				<CardFooter className="flex-col items-start gap-3 text-sm">
+					{colors.length > 0 && (
+						<div className="flex flex-wrap gap-1.5 px-2">
+							{colors.map((color) => (
+								<span
+									key={color.id}
+									title={`${color.name} ${color.hex}${color.isDisabled ? " (disabled)" : ""}`}
+									className={`size-5 rounded-full border shadow-xs ${color.isDisabled ? "opacity-40" : ""}`}
+									style={{ backgroundColor: color.hex }}
+								/>
+							))}
+						</div>
+					)}
+					<PrintingColorDialog
+						trigger={<Button className="min-w-full" variant="outline">Add Printing Color</Button>}
 					/>
 				</CardFooter>
 			</Card>
