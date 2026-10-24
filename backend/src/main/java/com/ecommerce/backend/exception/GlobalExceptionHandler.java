@@ -54,6 +54,19 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
+	 * handleIllegalArgument handles rejected input, such as an invalid hex color or
+	 * cart selection, as a 400 instead of a 500.
+	 *
+	 * @param ex
+	 * @return
+	 */
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
+		log.warn("IllegalArgumentException: {}", ex.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
+
+	/**
 	 * handleInvalidCredentials handles the InvalidCredentials
 	 *
 	 * @param ex

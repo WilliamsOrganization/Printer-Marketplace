@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.backend.entity.InventoryItemField;
 import com.ecommerce.backend.entity.InventoryItemFieldChecklist;
-import com.ecommerce.backend.entity.InventoryItemFieldColorPicker;
 import com.ecommerce.backend.entity.InventoryItemFieldRadioGroup;
+import com.ecommerce.backend.entity.InventoryItemFieldThreeMFColorPicker;
 import com.ecommerce.backend.service.InventoryItemFieldService;
 
 import lombok.RequiredArgsConstructor;
@@ -32,15 +32,16 @@ public class InventoryItemFieldController {
 		return inventoryItemFieldService.save(submitted);
 	}
 
-	@PostMapping("/stl")
-	@PreAuthorize("hasRole('ADMIN')")
-	public InventoryItemFieldColorPicker createColorPicker(@RequestBody InventoryItemFieldColorPicker submitted) {
-		return inventoryItemFieldService.save(submitted);
-	}
-
 	@PostMapping("/radio-group")
 	@PreAuthorize("hasRole('ADMIN')")
 	public InventoryItemFieldRadioGroup createRadioGroup(@RequestBody InventoryItemFieldRadioGroup submitted) {
+		return inventoryItemFieldService.save(submitted);
+	}
+
+	@PostMapping("/three-mf")
+	@PreAuthorize("hasRole('ADMIN')")
+	public InventoryItemFieldThreeMFColorPicker createThreeMFColorPicker(
+			@RequestBody InventoryItemFieldThreeMFColorPicker submitted) {
 		return inventoryItemFieldService.save(submitted);
 	}
 

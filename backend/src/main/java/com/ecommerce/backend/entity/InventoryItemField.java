@@ -43,7 +43,7 @@ import lombok.experimental.SuperBuilder;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "field_type", visible = true)
 @JsonSubTypes({@JsonSubTypes.Type(value = InventoryItemFieldRadioGroup.class, name = "radio_group"),
 		@JsonSubTypes.Type(value = InventoryItemFieldChecklist.class, name = "checklist"),
-		@JsonSubTypes.Type(value = InventoryItemFieldColorPicker.class, name = "color_picker"),})
+		@JsonSubTypes.Type(value = InventoryItemFieldThreeMFColorPicker.class, name = "three_mf_color_picker"),})
 public abstract class InventoryItemField {
 
 	@Id

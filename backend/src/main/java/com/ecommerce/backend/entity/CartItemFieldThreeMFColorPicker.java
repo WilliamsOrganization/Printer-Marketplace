@@ -1,6 +1,7 @@
 /* (C)2026 */
 package com.ecommerce.backend.entity;
 
+import java.net.URL;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -19,8 +20,8 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * CartItemFieldColorPicker holds the options a customer selected for a
- * color_picker field on an item in their cart.
+ * CartItemFieldThreeMFColorPicker holds the region colors a customer selected
+ * for a 3MF file on an item in their cart.
  *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
@@ -29,19 +30,23 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@DiscriminatorValue("color_picker")
-public class CartItemFieldColorPicker extends CartItemField {
+@DiscriminatorValue("three_mf_color_picker")
+public class CartItemFieldThreeMFColorPicker extends CartItemField {
 
-	@ManyToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "cart_color_picker_options", joinColumns = @JoinColumn(name = "color_picker_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
 	@NonNull
 	@NotNull
-	private List<CartItemFieldOptionsStlColor> options;
+	private URL threeMFUrl;
+
+	@ManyToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "cart_three_mf_color_picker_options", joinColumns = @JoinColumn(name = "color_picker_id"), inverseJoinColumns = @JoinColumn(name = "options_id"))
+	@NonNull
+	@NotNull
+	private List<CartItemFieldOptionsThreeMFColorRegion> options;
 
 	/**
-	 * Returns the selected options for this field.
+	 * Returns the selected region colors for this field.
 	 */
-	public List<CartItemFieldOptionsStlColor> getOptions() {
+	public List<CartItemFieldOptionsThreeMFColorRegion> getOptions() {
 		return options;
-	};
+	}
 }

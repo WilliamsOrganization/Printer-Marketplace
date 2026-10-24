@@ -42,7 +42,8 @@ public abstract class OrderItemField {
 		return switch (source) {
 			case CartItemFieldRadioGroup radioGroup -> OrderItemFieldRadioGroup.from(radioGroup);
 			case CartItemFieldChecklist checklist -> OrderItemFieldChecklist.from(checklist);
-			case CartItemFieldColorPicker colorPicker -> OrderItemFieldColorPicker.from(colorPicker);
+			case CartItemFieldThreeMFColorPicker threeMFColorPicker ->
+				OrderItemFieldThreeMFColorPicker.from(threeMFColorPicker);
 			default ->
 				throw new IllegalArgumentException("Unknown cart field type: " + source.getClass().getSimpleName());
 		};

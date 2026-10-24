@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,17 +19,17 @@ import com.ecommerce.backend.entity.Cart;
 import com.ecommerce.backend.entity.CartItem;
 import com.ecommerce.backend.entity.CartItemField;
 import com.ecommerce.backend.entity.CartItemFieldChecklist;
-import com.ecommerce.backend.entity.CartItemFieldColorPicker;
 import com.ecommerce.backend.entity.CartItemFieldOptionsDropdown;
-import com.ecommerce.backend.entity.CartItemFieldOptionsStlColor;
+import com.ecommerce.backend.entity.CartItemFieldOptionsThreeMFColorRegion;
 import com.ecommerce.backend.entity.CartItemFieldRadioGroup;
+import com.ecommerce.backend.entity.CartItemFieldThreeMFColorPicker;
 import com.ecommerce.backend.entity.InventoryItem;
 import com.ecommerce.backend.entity.InventoryItemField;
 import com.ecommerce.backend.entity.InventoryItemFieldChecklist;
-import com.ecommerce.backend.entity.InventoryItemFieldColorPicker;
 import com.ecommerce.backend.entity.InventoryItemFieldOptions;
-import com.ecommerce.backend.entity.InventoryItemFieldOptionsStlColor;
+import com.ecommerce.backend.entity.InventoryItemFieldOptionsThreeMFColorRegion;
 import com.ecommerce.backend.entity.InventoryItemFieldRadioGroup;
+import com.ecommerce.backend.entity.InventoryItemFieldThreeMFColorPicker;
 import com.ecommerce.backend.entity.Sessions;
 import com.ecommerce.backend.entity.Users;
 import com.ecommerce.backend.repository.CartItemRepository;
@@ -161,19 +162,27 @@ public class CartService {
 				.description(radioGroup.getDescription()).options(cartRadioOption).build());
 	}
 
-	private void getCartStlOptions(List<CartItemField> fieldSelections, InventoryItemFieldSelection field,
-			List<InventoryItemFieldOptions> selected, InventoryItemFieldColorPicker colorPicker) {
-		if (field.optionIds().size() != 1)
-			throw new IllegalArgumentException("Color picker needs exactly one option");
+	private void getCartThreeMFRegionOptions(List<CartItemField> fieldSelections, InventoryItemFieldSelection field,
+			List<InventoryItemFieldOptions> selected, InventoryItemFieldThreeMFColorPicker colorPicker) {
 		if (selected.size() != field.optionIds().size())
 			throw new IllegalArgumentException("Invalid option for " + colorPicker.getLabel());
-		List<CartItemFieldOptionsStlColor> cartStlOptions = new ArrayList<>();
-		for (InventoryItemFieldOptions option : selected) {
-			cartStlOptions.add(CartItemFieldOptionsStlColor.from((InventoryItemFieldOptionsStlColor) option,
-					colorPicker.getStlUrl()));
+		Set<UUID> regions = new HashSet<>();
+		for (InventoryItemFieldOptionsThreeMFColorRegion option : colorPicker.getOptions()) {
+			regions.add(option.getUuid());
 		}
-		fieldSelections.add(CartItemFieldColorPicker.builder().label(colorPicker.getLabel())
-				.description(colorPicker.getDescription()).options(cartStlOptions).build());
+		Set<UUID> chosenRegions = new HashSet<>();
+		List<CartItemFieldOptionsThreeMFColorRegion> cartRegionOptions = new ArrayList<>();
+		for (InventoryItemFieldOptions option : selected) {
+			InventoryItemFieldOptionsThreeMFColorRegion region = (InventoryItemFieldOptionsThreeMFColorRegion) option;
+			if (!chosenRegions.add(region.getUuid()))
+				throw new IllegalArgumentException(region.getName() + " has more than one color selected");
+			cartRegionOptions.add(CartItemFieldOptionsThreeMFColorRegion.from(region));
+		}
+		if (!chosenRegions.equals(regions))
+			throw new IllegalArgumentException("Every region of " + colorPicker.getLabel() + " needs a color");
+		fieldSelections.add(CartItemFieldThreeMFColorPicker.builder().label(colorPicker.getLabel())
+				.description(colorPicker.getDescription()).threeMFUrl(colorPicker.getThreeMFUrl())
+				.options(cartRegionOptions).build());
 	}
 
 	/**
@@ -238,8 +247,8 @@ public class CartService {
 				case InventoryItemFieldChecklist checklist :
 					getCartChecklistOptions(fieldSelections, field, selected, checklist);
 					break;
-				case InventoryItemFieldColorPicker colorPicker :
-					getCartStlOptions(fieldSelections, field, selected, colorPicker);
+				case InventoryItemFieldThreeMFColorPicker threeMFColorPicker :
+					getCartThreeMFRegionOptions(fieldSelections, field, selected, threeMFColorPicker);
 					break;
 				default :
 					throw new IllegalArgumentException("Field " + field.fieldId() + " is not a valid field type");

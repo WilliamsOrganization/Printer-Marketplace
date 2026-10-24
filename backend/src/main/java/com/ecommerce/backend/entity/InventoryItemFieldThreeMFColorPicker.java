@@ -20,8 +20,9 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * InventoryItemFieldOptionsDropdown is a collection of options for a group of
- * InventoryItemFields, such as a size or weight category.
+ * InventoryItemFieldThreeMFColorPicker is a single 3MF file split into color
+ * regions. Each option is one region offered in one color; the customer picks
+ * exactly one option per region.
  *
  * @author William Ewanchuk https://github.com/ewanchukwilliam
  */
@@ -30,23 +31,23 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@DiscriminatorValue("color_picker")
-public class InventoryItemFieldColorPicker extends InventoryItemField {
+@DiscriminatorValue("three_mf_color_picker")
+public class InventoryItemFieldThreeMFColorPicker extends InventoryItemField {
 
 	@NonNull
 	@NotNull
-	private URL stlUrl;
+	private URL threeMFUrl;
 
 	@OneToMany(mappedBy = "inventoryItemField", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonManagedReference
 	@NonNull
 	@NotNull
-	private List<InventoryItemFieldOptionsStlColor> options;
+	private List<InventoryItemFieldOptionsThreeMFColorRegion> options;
 
 	/**
-	 * Returns the options for this field.
+	 * Returns the region/color options for this field.
 	 */
-	public List<InventoryItemFieldOptionsStlColor> getOptions() {
+	public List<InventoryItemFieldOptionsThreeMFColorRegion> getOptions() {
 		return options;
-	};
+	}
 }
