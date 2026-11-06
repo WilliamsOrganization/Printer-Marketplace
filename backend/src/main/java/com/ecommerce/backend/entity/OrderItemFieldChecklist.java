@@ -1,4 +1,3 @@
-/* (C)2026 */
 package com.ecommerce.backend.entity;
 
 import java.util.ArrayList;
